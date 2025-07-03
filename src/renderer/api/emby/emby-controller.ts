@@ -8,6 +8,7 @@ import { embyType } from '/@/shared/api/emby/emby-types';
 import { getFeatures, VersionInfo } from '/@/shared/api/utils';
 import {
     albumArtistListSortMap,
+    AlbumListSort,
     albumListSortMap,
     ControllerEndpoint,
     genreListSortMap,
@@ -15,7 +16,9 @@ import {
     Played,
     playlistListSortMap,
     Song,
+    SongListSort,
     songListSortMap,
+    SortOrder,
     sortOrderMap,
 } from '/@/shared/types/domain-types';
 import { ServerFeature } from '/@/shared/types/features-types';
@@ -260,10 +263,12 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get album detail');
         }
 
-        return embyNormalize.album(
+        const album = await embyNormalize.album(
             { ...res.body, Songs: songsRes.body.Items },
             apiClientProps.server,
+            apiClientProps,
         );
+        return album;
     },
     getAlbumList: async (args) => {
         const { apiClientProps, query } = args;
@@ -271,6 +276,48 @@ export const EmbyController: ControllerEndpoint = {
 
         if (!apiClientProps.server?.userId) {
             throw new Error('No userId found');
+        }
+
+        if (query.sortBy === AlbumListSort.RANDOM) {
+            const songList = await EmbyController.getSongList({
+                apiClientProps,
+                query: {
+                    limit: 50, // Fetch more songs to ensure album diversity
+                    sortBy: SongListSort.RANDOM,
+                    sortOrder: SortOrder.ASC,
+                    startIndex: 0,
+                },
+            });
+
+            if (!songList?.items) {
+                return { items: [], startIndex: 0, totalRecordCount: 0 };
+            }
+
+            const albumMap = new Map();
+            for (const song of songList.items) {
+                if (song.albumId && !albumMap.has(song.albumId)) {
+                    albumMap.set(song.albumId, song);
+                }
+            }
+
+            const uniqueAlbumSongs = Array.from(albumMap.values()).slice(0, query.limit);
+
+            const albumDetailsPromises = uniqueAlbumSongs.map((song) =>
+                EmbyController.getAlbumDetail({
+                    apiClientProps,
+                    query: { id: song.albumId },
+                }),
+            );
+
+            const albums = (await Promise.all(albumDetailsPromises)).filter(
+                (album) => album !== null,
+            );
+
+            return {
+                items: albums,
+                startIndex: 0,
+                totalRecordCount: albums.length,
+            };
         }
 
         const res = await embyApiClient(apiClientProps).getAlbumList({
@@ -297,8 +344,14 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get album list');
         }
 
+        const items = await Promise.all(
+            res.body.Items.map((item) =>
+                embyNormalize.album(item, apiClientProps.server, apiClientProps),
+            ),
+        );
+
         return {
-            items: res.body.Items.map((item) => embyNormalize.album(item, apiClientProps.server)),
+            items,
             startIndex: query.startIndex,
             totalRecordCount: res.body.TotalRecordCount,
         };
@@ -936,7 +989,11 @@ export const EmbyController: ControllerEndpoint = {
             albumArtists: albumArtists.map((item) =>
                 embyNormalize.albumArtist(item, apiClientProps.server),
             ),
-            albums: albums.map((item) => embyNormalize.album(item, apiClientProps.server)),
+            albums: await Promise.all(
+                albums.map((item) =>
+                    embyNormalize.album(item, apiClientProps.server, apiClientProps),
+                ),
+            ),
             songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server, '')),
         };
     },

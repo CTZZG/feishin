@@ -1,10 +1,12 @@
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
+import { embyApiClient } from '/@/renderer/api/emby/emby-api';
 import { embyType } from '/@/shared/api/emby/emby-types';
 import {
     Album,
     AlbumArtist,
+    ControllerApiClient,
     Genre,
     LibraryItem,
     MusicFolder,
@@ -45,36 +47,39 @@ const normalizeSong = (
     imageSize?: number,
 ): Song => {
     return {
-        album: item.Album,
-        albumArtists: item.AlbumArtists?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            name: entry.Name,
-        })),
+        album: item.Album ?? null,
+        albumArtists:
+            item.AlbumArtists?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                name: entry.Name,
+            })) ?? [],
         albumId: item.AlbumId || `dummy/${item.Id}`,
-        artistName: item?.ArtistItems?.[0]?.Name,
-        artists: item?.ArtistItems?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            name: entry.Name,
-        })),
-        bitRate: null, // Emby does not provide this directly in the main song object
+        artistName: item?.ArtistItems?.[0]?.Name ?? '',
+        artists:
+            item?.ArtistItems?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                name: entry.Name,
+            })) ?? [],
+        bitRate: 0, // Emby does not provide this directly in the main song object
         bpm: null,
         channels: null,
         comment: null,
         compilation: null,
         container: item.MediaSources?.[0]?.Container || null,
-        createdAt: item.DateCreated,
+        createdAt: item.DateCreated ?? '',
         discNumber: item.ParentIndexNumber || 1,
         discSubtitle: null,
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
         gain: null, // Emby does not provide normalization data
-        genres: item.GenreItems?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            itemType: LibraryItem.GENRE,
-            name: entry.Name,
-        })),
+        genres:
+            item.GenreItems?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                itemType: LibraryItem.GENRE,
+                name: entry.Name,
+            })) ?? [],
         id: item.Id,
         imagePlaceholderUrl: null,
         imageUrl: getImageUrl({
@@ -101,57 +106,84 @@ const normalizeSong = (
         releaseYear: item.ProductionYear ? String(item.ProductionYear) : null,
         serverId: server?.id || '',
         serverType: ServerType.EMBY,
-        size: item.MediaSources?.[0]?.Size,
+        size: item.MediaSources?.[0]?.Size ?? 0,
         streamUrl: getStreamUrl({
             id: item.Id,
             server,
         }),
         tags: null,
-        trackNumber: item.IndexNumber,
+        trackNumber: item.IndexNumber ?? 1,
         uniqueId: nanoid(),
-        updatedAt: item.DateCreated,
+        updatedAt: item.DateCreated ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
         userRating: null,
     };
 };
 
-const normalizeAlbum = (
+const normalizeAlbum = async (
     item: z.infer<typeof embyType._response.album>,
     server: null | ServerListItem,
+    apiClientProps: ControllerApiClient,
     imageSize?: number,
-): Album => {
+): Promise<Album> => {
+    let imageUrl = getImageUrl({
+        baseUrl: server?.url || '',
+        imageType: 'Primary',
+        itemId: item.Id,
+        size: imageSize || 300,
+        tag: item.ImageTags?.Primary,
+    });
+
+    if (!imageUrl) {
+        const res = await embyApiClient(apiClientProps).getSongList({
+            query: {
+                Fields: 'ImageTags',
+                IncludeItemTypes: 'Audio',
+                Limit: 1,
+                ParentId: item.Id,
+            },
+        });
+
+        if (res.status === 200 && res.body.Items.length > 0) {
+            const firstSong = res.body.Items[0];
+            imageUrl = getImageUrl({
+                baseUrl: server?.url || '',
+                imageType: 'Primary',
+                itemId: firstSong.Id,
+                size: imageSize || 300,
+                tag: firstSong.ImageTags?.Primary,
+            });
+        }
+    }
+
     return {
-        albumArtist: item.ArtistItems?.[0]?.Name,
+        albumArtist: item.ArtistItems?.[0]?.Name ?? '',
         albumArtists:
             item.AlbumArtists?.map((entry) => ({
                 id: entry.Id,
                 imageUrl: null,
                 name: entry.Name,
             })) || [],
-        artists: item.ArtistItems?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            name: entry.Name,
-        })),
+        artists:
+            item.ArtistItems?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                name: entry.Name,
+            })) ?? [],
         backdropImageUrl: null,
         comment: null,
-        createdAt: item.DateCreated,
+        createdAt: item.DateCreated ?? '',
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
-        genres: item.GenreItems?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            itemType: LibraryItem.GENRE,
-            name: entry.Name,
-        })),
+        genres:
+            item.GenreItems?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                itemType: LibraryItem.GENRE,
+                name: entry.Name,
+            })) ?? [],
         id: item.Id,
         imagePlaceholderUrl: null,
-        imageUrl: getImageUrl({
-            baseUrl: server?.url || '',
-            imageType: 'Primary',
-            itemId: item.Id,
-            size: imageSize || 300,
-            tag: item.ImageTags?.Primary,
-        }),
+        imageUrl,
         isCompilation: null,
         itemType: LibraryItem.ALBUM,
         lastPlayedAt: null,
@@ -169,7 +201,7 @@ const normalizeAlbum = (
         songs: item.Songs?.map((song) => normalizeSong(song, server, '', imageSize)),
         tags: null,
         uniqueId: nanoid(),
-        updatedAt: item?.DateLastMediaAdded || item.DateCreated,
+        updatedAt: (item?.DateLastMediaAdded || item.DateCreated) ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
         userRating: null,
     };
@@ -202,12 +234,13 @@ const normalizeAlbumArtist = (
         backgroundImageUrl: null,
         biography: item.Overview || null,
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
-        genres: item.GenreItems?.map((entry) => ({
-            id: entry.Id,
-            imageUrl: null,
-            itemType: LibraryItem.GENRE,
-            name: entry.Name,
-        })),
+        genres:
+            item.GenreItems?.map((entry) => ({
+                id: entry.Id,
+                imageUrl: null,
+                itemType: LibraryItem.GENRE,
+                name: entry.Name,
+            })) ?? [],
         id: item.Id,
         imageUrl: getImageUrl({
             baseUrl: server?.url || '',

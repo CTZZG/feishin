@@ -4,6 +4,7 @@ import isElectron from 'is-electron';
 import { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import EmbyLogo from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinLogo from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeLogo from '/@/renderer/features/servers/assets/navidrome.png';
 import OpenSubsonicLogo from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -85,7 +86,9 @@ export const ServerList = () => {
                                                     ? NavidromeLogo
                                                     : server.type === ServerType.JELLYFIN
                                                       ? JellyfinLogo
-                                                      : OpenSubsonicLogo
+                                                      : server.type === ServerType.EMBY
+                                                        ? EmbyLogo
+                                                        : OpenSubsonicLogo
                                             }
                                             style={{
                                                 height: 'var(--theme-font-size-lg)',

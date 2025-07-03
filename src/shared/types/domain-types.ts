@@ -252,6 +252,11 @@ export interface BaseQuery<T> {
     sortOrder: SortOrder;
 }
 
+export type ControllerApiClient = {
+    server: null | ServerListItem;
+    signal?: AbortSignal;
+};
+
 export type EndpointDetails = {
     server: ServerListItem;
 };
@@ -373,10 +378,7 @@ export type Song = {
 };
 
 type BaseEndpointArgs = {
-    apiClientProps: {
-        server: null | ServerListItem;
-        signal?: AbortSignal;
-    };
+    apiClientProps: ControllerApiClient;
 };
 
 type GenreListSortMap = {
