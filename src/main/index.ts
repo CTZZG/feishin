@@ -17,7 +17,6 @@ import {
     Tray,
 } from 'electron';
 import electronLocalShortcut from 'electron-localshortcut';
-import log from 'electron-log/main';
 import { access, constants, readFile, writeFile } from 'fs';
 import path, { join } from 'path';
 import { deflate, inflate } from 'zlib';

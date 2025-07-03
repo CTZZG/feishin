@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import { embyApiClient } from '/@/renderer/api/emby/emby-api';
 import { embyType } from '/@/shared/api/emby/emby-types';
 import {
     Album,
@@ -18,12 +17,12 @@ import { ServerListItem, ServerType } from '/@/shared/types/types';
 type EmbyGenre = z.infer<typeof embyType._response.genre>;
 type EmbyMusicFolder = z.infer<typeof embyType._response.musicFolderList>['Items'][number];
 
-const getStreamUrl = (args: { id: string; server: null | ServerListItem }) => {
-    const { id, server } = args;
+const getStreamUrl = (args: { deviceId: string; id: string; server: null | ServerListItem }) => {
+    const { deviceId, id, server } = args;
 
     if (!server) return '';
 
-    return `${server.url}/Audio/${id}/stream?static=true&api_key=${server.credential}`;
+    return `${server.url}/Audio/${id}/stream?static=true&api_key=${server.credential}&DeviceId=${deviceId}`;
 };
 
 const getImageUrl = (args: {
@@ -108,6 +107,7 @@ const normalizeSong = (
         serverType: ServerType.EMBY,
         size: item.MediaSources?.[0]?.Size ?? 0,
         streamUrl: getStreamUrl({
+            deviceId,
             id: item.Id,
             server,
         }),
@@ -123,9 +123,11 @@ const normalizeSong = (
 const normalizeAlbum = async (
     item: z.infer<typeof embyType._response.album>,
     server: null | ServerListItem,
+    apiClient: any,
     apiClientProps: ControllerApiClient,
     imageSize?: number,
 ): Promise<Album> => {
+    const deviceId = apiClientProps.server?.id || '';
     let imageUrl = getImageUrl({
         baseUrl: server?.url || '',
         imageType: 'Primary',
@@ -135,12 +137,13 @@ const normalizeAlbum = async (
     });
 
     if (!imageUrl) {
-        const res = await embyApiClient(apiClientProps).getSongList({
+        const res = await apiClient.getSongList({
             query: {
                 Fields: 'ImageTags',
                 IncludeItemTypes: 'Audio',
                 Limit: 1,
                 ParentId: item.Id,
+                UserId: apiClientProps.server?.userId,
             },
         });
 
@@ -198,7 +201,7 @@ const normalizeAlbum = async (
         serverType: ServerType.EMBY,
         size: null,
         songCount: item?.ChildCount || null,
-        songs: item.Songs?.map((song) => normalizeSong(song, server, '', imageSize)),
+        songs: item.Songs?.map((song) => normalizeSong(song, server, deviceId, imageSize)),
         tags: null,
         uniqueId: nanoid(),
         updatedAt: (item?.DateLastMediaAdded || item.DateCreated) ?? '',

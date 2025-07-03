@@ -12,8 +12,6 @@ import {
     albumListSortMap,
     ControllerEndpoint,
     genreListSortMap,
-    LibraryItem,
-    Played,
     playlistListSortMap,
     Song,
     SongListSort,
@@ -266,6 +264,7 @@ export const EmbyController: ControllerEndpoint = {
         const album = await embyNormalize.album(
             { ...res.body, Songs: songsRes.body.Items },
             apiClientProps.server,
+            embyApiClient(apiClientProps),
             apiClientProps,
         );
         return album;
@@ -346,7 +345,12 @@ export const EmbyController: ControllerEndpoint = {
 
         const items = await Promise.all(
             res.body.Items.map((item) =>
-                embyNormalize.album(item, apiClientProps.server, apiClientProps),
+                embyNormalize.album(
+                    item,
+                    apiClientProps.server,
+                    embyApiClient(apiClientProps),
+                    apiClientProps,
+                ),
             ),
         );
 
@@ -991,7 +995,12 @@ export const EmbyController: ControllerEndpoint = {
             ),
             albums: await Promise.all(
                 albums.map((item) =>
-                    embyNormalize.album(item, apiClientProps.server, apiClientProps),
+                    embyNormalize.album(
+                        item,
+                        apiClientProps.server,
+                        embyApiClient(apiClientProps),
+                        apiClientProps,
+                    ),
                 ),
             ),
             songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server, '')),
