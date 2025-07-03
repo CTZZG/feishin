@@ -41,6 +41,13 @@ import {
 import { ListDisplayType } from '/@/shared/types/types';
 
 const FILTERS = {
+    emby: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: AlbumArtistListSort.NAME,
+        },
+    ],
     jellyfin: [
         {
             defaultOrder: SortOrder.ASC,

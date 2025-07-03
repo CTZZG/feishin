@@ -50,6 +50,28 @@ import {
 import { ListDisplayType, Play } from '/@/shared/types/types';
 
 const FILTERS = {
+    emby: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: SongListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.album', { postProcess: 'titleCase' }),
+            value: SongListSort.ALBUM,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.artist', { postProcess: 'titleCase' }),
+            value: SongListSort.ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: SongListSort.RECENTLY_ADDED,
+        },
+    ],
     jellyfin: [
         {
             defaultOrder: SortOrder.ASC,

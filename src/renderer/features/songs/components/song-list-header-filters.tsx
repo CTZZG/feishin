@@ -16,6 +16,7 @@ import { FolderButton } from '/@/renderer/features/shared/components/folder-butt
 import { ListConfigMenu } from '/@/renderer/features/shared/components/list-config-menu';
 import { MoreButton } from '/@/renderer/features/shared/components/more-button';
 import { RefreshButton } from '/@/renderer/features/shared/components/refresh-button';
+import { EmbySongFilters } from '/@/renderer/features/songs/components/emby-song-filters';
 import { JellyfinSongFilters } from '/@/renderer/features/songs/components/jellyfin-song-filters';
 import { NavidromeSongFilters } from '/@/renderer/features/songs/components/navidrome-song-filters';
 import { SubsonicSongFilters } from '/@/renderer/features/songs/components/subsonic-song-filter';
@@ -45,6 +46,58 @@ import {
 import { ListDisplayType, Play } from '/@/shared/types/types';
 
 const FILTERS = {
+    emby: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.album', { postProcess: 'titleCase' }),
+            value: SongListSort.ALBUM,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.albumArtist', { postProcess: 'titleCase' }),
+            value: SongListSort.ALBUM_ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.artist', { postProcess: 'titleCase' }),
+            value: SongListSort.ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.duration', { postProcess: 'titleCase' }),
+            value: SongListSort.DURATION,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.playCount', { postProcess: 'titleCase' }),
+            value: SongListSort.PLAY_COUNT,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: SongListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: SongListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: SongListSort.RECENTLY_ADDED,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.recentlyPlayed', { postProcess: 'titleCase' }),
+            value: SongListSort.RECENTLY_PLAYED,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.releaseDate', { postProcess: 'titleCase' }),
+            value: SongListSort.RELEASE_DATE,
+        },
+    ],
     jellyfin: [
         {
             defaultOrder: SortOrder.ASC,
@@ -426,6 +479,9 @@ export const SongListHeaderFilters = ({
         let FilterComponent;
 
         switch (server?.type) {
+            case ServerType.EMBY:
+                FilterComponent = EmbySongFilters;
+                break;
             case ServerType.JELLYFIN:
                 FilterComponent = JellyfinSongFilters;
                 break;
@@ -461,7 +517,7 @@ export const SongListHeaderFilters = ({
             Object.values(filter?._custom?.navidrome).some((value) => value !== undefined);
 
         const isJellyfinFilterApplied =
-            server?.type === ServerType.JELLYFIN &&
+            (server?.type === ServerType.JELLYFIN || server?.type === ServerType.EMBY) &&
             filter?._custom?.jellyfin &&
             Object.values(filter?._custom?.jellyfin)
                 .filter((value) => value !== 'Audio') // Don't account for includeItemTypes: Audio

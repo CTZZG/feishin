@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '/@/renderer/api';
+import EmbyIcon from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinIcon from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeIcon from '/@/renderer/features/servers/assets/navidrome.png';
 import SubsonicIcon from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -54,6 +55,15 @@ const SERVER_TYPES = [
             />
         ),
         value: ServerType.JELLYFIN,
+    },
+    {
+        label: (
+            <ServerIconWithLabel
+                icon={EmbyIcon}
+                label="Emby"
+            />
+        ),
+        value: ServerType.EMBY,
     },
     {
         label: (

@@ -12,39 +12,25 @@ import {
     protocol,
     Rectangle,
     screen,
+    session,
     shell,
     Tray,
 } from 'electron';
 import electronLocalShortcut from 'electron-localshortcut';
 import log from 'electron-log/main';
-import { autoUpdater } from 'electron-updater';
 import { access, constants, readFile, writeFile } from 'fs';
 import path, { join } from 'path';
 import { deflate, inflate } from 'zlib';
 
+import packageJson from '../../package.json';
 import { disableMediaKeys, enableMediaKeys } from './features/core/player/media-keys';
 import { shutdownServer } from './features/core/remote';
 import { store } from './features/core/settings';
 import MenuBuilder from './menu';
-import {
-    autoUpdaterLogInterface,
-    createLog,
-    hotkeyToElectronAccelerator,
-    isLinux,
-    isMacOS,
-    isWindows,
-} from './utils';
+import { createLog, hotkeyToElectronAccelerator, isLinux, isMacOS, isWindows } from './utils';
 import './features';
 
 import { TitleTheme } from '/@/shared/types/types';
-
-export default class AppUpdater {
-    constructor() {
-        log.transports.file.level = 'info';
-        autoUpdater.logger = autoUpdaterLogInterface;
-        autoUpdater.checkForUpdatesAndNotify();
-    }
-}
 
 protocol.registerSchemesAsPrivileged([{ privileges: { bypassCSP: true }, scheme: 'feishin' }]);
 
@@ -492,10 +478,6 @@ async function createWindow(first = true): Promise<void> {
         return { action: 'deny' };
     });
 
-    if (store.get('disable_auto_updates') !== true) {
-        new AppUpdater();
-    }
-
     const theme = store.get('theme') as TitleTheme | undefined;
     nativeTheme.themeSource = theme || 'dark';
 
@@ -652,6 +634,11 @@ if (!singleInstance) {
 
     app.whenReady()
         .then(() => {
+            session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+                details.requestHeaders['User-Agent'] = `feishin/${packageJson.version}`;
+                callback({ cancel: false, requestHeaders: details.requestHeaders });
+            });
+
             protocol.handle('feishin', async (request) => {
                 const filePath = `file://${request.url.slice('feishin://'.length)}`;
                 const response = await net.fetch(filePath);

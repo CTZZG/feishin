@@ -11,6 +11,7 @@ import { queryKeys } from '/@/renderer/api/query-keys';
 import { VirtualInfiniteGridRef } from '/@/renderer/components/virtual-grid';
 import { ALBUM_TABLE_COLUMNS } from '/@/renderer/components/virtual-table';
 import { useListContext } from '/@/renderer/context/list-context';
+import { EmbyAlbumFilters } from '/@/renderer/features/albums/components/emby-album-filters';
 import { JellyfinAlbumFilters } from '/@/renderer/features/albums/components/jellyfin-album-filters';
 import { NavidromeAlbumFilters } from '/@/renderer/features/albums/components/navidrome-album-filters';
 import { SubsonicAlbumFilters } from '/@/renderer/features/albums/components/subsonic-album-filters';
@@ -44,6 +45,48 @@ import {
 import { ListDisplayType, Play, TableColumn } from '/@/shared/types/types';
 
 const FILTERS = {
+    emby: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.albumArtist', { postProcess: 'titleCase' }),
+            value: AlbumListSort.ALBUM_ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.communityRating', { postProcess: 'titleCase' }),
+            value: AlbumListSort.COMMUNITY_RATING,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.criticRating', { postProcess: 'titleCase' }),
+            value: AlbumListSort.CRITIC_RATING,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: AlbumListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.playCount', { postProcess: 'titleCase' }),
+            value: AlbumListSort.PLAY_COUNT,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RECENTLY_ADDED,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.releaseDate', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RELEASE_DATE,
+        },
+    ],
     jellyfin: [
         {
             defaultOrder: SortOrder.ASC,
@@ -251,6 +294,9 @@ export const AlbumListHeaderFilters = ({
         let FilterComponent;
 
         switch (server?.type) {
+            case ServerType.EMBY:
+                FilterComponent = EmbyAlbumFilters;
+                break;
             case ServerType.JELLYFIN:
                 FilterComponent = JellyfinAlbumFilters;
                 break;
@@ -409,7 +455,7 @@ export const AlbumListHeaderFilters = ({
             Object.values(filter?._custom?.navidrome).some((value) => value !== undefined);
 
         const isJellyfinFilterApplied =
-            server?.type === ServerType.JELLYFIN &&
+            (server?.type === ServerType.JELLYFIN || server?.type === ServerType.EMBY) &&
             filter?._custom?.jellyfin &&
             Object.values(filter?._custom?.jellyfin).some((value) => value !== undefined);
 

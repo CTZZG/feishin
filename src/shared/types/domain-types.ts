@@ -4,6 +4,14 @@ import shuffle from 'lodash/shuffle';
 import { z } from 'zod';
 
 import {
+    EmbyAlbumArtistListSort,
+    EmbyAlbumListSort,
+    EmbyGenreListSort,
+    EmbyPlaylistListSort,
+    EmbySongListSort,
+    EmbySortOrder,
+} from '/@/shared/api/emby.types';
+import {
     JFAlbumArtistListSort,
     JFAlbumListSort,
     JFArtistListSort,
@@ -37,6 +45,7 @@ export enum LibraryItem {
 }
 
 export enum ServerType {
+    EMBY = 'emby',
     JELLYFIN = 'jellyfin',
     NAVIDROME = 'navidrome',
     SUBSONIC = 'subsonic',
@@ -108,12 +117,17 @@ export type User = {
 };
 
 type SortOrderMap = {
+    emby: Record<SortOrder, EmbySortOrder>;
     jellyfin: Record<SortOrder, JFSortOrder>;
     navidrome: Record<SortOrder, NDSortOrder>;
     subsonic: Record<SortOrder, undefined>;
 };
 
 export const sortOrderMap: SortOrderMap = {
+    emby: {
+        ASC: EmbySortOrder.ASC,
+        DESC: EmbySortOrder.DESC,
+    },
     jellyfin: {
         ASC: JFSortOrder.ASC,
         DESC: JFSortOrder.DESC,
@@ -366,12 +380,16 @@ type BaseEndpointArgs = {
 };
 
 type GenreListSortMap = {
+    emby: Record<GenreListSort, EmbyGenreListSort | undefined>;
     jellyfin: Record<GenreListSort, JFGenreListSort | undefined>;
     navidrome: Record<GenreListSort, NDGenreListSort | undefined>;
     subsonic: Record<UserListSort, undefined>;
 };
 
 export const genreListSortMap: GenreListSortMap = {
+    emby: {
+        name: EmbyGenreListSort.NAME,
+    },
     jellyfin: {
         name: JFGenreListSort.NAME,
     },
@@ -405,6 +423,7 @@ export type AlbumListArgs = BaseEndpointArgs & { query: AlbumListQuery };
 
 export interface AlbumListQuery extends BaseQuery<AlbumListSort> {
     _custom?: {
+        emby?: Partial<z.infer<typeof jfType._parameters.albumList>>;
         jellyfin?: Partial<z.infer<typeof jfType._parameters.albumList>>;
         navidrome?: Partial<z.infer<typeof ndType._parameters.albumList>>;
     };
@@ -424,12 +443,30 @@ export interface AlbumListQuery extends BaseQuery<AlbumListSort> {
 export type AlbumListResponse = BasePaginatedResponse<Album[]> | null | undefined;
 
 type AlbumListSortMap = {
+    emby: Record<AlbumListSort, EmbyAlbumListSort | undefined>;
     jellyfin: Record<AlbumListSort, JFAlbumListSort | undefined>;
     navidrome: Record<AlbumListSort, NDAlbumListSort | undefined>;
     subsonic: Record<AlbumListSort, undefined>;
 };
 
 export const albumListSortMap: AlbumListSortMap = {
+    emby: {
+        albumArtist: EmbyAlbumListSort.ALBUM_ARTIST,
+        artist: undefined,
+        communityRating: EmbyAlbumListSort.COMMUNITY_RATING,
+        criticRating: EmbyAlbumListSort.CRITIC_RATING,
+        duration: undefined,
+        favorited: undefined,
+        name: EmbyAlbumListSort.NAME,
+        playCount: EmbyAlbumListSort.PLAY_COUNT,
+        random: EmbyAlbumListSort.RANDOM,
+        rating: undefined,
+        recentlyAdded: EmbyAlbumListSort.RECENTLY_ADDED,
+        recentlyPlayed: undefined,
+        releaseDate: EmbyAlbumListSort.RELEASE_DATE,
+        songCount: undefined,
+        year: undefined,
+    },
     jellyfin: {
         albumArtist: JFAlbumListSort.ALBUM_ARTIST,
         artist: undefined,
@@ -521,6 +558,7 @@ export type SongListArgs = BaseEndpointArgs & { query: SongListQuery };
 
 export interface SongListQuery extends BaseQuery<SongListSort> {
     _custom?: {
+        emby?: Partial<z.infer<typeof jfType._parameters.songList>>;
         jellyfin?: Partial<z.infer<typeof jfType._parameters.songList>>;
         navidrome?: Partial<z.infer<typeof ndType._parameters.songList>>;
     };
@@ -543,12 +581,33 @@ export interface SongListQuery extends BaseQuery<SongListSort> {
 export type SongListResponse = BasePaginatedResponse<Song[]> | null | undefined;
 
 type SongListSortMap = {
+    emby: Record<SongListSort, EmbySongListSort | undefined>;
     jellyfin: Record<SongListSort, JFSongListSort | undefined>;
     navidrome: Record<SongListSort, NDSongListSort | undefined>;
     subsonic: Record<SongListSort, undefined>;
 };
 
 export const songListSortMap: SongListSortMap = {
+    emby: {
+        album: EmbySongListSort.ALBUM,
+        albumArtist: EmbySongListSort.ALBUM_ARTIST,
+        artist: EmbySongListSort.ARTIST,
+        bpm: undefined,
+        channels: undefined,
+        comment: undefined,
+        duration: EmbySongListSort.DURATION,
+        favorited: undefined,
+        genre: undefined,
+        id: undefined,
+        name: EmbySongListSort.NAME,
+        playCount: EmbySongListSort.PLAY_COUNT,
+        random: EmbySongListSort.RANDOM,
+        rating: undefined,
+        recentlyAdded: EmbySongListSort.RECENTLY_ADDED,
+        recentlyPlayed: EmbySongListSort.RECENTLY_PLAYED,
+        releaseDate: EmbySongListSort.RELEASE_DATE,
+        year: undefined,
+    },
     jellyfin: {
         album: JFSongListSort.ALBUM,
         albumArtist: JFSongListSort.ALBUM_ARTIST,
@@ -629,6 +688,7 @@ export type AlbumArtistListArgs = BaseEndpointArgs & { query: AlbumArtistListQue
 
 export interface AlbumArtistListQuery extends BaseQuery<AlbumArtistListSort> {
     _custom?: {
+        emby?: Partial<z.infer<typeof jfType._parameters.albumArtistList>>;
         jellyfin?: Partial<z.infer<typeof jfType._parameters.albumArtistList>>;
         navidrome?: Partial<z.infer<typeof ndType._parameters.albumArtistList>>;
     };
@@ -649,12 +709,26 @@ export type SongDetailQuery = { id: string };
 export type SongDetailResponse = null | Song | undefined;
 
 type AlbumArtistListSortMap = {
+    emby: Record<AlbumArtistListSort, EmbyAlbumArtistListSort | undefined>;
     jellyfin: Record<AlbumArtistListSort, JFAlbumArtistListSort | undefined>;
     navidrome: Record<AlbumArtistListSort, NDAlbumArtistListSort | undefined>;
     subsonic: Record<AlbumArtistListSort, undefined>;
 };
 
 export const albumArtistListSortMap: AlbumArtistListSortMap = {
+    emby: {
+        album: undefined,
+        albumCount: undefined,
+        duration: undefined,
+        favorited: undefined,
+        name: EmbyAlbumArtistListSort.NAME,
+        playCount: undefined,
+        random: EmbyAlbumArtistListSort.RANDOM,
+        rating: undefined,
+        recentlyAdded: EmbyAlbumArtistListSort.RECENTLY_ADDED,
+        releaseDate: undefined,
+        songCount: undefined,
+    },
     jellyfin: {
         album: JFAlbumArtistListSort.ALBUM,
         albumCount: undefined,
@@ -930,12 +1004,21 @@ export type UpdatePlaylistQuery = {
 export type UpdatePlaylistResponse = null | undefined;
 
 type PlaylistListSortMap = {
+    emby: Record<PlaylistListSort, EmbyPlaylistListSort | undefined>;
     jellyfin: Record<PlaylistListSort, JFPlaylistListSort | undefined>;
     navidrome: Record<PlaylistListSort, NDPlaylistListSort | undefined>;
     subsonic: Record<PlaylistListSort, undefined>;
 };
 
 export const playlistListSortMap: PlaylistListSortMap = {
+    emby: {
+        duration: undefined,
+        name: EmbyPlaylistListSort.NAME,
+        owner: undefined,
+        public: undefined,
+        songCount: undefined,
+        updatedAt: EmbyPlaylistListSort.RECENTLY_ADDED,
+    },
     jellyfin: {
         duration: JFPlaylistListSort.DURATION,
         name: JFPlaylistListSort.NAME,
@@ -1159,6 +1242,7 @@ export type TopSongListQuery = {
     artist: string;
     artistId: string;
     limit?: number;
+    musicFolderId?: string;
 };
 
 // Top Songs List
