@@ -457,16 +457,11 @@ export const AlbumListHeaderFilters = ({
                 filter.compilation !== undefined);
 
         const isJellyfinFilterApplied =
-            (server?.type === ServerType.JELLYFIN &&
-                ((filter?._custom?.jellyfin &&
-                    Object.values(filter?._custom?.jellyfin).some(
-                        (value) => value !== undefined,
-                    )) ||
-                    // Compilation filter is only valid when on the artist page
-                    (filter.compilation !== undefined && customFilters?.artistIds))) ||
-            (server?.type === ServerType.EMBY &&
-                filter?._custom?.jellyfin &&
-                Object.values(filter?._custom?.jellyfin).some((value) => value !== undefined));
+            (server?.type === ServerType.JELLYFIN || server?.type === ServerType.EMBY) &&
+            ((filter?._custom?.jellyfin &&
+                Object.values(filter?._custom?.jellyfin).some((value) => value !== undefined)) ||
+                // Compilation filter is only valid when on the artist page
+                (filter.compilation !== undefined && customFilters?.artistIds));
 
         const isSubsonicFilterApplied =
             server?.type === ServerType.SUBSONIC && (filter.maxYear || filter.minYear);
