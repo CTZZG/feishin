@@ -1,5 +1,5 @@
 import debounce from 'lodash/debounce';
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
@@ -43,6 +43,10 @@ export const NavidromeAlbumFilters = ({
     const { setFilter } = useListStoreActions();
 
     const genreListQuery = useGenreList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
         query: {
             sortBy: GenreListSort.NAME,
             sortOrder: SortOrder.ASC,
@@ -73,6 +77,10 @@ export const NavidromeAlbumFilters = ({
     }, 250);
 
     const tagsQuery = useTagList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
         query: {
             type: LibraryItem.ALBUM,
         },
@@ -176,8 +184,6 @@ export const NavidromeAlbumFilters = ({
         }) as AlbumListFilter;
         onFilterChange(updatedFilters);
     }, 500);
-
-    const [albumArtistSearchTerm, setAlbumArtistSearchTerm] = useState<string>('');
 
     const albumArtistListQuery = useAlbumArtistList({
         options: {
@@ -293,13 +299,12 @@ export const NavidromeAlbumFilters = ({
                     label={t('entity.artist', { count: 1, postProcess: 'titleCase' })}
                     limit={300}
                     onChange={handleAlbumArtistFilter}
-                    onSearchChange={setAlbumArtistSearchTerm}
                     rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
                     searchable
-                    searchValue={albumArtistSearchTerm}
                 />
             </Group>
             {tagsQuery.data?.enumTags?.length &&
+                tagsQuery.data.enumTags.length > 0 &&
                 tagsQuery.data.enumTags.map((tag) => (
                     <Group
                         grow

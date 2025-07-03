@@ -451,19 +451,25 @@ export const AlbumListHeaderFilters = ({
     const isFilterApplied = useMemo(() => {
         const isNavidromeFilterApplied =
             server?.type === ServerType.NAVIDROME &&
-            filter?._custom?.navidrome &&
-            Object.values(filter?._custom?.navidrome).some((value) => value !== undefined);
+            ((filter?._custom?.navidrome &&
+                Object.values(filter?._custom?.navidrome).some((value) => value !== undefined)) ||
+                // Compilation is always valid
+                filter.compilation !== undefined);
 
         const isJellyfinFilterApplied =
-            (server?.type === ServerType.JELLYFIN || server?.type === ServerType.EMBY) &&
-            filter?._custom?.jellyfin &&
-            Object.values(filter?._custom?.jellyfin).some((value) => value !== undefined);
+            (server?.type === ServerType.JELLYFIN &&
+                ((filter?._custom?.jellyfin &&
+                    Object.values(filter?._custom?.jellyfin).some(
+                        (value) => value !== undefined,
+                    )) ||
+                    // Compilation filter is only valid when on the artist page
+                    (filter.compilation !== undefined && customFilters?.artistIds))) ||
+            (server?.type === ServerType.EMBY &&
+                filter?._custom?.jellyfin &&
+                Object.values(filter?._custom?.jellyfin).some((value) => value !== undefined));
 
         const isSubsonicFilterApplied =
             server?.type === ServerType.SUBSONIC && (filter.maxYear || filter.minYear);
-
-        const isCompilationFilterApplied =
-            server?.type === ServerType.NAVIDROME && filter.compilation !== undefined;
 
         return (
             isNavidromeFilterApplied ||
@@ -471,11 +477,14 @@ export const AlbumListHeaderFilters = ({
             isSubsonicFilterApplied ||
             filter.genres?.length ||
             filter.favorite !== undefined ||
-            isCompilationFilterApplied
+            // If we are on the artist page, the artist id filter should not be active
+            (filter.artistIds?.length && !(customFilters?.artistIds as any | undefined)?.length)
         );
     }, [
+        customFilters?.artistIds,
         filter?._custom?.jellyfin,
         filter?._custom?.navidrome,
+        filter.artistIds?.length,
         filter.compilation,
         filter.favorite,
         filter.genres?.length,

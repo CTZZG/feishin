@@ -75,7 +75,9 @@ export const useHandlePlayQueueAdd = () => {
             if (!server) return toast.error({ message: 'No server selected', type: 'error' });
             const { byData, byItemType, initialIndex, initialSongId, playType, query } = options;
             let songs: null | QueueSong[] = null;
-            let initialSongIndex = 0;
+            // Allow this to be undefined for "play shuffled". If undefined, default to 0,
+            // otherwise, choose the selected item in the queue
+            let initialSongIndex: number | undefined;
 
             if (byItemType) {
                 let songList: SongListResponse | undefined;

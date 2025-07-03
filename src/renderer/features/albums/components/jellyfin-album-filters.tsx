@@ -1,5 +1,5 @@
 import debounce from 'lodash/debounce';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
@@ -43,6 +43,10 @@ export const JellyfinAlbumFilters = ({
 
     // TODO - eventually replace with /items/filters endpoint to fetch genres and tags specific to the selected library
     const genreListQuery = useGenreList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
         query: {
             musicFolderId: filter?.musicFolderId,
             sortBy: GenreListSort.NAME,
@@ -61,6 +65,10 @@ export const JellyfinAlbumFilters = ({
     }, [genreListQuery.data]);
 
     const tagsQuery = useTagList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
         query: {
             folder: filter?.musicFolderId,
             type: LibraryItem.ALBUM,
@@ -72,24 +80,55 @@ export const JellyfinAlbumFilters = ({
         return filter?._custom?.jellyfin?.Tags?.split('|');
     }, [filter?._custom?.jellyfin?.Tags]);
 
-    const yesNoFilter = [
-        {
-            label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
-            onChange: (favorite?: boolean) => {
-                const updatedFilters = setFilter({
-                    customFilters,
-                    data: {
-                        _custom: filter?._custom,
-                        favorite,
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
+    const yesNoFilter = useMemo(() => {
+        const filters = [
+            {
+                label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
+                onChange: (favorite?: boolean) => {
+                    const updatedFilters = setFilter({
+                        customFilters,
+                        data: {
+                            _custom: filter?._custom,
+                            favorite,
+                        },
+                        itemType: LibraryItem.ALBUM,
+                        key: pageKey,
+                    }) as AlbumListFilter;
+                    onFilterChange(updatedFilters);
+                },
+                value: filter?.favorite,
             },
-            value: filter?.favorite,
-        },
-    ];
+        ];
+
+        if (customFilters?.artistIds) {
+            filters.push({
+                label: t('filter.isCompilation', { postProcess: 'sentenceCase' }),
+                onChange: (compilation?: boolean) => {
+                    const updatedFilters = setFilter({
+                        customFilters,
+                        data: {
+                            _custom: filter._custom,
+                            compilation,
+                        },
+                        itemType: LibraryItem.ALBUM,
+                        key: pageKey,
+                    }) as AlbumListFilter;
+                    onFilterChange(updatedFilters);
+                },
+                value: filter.compilation,
+            });
+        }
+        return filters;
+    }, [
+        customFilters,
+        filter._custom,
+        filter.compilation,
+        filter?.favorite,
+        onFilterChange,
+        pageKey,
+        setFilter,
+        t,
+    ]);
 
     const handleMinYearFilter = debounce((e: number | string) => {
         if (typeof e === 'number' && (e < 1700 || e > 2300)) return;
@@ -132,8 +171,6 @@ export const JellyfinAlbumFilters = ({
         onFilterChange(updatedFilters);
     }, 250);
 
-    const [albumArtistSearchTerm, setAlbumArtistSearchTerm] = useState<string>('');
-
     const albumArtistListQuery = useAlbumArtistList({
         options: {
             cacheTime: 1000 * 60 * 2,
@@ -161,7 +198,7 @@ export const JellyfinAlbumFilters = ({
             customFilters,
             data: {
                 _custom: filter?._custom,
-                artistIds: e || undefined,
+                artistIds: e?.length ? e : undefined,
             },
             itemType: LibraryItem.ALBUM,
             key: pageKey,
@@ -238,16 +275,14 @@ export const JellyfinAlbumFilters = ({
                 <MultiSelectWithInvalidData
                     clearable
                     data={selectableAlbumArtists}
-                    defaultValue={filter?._custom?.jellyfin?.AlbumArtistIds?.split(',')}
+                    defaultValue={filter?.artistIds}
                     disabled={disableArtistFilter}
                     label={t('entity.artist', { count: 2, postProcess: 'sentenceCase' })}
                     limit={300}
                     onChange={handleAlbumArtistFilter}
-                    onSearchChange={setAlbumArtistSearchTerm}
                     placeholder="Type to search for an artist"
                     rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
                     searchable
-                    searchValue={albumArtistSearchTerm}
                 />
             </Group>
             {tagsQuery.data?.boolTags && tagsQuery.data.boolTags.length > 0 && (

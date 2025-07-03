@@ -1,17 +1,21 @@
 import debounce from 'lodash/debounce';
-import { ChangeEvent, useMemo } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
+import { useAlbumArtistList } from '/@/renderer/features/artists/queries/album-artist-list-query';
 import { useGenreList } from '/@/renderer/features/genres';
 import { AlbumListFilter, useListStoreActions, useListStoreByKey } from '/@/renderer/store';
 import { Divider } from '/@/shared/components/divider/divider';
 import { Group } from '/@/shared/components/group/group';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
 import { Select } from '/@/shared/components/select/select';
+import { SpinnerIcon } from '/@/shared/components/spinner/spinner';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { Text } from '/@/shared/components/text/text';
 import {
+    AlbumArtistListSort,
     AlbumListQuery,
     GenreListSort,
     LibraryItem,
@@ -19,12 +23,14 @@ import {
 } from '/@/shared/types/domain-types';
 
 interface SubsonicAlbumFiltersProps {
+    disableArtistFilter?: boolean;
     onFilterChange: (filters: AlbumListFilter) => void;
     pageKey: string;
     serverId?: string;
 }
 
 export const SubsonicAlbumFilters = ({
+    disableArtistFilter,
     onFilterChange,
     pageKey,
     serverId,
@@ -32,8 +38,46 @@ export const SubsonicAlbumFilters = ({
     const { t } = useTranslation();
     const { filter } = useListStoreByKey<AlbumListQuery>({ key: pageKey });
     const { setFilter } = useListStoreActions();
+    const [albumArtistSearchTerm, setAlbumArtistSearchTerm] = useState<string>('');
+
+    const albumArtistListQuery = useAlbumArtistList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
+        query: {
+            sortBy: AlbumArtistListSort.NAME,
+            sortOrder: SortOrder.ASC,
+            startIndex: 0,
+        },
+        serverId,
+    });
+
+    const selectableAlbumArtists = useMemo(() => {
+        if (!albumArtistListQuery?.data?.items) return [];
+
+        return albumArtistListQuery?.data?.items?.map((artist) => ({
+            label: artist.name,
+            value: artist.id,
+        }));
+    }, [albumArtistListQuery?.data?.items]);
+
+    const handleAlbumArtistFilter = (e: null | string[]) => {
+        const updatedFilters = setFilter({
+            data: {
+                artistIds: e?.length ? e : undefined,
+            },
+            itemType: LibraryItem.ALBUM,
+            key: pageKey,
+        }) as AlbumListFilter;
+        onFilterChange(updatedFilters);
+    };
 
     const genreListQuery = useGenreList({
+        options: {
+            cacheTime: 1000 * 60 * 2,
+            staleTime: 1000 * 60 * 1,
+        },
         query: {
             sortBy: GenreListSort.NAME,
             sortOrder: SortOrder.ASC,
@@ -145,6 +189,22 @@ export const SubsonicAlbumFilters = ({
                     label={t('entity.genre', { count: 1, postProcess: 'titleCase' })}
                     onChange={handleGenresFilter}
                     searchable
+                />
+            </Group>
+            <Group grow>
+                <MultiSelectWithInvalidData
+                    clearable
+                    data={selectableAlbumArtists}
+                    defaultValue={filter?.artistIds}
+                    disabled={disableArtistFilter}
+                    label={t('entity.artist', { count: 2, postProcess: 'sentenceCase' })}
+                    limit={300}
+                    onChange={handleAlbumArtistFilter}
+                    onSearchChange={setAlbumArtistSearchTerm}
+                    placeholder="Type to search for an artist"
+                    rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
+                    searchable
+                    searchValue={albumArtistSearchTerm}
                 />
             </Group>
         </Stack>

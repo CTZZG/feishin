@@ -167,6 +167,7 @@ export const NavidromeSongFilters = ({
                 )}
             </Group>
             {tagsQuery.data?.enumTags?.length &&
+                tagsQuery.data.enumTags.length > 0 &&
                 tagsQuery.data.enumTags.map((tag) => (
                     <Group
                         grow

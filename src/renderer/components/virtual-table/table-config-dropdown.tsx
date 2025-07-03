@@ -215,7 +215,7 @@ export const ALBUMARTIST_TABLE_COLUMNS = [
         value: TableColumn.PLAY_COUNT,
     },
     {
-        label: i18n.t('table.config.label.albumCount', { postProcess: 'titleCase' }),
+        label: i18n.t('filter.albumCount', { postProcess: 'titleCase' }),
         value: TableColumn.ALBUM_COUNT,
     },
     {

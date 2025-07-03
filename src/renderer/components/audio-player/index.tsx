@@ -322,10 +322,8 @@ export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>((props, 
         if (isElectron() && webAudio && 'setSinkId' in webAudio.context && audioDeviceId) {
             const setSink = async () => {
                 try {
-                    if (audioDeviceId !== 'default') {
+                    if (webAudio.context.state !== 'closed') {
                         await (webAudio.context as any).setSinkId(audioDeviceId);
-                    } else {
-                        await (webAudio.context as any).setSinkId('');
                     }
                 } catch (error) {
                     toast.error({ message: `Error setting sink: ${(error as Error).message}` });
