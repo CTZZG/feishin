@@ -42,6 +42,18 @@ import {
 import { ListDisplayType } from '/@/shared/types/types';
 
 const FILTERS = {
+    emby: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: PlaylistListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: PlaylistListSort.UPDATED_AT,
+        },
+    ],
     jellyfin: [
         {
             defaultOrder: SortOrder.DESC,

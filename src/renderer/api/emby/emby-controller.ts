@@ -11,10 +11,10 @@ import {
     AlbumListSort,
     albumListSortMap,
     ControllerEndpoint,
+    GenreListSort,
     genreListSortMap,
     playlistListSortMap,
     Song,
-    SongListSort,
     songListSortMap,
     SortOrder,
     sortOrderMap,
@@ -43,6 +43,7 @@ export const EmbyController: ControllerEndpoint = {
 
         for (const chunk of chunks) {
             const res = await embyApiClient(apiClientProps).addToPlaylist({
+                body: null,
                 params: {
                     id: query.id,
                 },
@@ -277,54 +278,13 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        if (query.sortBy === AlbumListSort.RANDOM) {
-            const songList = await EmbyController.getSongList({
-                apiClientProps,
-                query: {
-                    limit: 50, // Fetch more songs to ensure album diversity
-                    sortBy: SongListSort.RANDOM,
-                    sortOrder: SortOrder.ASC,
-                    startIndex: 0,
-                },
-            });
-
-            if (!songList?.items) {
-                return { items: [], startIndex: 0, totalRecordCount: 0 };
-            }
-
-            const albumMap = new Map();
-            for (const song of songList.items) {
-                if (song.albumId && !albumMap.has(song.albumId)) {
-                    albumMap.set(song.albumId, song);
-                }
-            }
-
-            const uniqueAlbumSongs = Array.from(albumMap.values()).slice(0, query.limit);
-
-            const albumDetailsPromises = uniqueAlbumSongs.map((song) =>
-                EmbyController.getAlbumDetail({
-                    apiClientProps,
-                    query: { id: song.albumId },
-                }),
-            );
-
-            const albums = (await Promise.all(albumDetailsPromises)).filter(
-                (album) => album !== null,
-            );
-
-            return {
-                items: albums,
-                startIndex: 0,
-                totalRecordCount: albums.length,
-            };
-        }
-
         const res = await embyApiClient(apiClientProps).getAlbumList({
             query: {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
                 Fields: 'ChildCount,DateCreated,MediaSources',
+                Filters: query.sortBy === AlbumListSort.RANDOM ? 'IsFavorite' : undefined,
                 GenreIds: query.genres ? query.genres.join(',') : undefined,
                 IncludeItemTypes: 'MusicAlbum',
                 IsFavorite: query.favorite,
@@ -449,13 +409,13 @@ export const EmbyController: ControllerEndpoint = {
         });
 
         if (!songData) {
-            return null;
+            return [];
         }
 
         const embySong = songData as unknown as z.infer<typeof embyType._response.song>;
 
         if (!embySong.MediaSources || embySong.MediaSources.length === 0) {
-            return null;
+            return [];
         }
 
         const lrcStream = embySong.MediaSources[0].MediaStreams?.find(
@@ -463,7 +423,7 @@ export const EmbyController: ControllerEndpoint = {
         );
 
         if (!lrcStream) {
-            return null;
+            return [];
         }
 
         const res = await embyApiClient(apiClientProps).getSongLyrics({
@@ -478,7 +438,6 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get lyrics');
         }
 
-        // Emby returns lyrics in a JS file, not pure JSON
         const jsonpData = res.body as unknown as string;
         const jsonString = jsonpData.substring(
             jsonpData.indexOf('{'),
@@ -494,7 +453,7 @@ export const EmbyController: ControllerEndpoint = {
             ]);
         }
 
-        return null;
+        return [] as [number, string][];
     },
     getMusicFolderList: async (args) => {
         const { apiClientProps } = args;
@@ -506,7 +465,10 @@ export const EmbyController: ControllerEndpoint = {
             const cachedLibrary = embyNormalize.musicFolder({
                 CollectionType: 'music',
                 Id: musicLibraryId,
+                IsFolder: true,
                 Name: '音乐',
+                ServerId: apiClientProps.server?.id || '',
+                Type: 'CollectionFolder',
             });
             return {
                 items: [cachedLibrary],
@@ -794,9 +756,30 @@ export const EmbyController: ControllerEndpoint = {
             apiClientProps,
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
-    getTags: async () => {
-        // Emby does not support tags in the same way as Jellyfin
-        return { boolTags: [], enumTags: [] };
+    getTags: async (args) => {
+        const { apiClientProps } = args;
+        const genres = await EmbyController.getGenreList({
+            apiClientProps,
+            query: {
+                sortBy: GenreListSort.NAME,
+                sortOrder: SortOrder.ASC,
+                startIndex: 0,
+            },
+        });
+
+        if (!genres?.items.length) {
+            return { boolTags: [], enumTags: [] };
+        }
+
+        return {
+            boolTags: [],
+            enumTags: [
+                {
+                    name: '流派',
+                    options: genres.items.map((genre) => genre.name),
+                },
+            ],
+        };
     },
     getTopSongs: async (args) => {
         const { apiClientProps, query } = args;
@@ -810,6 +793,7 @@ export const EmbyController: ControllerEndpoint = {
             query: {
                 ArtistIds: query.artistId,
                 Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Filters: 'IsPlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
                 ParentId: musicLibraryId,
@@ -844,8 +828,6 @@ export const EmbyController: ControllerEndpoint = {
         return url;
     },
     movePlaylistItem: async () => {
-        // Emby does not support moving playlist items directly.
-        // This would require removing and re-adding at a specific position, which is complex.
         return;
     },
     removeFromPlaylist: async (args) => {
@@ -872,7 +854,7 @@ export const EmbyController: ControllerEndpoint = {
     },
     scrobble: async (args) => {
         const { apiClientProps, query } = args;
-        const playSessionId = apiClientProps.server?.id + '-' + query.id; // Create a pseudo play session id
+        const playSessionId = apiClientProps.server?.id + '-' + query.id;
         const position = query.position && Math.round(query.position * 10000);
 
         if (!apiClientProps.server?.userId) {
@@ -906,7 +888,7 @@ export const EmbyController: ControllerEndpoint = {
                 IsPaused: query.event === 'pause',
                 ItemId: query.id,
                 PlaySessionId: playSessionId,
-                PositionTicks: position,
+                PositionTicks: position || 0,
             },
         });
 

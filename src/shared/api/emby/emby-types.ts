@@ -280,6 +280,7 @@ const albumListSort = {
 
 const albumListParameters = paginationParameters.merge(
     baseParameters.extend({
+        Filters: z.string().optional(),
         IncludeItemTypes: z.literal('MusicAlbum'),
         SortBy: z.nativeEnum(albumListSort).optional(),
     }),
@@ -325,6 +326,7 @@ const songListSort = {
 
 const songListParameters = paginationParameters.merge(
     baseParameters.extend({
+        Filters: z.string().optional(),
         SortBy: z.nativeEnum(songListSort).optional(),
     }),
 );
