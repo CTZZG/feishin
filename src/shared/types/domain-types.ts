@@ -464,7 +464,7 @@ export const albumListSortMap: AlbumListSortMap = {
         random: EmbyAlbumListSort.RANDOM,
         rating: undefined,
         recentlyAdded: EmbyAlbumListSort.RECENTLY_ADDED,
-        recentlyPlayed: undefined,
+        recentlyPlayed: EmbyAlbumListSort.RECENTLY_PLAYED,
         releaseDate: EmbyAlbumListSort.RELEASE_DATE,
         songCount: undefined,
         year: undefined,

@@ -275,6 +275,7 @@ const albumListSort = {
     PLAY_COUNT: 'PlayCount',
     RANDOM: 'Random',
     RECENTLY_ADDED: 'DateCreated,SortName',
+    RECENTLY_PLAYED: 'DatePlayed,SortName',
     RELEASE_DATE: 'ProductionYear,PremiereDate,SortName',
 } as const;
 
