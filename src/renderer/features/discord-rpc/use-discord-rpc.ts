@@ -121,6 +121,10 @@ export const useDiscordRpc = () => {
                     activity.largeImageKey = 'icon';
                 }
 
+                // Initialize if needed
+                const isConnected = await discordRpc?.isConnected();
+                if (!isConnected) await discordRpc?.initialize(discordSettings.clientId);
+
                 discordRpc?.setActivity(activity);
             }
         },
@@ -129,6 +133,7 @@ export const useDiscordRpc = () => {
             discordSettings.showServerImage,
             discordSettings.showPaused,
             generalSettings.lastfmApiKey,
+            discordSettings.clientId,
             lastUniqueId,
         ],
     );
@@ -136,7 +141,6 @@ export const useDiscordRpc = () => {
     useEffect(() => {
         if (!discordSettings.enabled) return discordRpc?.quit();
 
-        discordRpc?.initialize(discordSettings.clientId);
         return () => {
             discordRpc?.quit();
         };
