@@ -8,7 +8,6 @@ import { embyType } from '/@/shared/api/emby/emby-types';
 import { getFeatures, VersionInfo } from '/@/shared/api/utils';
 import {
     albumArtistListSortMap,
-    AlbumListSort,
     albumListSortMap,
     ControllerEndpoint,
     GenreListSort,
@@ -43,6 +42,7 @@ export const EmbyController: ControllerEndpoint = {
 
         for (const chunk of chunks) {
             const res = await embyApiClient(apiClientProps).addToPlaylist({
+                body: null,
                 params: {
                     id: query.id,
                 },
