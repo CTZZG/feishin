@@ -68,7 +68,7 @@ export type TableType =
 
 export const toServerType = (value?: string): null | ServerType => {
     switch (value?.toLowerCase()) {
-        case ServerType.EMBY:
+        case 'emby':
             return ServerType.EMBY;
         case ServerType.JELLYFIN:
             return ServerType.JELLYFIN;

@@ -283,7 +283,6 @@ export const EmbyController: ControllerEndpoint = {
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
                 Fields: 'ChildCount,DateCreated,MediaSources',
-                Filters: query.sortBy === AlbumListSort.RANDOM ? 'IsFavorite' : undefined,
                 GenreIds: query.genres ? query.genres.join(',') : undefined,
                 IncludeItemTypes: 'MusicAlbum',
                 IsFavorite: query.favorite,

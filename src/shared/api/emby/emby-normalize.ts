@@ -195,12 +195,16 @@ const normalizeAlbum = async (
         originalDate: null,
         participants: null,
         playCount: item.UserData?.PlayCount || 0,
-        releaseDate: item.PremiereDate?.split('T')[0] || null,
-        releaseYear: item.ProductionYear || null,
+        releaseDate: item.PremiereDate
+            ? new Date(item.PremiereDate).toISOString()
+            : item.ProductionYear
+              ? new Date(item.ProductionYear, 0, 1).toISOString()
+              : null,
+        releaseYear: item.ProductionYear ? String(item.ProductionYear) : null,
         serverId: server?.id || '',
         serverType: ServerType.EMBY,
         size: null,
-        songCount: item?.ChildCount || null,
+        songCount: item.Songs?.length ?? item.ChildCount ?? null,
         songs: item.Songs?.map((song) => normalizeSong(song, server, deviceId, imageSize)),
         tags: null,
         uniqueId: nanoid(),
