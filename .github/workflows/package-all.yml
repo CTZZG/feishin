@@ -1,0 +1,129 @@
+name: Package All Platforms (Manual)
+
+on: workflow_dispatch
+
+jobs:
+  package:
+    name: Package for ${{ matrix.os }}
+    strategy:
+      # fail-fast: false
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: Install Node and PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Get App Version
+        id: get_version
+        shell: bash
+        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Build and Package for Windows
+        if: runner.os == 'Windows'
+        uses: nick-invision/retry@v2.8.2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: error
+          command: pnpm run package:win:pr
+          on_retry_command: pnpm cache delete
+
+      - name: Build and Package for macOS
+        if: runner.os == 'macOS'
+        uses: nick-invision/retry@v2.8.2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: error
+          command: pnpm run package:mac:pr
+          on_retry_command: pnpm cache delete
+
+      - name: Build and Package for Linux (amd64)
+        if: runner.os == 'Linux'
+        uses: nick-invision/retry@v2.8.2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: error
+          command: pnpm run package:linux:pr
+          on_retry_command: pnpm cache delete
+      
+      - name: Upload Windows Artifacts
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Feishin-v${{ env.APP_VERSION }}-win
+          path: |
+            dist/*x64.exe
+            dist/*.zip
+            dist/*.blockmap
+
+      - name: Upload macOS Artifacts
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Feishin-v${{ env.APP_VERSION }}-macos
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.blockmap
+
+      - name: Upload Linux (amd64) Artifacts
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Feishin-v${{ env.APP_VERSION }}-linux-amd64
+          path: |
+            dist/*.AppImage
+            dist/*.tar.xz
+  
+  package-linux-arm64:
+    name: Package for Linux (arm64)
+    needs: package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v4
+
+      - name: Install Node and PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Get App Version
+        id: get_version
+        shell: bash
+        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+      
+      - name: Build and Package for Linux (arm64)
+        uses: nick-invision/retry@v2.8.2
+        with:
+          timeout_minutes: 30
+          max_attempts: 3
+          retry_on: error
+          command: pnpm run package:linux-arm64:pr
+          on_retry_command: pnpm cache delete
+            
+      - name: Upload Linux (arm64) Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Feishin-v${{ env.APP_VERSION }}-linux-arm64
+          path: |
+            dist/*.AppImage
+            dist/*.tar.xz
