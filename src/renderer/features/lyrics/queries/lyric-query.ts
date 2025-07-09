@@ -100,7 +100,10 @@ export const useSongLyricsBySong = (
             let localLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
             let remoteLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
 
-            if (server.type === ServerType.EMBY) {
+            if (
+                server.type === ServerType.EMBY &&
+                hasFeature(server, ServerFeature.LYRICS_SINGLE_STRUCTURED)
+            ) {
                 const embyLyrics = await api.controller
                     .getLyrics({
                         apiClientProps: { server, signal },
@@ -108,7 +111,7 @@ export const useSongLyricsBySong = (
                     })
                     .catch(console.error);
 
-                if (embyLyrics) {
+                if (embyLyrics && embyLyrics.length > 0) {
                     localLyrics = {
                         artist: song.artists?.[0]?.name,
                         lyrics: embyLyrics,
