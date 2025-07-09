@@ -46,6 +46,10 @@ const ALBUM_LIST_SORT_MAPPING: Record<AlbumListSort, AlbumListSortType | undefin
     [AlbumListSort.YEAR]: AlbumListSortType.BY_YEAR,
 };
 
+const MAX_SUBSONIC_ITEMS = 500;
+// A trick to skip ahead 10x
+const SUBSONIC_FAST_BATCH_SIZE = MAX_SUBSONIC_ITEMS * 10;
+
 export const SubsonicController: ControllerEndpoint = {
     addToPlaylist: async ({ apiClientProps, body, query }) => {
         const res = await ssApiClient(apiClientProps).updatePlaylist({
@@ -90,7 +94,7 @@ export const SubsonicController: ControllerEndpoint = {
             };
         }
 
-        await ssApiClient({ server: null, url: cleanServerUrl }).authenticate({
+        const resp = await ssApiClient({ server: null, url: cleanServerUrl }).authenticate({
             query: {
                 c: 'Feishin',
                 f: 'json',
@@ -98,6 +102,10 @@ export const SubsonicController: ControllerEndpoint = {
                 ...credentialParams,
             },
         });
+
+        if (resp.status !== 200) {
+            throw new Error('Failed to log in');
+        }
 
         return {
             credential,
@@ -269,7 +277,7 @@ export const SubsonicController: ControllerEndpoint = {
                     albumOffset: query.startIndex,
                     artistCount: 0,
                     artistOffset: 0,
-                    query: query.searchTerm || '""',
+                    query: query.searchTerm || '',
                     songCount: 0,
                     songOffset: 0,
                 },
@@ -418,11 +426,11 @@ export const SubsonicController: ControllerEndpoint = {
             while (fetchNextPage) {
                 const res = await ssApiClient(apiClientProps).search3({
                     query: {
-                        albumCount: 500,
+                        albumCount: MAX_SUBSONIC_ITEMS,
                         albumOffset: startIndex,
                         artistCount: 0,
                         artistOffset: 0,
-                        query: query.searchTerm || '""',
+                        query: query.searchTerm || '',
                         songCount: 0,
                         songOffset: 0,
                     },
@@ -437,8 +445,7 @@ export const SubsonicController: ControllerEndpoint = {
                 totalRecordCount += albumCount;
                 startIndex += albumCount;
 
-                // The max limit size for Subsonic is 500
-                fetchNextPage = albumCount === 500;
+                fetchNextPage = albumCount === MAX_SUBSONIC_ITEMS;
             }
 
             return totalRecordCount;
@@ -522,7 +529,7 @@ export const SubsonicController: ControllerEndpoint = {
                     genre: query.genres?.length ? query.genres[0] : undefined,
                     musicFolderId: query.musicFolderId,
                     offset: startIndex,
-                    size: 500,
+                    size: MAX_SUBSONIC_ITEMS,
                     toYear,
                     type,
                 },
@@ -546,8 +553,7 @@ export const SubsonicController: ControllerEndpoint = {
             totalRecordCount += albumCount;
             startIndex += albumCount;
 
-            // The max limit size for Subsonic is 500
-            fetchNextPage = albumCount === 500;
+            fetchNextPage = albumCount === MAX_SUBSONIC_ITEMS;
         }
 
         return totalRecordCount;
@@ -904,7 +910,7 @@ export const SubsonicController: ControllerEndpoint = {
                     albumOffset: 0,
                     artistCount: 0,
                     artistOffset: 0,
-                    query: query.searchTerm || '""',
+                    query: query.searchTerm || '',
                     songCount: query.limit,
                     songOffset: query.startIndex,
                 },
@@ -1046,7 +1052,7 @@ export const SubsonicController: ControllerEndpoint = {
                 albumOffset: 0,
                 artistCount: 0,
                 artistOffset: 0,
-                query: query.searchTerm || '""',
+                query: query.searchTerm || '',
                 songCount: query.limit,
                 songOffset: query.startIndex,
             },
@@ -1086,8 +1092,8 @@ export const SubsonicController: ControllerEndpoint = {
                         albumOffset: 0,
                         artistCount: 0,
                         artistOffset: 0,
-                        query: query.searchTerm || '""',
-                        songCount: 500,
+                        query: query.searchTerm || '',
+                        songCount: MAX_SUBSONIC_ITEMS,
                         songOffset: startIndex,
                     },
                 });
@@ -1101,8 +1107,7 @@ export const SubsonicController: ControllerEndpoint = {
                 totalRecordCount += songCount;
                 startIndex += songCount;
 
-                // The max limit size for Subsonic is 500
-                fetchNextPage = songCount === 500;
+                fetchNextPage = songCount === MAX_SUBSONIC_ITEMS;
             }
 
             return totalRecordCount;
@@ -1110,6 +1115,10 @@ export const SubsonicController: ControllerEndpoint = {
 
         if (query.genreIds) {
             let totalRecordCount = 0;
+
+            // Rather than just do `getSongsByGenre` by groups of 500, instead
+            // jump the offset 10x, and then backtrack on the last chunk. This improves
+            // performance for extremely large libraries
             while (fetchNextSection) {
                 const res = await ssApiClient(apiClientProps).getSongsByGenre({
                     query: {
@@ -1128,17 +1137,17 @@ export const SubsonicController: ControllerEndpoint = {
 
                 if (numberOfResults !== 1) {
                     fetchNextSection = false;
-                    startIndex = sectionIndex === 0 ? 0 : sectionIndex - 5000;
+                    startIndex = sectionIndex === 0 ? 0 : sectionIndex - SUBSONIC_FAST_BATCH_SIZE;
                     break;
                 } else {
-                    sectionIndex += 5000;
+                    sectionIndex += SUBSONIC_FAST_BATCH_SIZE;
                 }
             }
 
             while (fetchNextPage) {
                 const res = await ssApiClient(apiClientProps).getSongsByGenre({
                     query: {
-                        count: 500,
+                        count: MAX_SUBSONIC_ITEMS,
                         genre: query.genreIds[0],
                         musicFolderId: query.musicFolderId,
                         offset: startIndex,
@@ -1154,7 +1163,7 @@ export const SubsonicController: ControllerEndpoint = {
                 totalRecordCount = startIndex + numberOfResults;
                 startIndex += numberOfResults;
 
-                fetchNextPage = numberOfResults === 500;
+                fetchNextPage = numberOfResults === MAX_SUBSONIC_ITEMS;
             }
 
             return totalRecordCount;
@@ -1176,6 +1185,9 @@ export const SubsonicController: ControllerEndpoint = {
 
         let totalRecordCount = 0;
 
+        // Rather than just do `search3` by groups of 500, instead
+        // jump the offset 10x, and then backtrack on the last chunk. This improves
+        // performance for extremely large libraries
         while (fetchNextSection) {
             const res = await ssApiClient(apiClientProps).search3({
                 query: {
@@ -1183,7 +1195,7 @@ export const SubsonicController: ControllerEndpoint = {
                     albumOffset: 0,
                     artistCount: 0,
                     artistOffset: 0,
-                    query: query.searchTerm || '""',
+                    query: query.searchTerm || '',
                     songCount: 1,
                     songOffset: sectionIndex,
                 },
@@ -1195,13 +1207,12 @@ export const SubsonicController: ControllerEndpoint = {
 
             const numberOfResults = (res.body.searchResult3?.song || []).length || 0;
 
-            // Check each batch of 5000 songs to check for data
-            sectionIndex += 5000;
-            fetchNextSection = numberOfResults === 1;
-
-            if (!fetchNextSection) {
-                // fetchNextBlock will be false on the next loop so we need to subtract 5000 * 2
-                startIndex = sectionIndex - 10000;
+            if (numberOfResults !== 1) {
+                fetchNextSection = false;
+                startIndex = sectionIndex === 0 ? 0 : sectionIndex - SUBSONIC_FAST_BATCH_SIZE;
+                break;
+            } else {
+                sectionIndex += SUBSONIC_FAST_BATCH_SIZE;
             }
         }
 
@@ -1212,8 +1223,8 @@ export const SubsonicController: ControllerEndpoint = {
                     albumOffset: 0,
                     artistCount: 0,
                     artistOffset: 0,
-                    query: query.searchTerm || '""',
-                    songCount: 500,
+                    query: query.searchTerm || '',
+                    songCount: MAX_SUBSONIC_ITEMS,
                     songOffset: startIndex,
                 },
             });
@@ -1227,8 +1238,7 @@ export const SubsonicController: ControllerEndpoint = {
             totalRecordCount = startIndex + numberOfResults;
             startIndex += numberOfResults;
 
-            // The max limit size for Subsonic is 500
-            fetchNextPage = numberOfResults === 500;
+            fetchNextPage = numberOfResults === MAX_SUBSONIC_ITEMS;
         }
 
         return totalRecordCount;
