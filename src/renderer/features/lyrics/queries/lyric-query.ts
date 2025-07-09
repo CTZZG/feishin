@@ -100,7 +100,24 @@ export const useSongLyricsBySong = (
             let localLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
             let remoteLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
 
-            if (hasFeature(server, ServerFeature.LYRICS_MULTIPLE_STRUCTURED)) {
+            if (server.type === ServerType.EMBY) {
+                const embyLyrics = await api.controller
+                    .getLyrics({
+                        apiClientProps: { server, signal },
+                        query: { songId: song.id },
+                    })
+                    .catch(console.error);
+
+                if (embyLyrics) {
+                    localLyrics = {
+                        artist: song.artists?.[0]?.name,
+                        lyrics: embyLyrics,
+                        name: song.name,
+                        remote: false,
+                        source: server?.name ?? 'music server',
+                    };
+                }
+            } else if (hasFeature(server, ServerFeature.LYRICS_MULTIPLE_STRUCTURED)) {
                 const subsonicLyrics = await api.controller
                     .getStructuredLyrics({
                         apiClientProps: { server, signal },

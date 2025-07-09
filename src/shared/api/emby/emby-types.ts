@@ -407,7 +407,7 @@ const searchParameters = paginationParameters.merge(baseParameters);
 const search = z.any();
 
 const lyricEvent = z.object({
-    EndPositionTicks: z.number(),
+    EndPositionTicks: z.number().optional(),
     StartPositionTicks: z.number(),
     Text: z.string(),
 });
@@ -444,6 +444,10 @@ const filters = z.object({
     Years: z.number().array().optional(),
 });
 
+const songDetailParameters = baseParameters.extend({
+    Fields: z.string().optional(),
+});
+
 export const embyType = {
     _enum: {
         albumArtistList: albumArtistListSort,
@@ -476,7 +480,7 @@ export const embyType = {
         search: searchParameters,
         similarArtistList: similarArtistListParameters,
         similarSongs: similarSongsParameters,
-        songDetail: baseParameters,
+        songDetail: songDetailParameters,
         songList: songListParameters,
         updatePlaylist: updatePlaylistParameters,
     },

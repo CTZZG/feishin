@@ -401,10 +401,17 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const songData = await EmbyController.getSongDetail({
-            apiClientProps,
-            query: { id: query.songId },
+        const songDetailRes = await embyApiClient(apiClientProps).getSongDetail({
+            params: {
+                id: query.songId,
+                userId: apiClientProps.server.userId,
+            },
+            query: {
+                Fields: 'MediaSources',
+            },
         });
+
+        const songData = songDetailRes.body;
 
         if (!songData) {
             return [];
@@ -436,12 +443,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get lyrics');
         }
 
-        const jsonpData = res.body as unknown as string;
-        const jsonString = jsonpData.substring(
-            jsonpData.indexOf('{'),
-            jsonpData.lastIndexOf('}') + 1,
-        );
-        const lyricsData = JSON.parse(jsonString);
+        const lyricsData = res.body;
         const parsedLyrics = embyType._response.lyrics.parse(lyricsData);
 
         if (parsedLyrics.TrackEvents.length > 0) {

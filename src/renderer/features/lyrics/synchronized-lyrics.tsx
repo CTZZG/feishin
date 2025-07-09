@@ -190,6 +190,10 @@ export const SynchronizedLyrics = ({
     useEffect(() => {
         // Copy the follow settings into a ref that can be accessed in the timeout
         followRef.current = settings.follow;
+
+        if (lyricTimer.current) {
+            clearTimeout(lyricTimer.current);
+        }
     }, [settings.follow]);
 
     useEffect(() => {
@@ -198,6 +202,10 @@ export const SynchronizedLyrics = ({
         // ALSO remove listeners on close. Use the promisified getCurrentTime(), because
         // we don't want to be dependent on npw, which may not be precise
         lyricRef.current = lyrics;
+
+        if (lyricTimer.current) {
+            clearTimeout(lyricTimer.current);
+        }
 
         if (status === PlayerStatus.PLAYING) {
             let rejected = false;
@@ -212,7 +220,13 @@ export const SynchronizedLyrics = ({
 
                     return true;
                 })
-                .catch(console.error);
+                .catch((err) => {
+                    console.error(
+                        'Failed to get current time for lyric sync, starting from 0.',
+                        err,
+                    );
+                    setCurrentLyric(0 - delayMsRef.current);
+                });
 
             return () => {
                 // Case 1: cleanup happens before we hear back from
