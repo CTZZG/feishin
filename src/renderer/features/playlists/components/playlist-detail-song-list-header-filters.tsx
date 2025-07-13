@@ -491,11 +491,7 @@ export const PlaylistDetailSongListHeaderFilters = ({
 
     return (
         <Flex justify="space-between">
-            <Group
-                gap="sm"
-                ref={cq.ref}
-                w="100%"
-            >
+            <Group gap="sm" ref={cq.ref} w="100%">
                 <DropdownMenu position="bottom-start">
                     <DropdownMenu.Target>
                         <Button
@@ -577,10 +573,7 @@ export const PlaylistDetailSongListHeaderFilters = ({
                         {server?.type === ServerType.NAVIDROME && !isSmartPlaylist && (
                             <>
                                 <DropdownMenu.Divider />
-                                <DropdownMenu.Item
-                                    isDanger
-                                    onClick={handleToggleShowQueryBuilder}
-                                >
+                                <DropdownMenu.Item isDanger onClick={handleToggleShowQueryBuilder}>
                                     {t('action.toggleSmartPlaylistEditor', {
                                         postProcess: 'sentenceCase',
                                     })}

@@ -81,10 +81,7 @@ const formatArtists = (artists: null | RelatedArtist[] | undefined) =>
                     {artist.name || '—'}
                 </Text>
             ) : (
-                <Text
-                    overflow="visible"
-                    size="md"
-                >
+                <Text overflow="visible" size="md">
                     {artist.name || '-'}
                 </Text>
             )}
@@ -119,17 +116,7 @@ const FormatGenre = (item: Album | AlbumArtist | Playlist | Song) => {
 };
 
 const BoolField = (key: boolean) =>
-    key ? (
-        <Icon
-            color="success"
-            icon="check"
-        />
-    ) : (
-        <Icon
-            color="error"
-            icon="x"
-        />
-    );
+    key ? <Icon color="success" icon="check" /> : <Icon color="error" icon="x" />;
 
 const AlbumPropertyMapping: ItemDetailRow<Album>[] = [
     { key: 'name', label: 'common.title' },
@@ -409,12 +396,7 @@ export const ItemDetailsModal = ({ item }: ItemDetailsModalProps) => {
     }
 
     return (
-        <Table
-            highlightOnHover
-            variant="vertical"
-            withRowBorders={false}
-            withTableBorder
-        >
+        <Table highlightOnHover variant="vertical" withRowBorders={false} withTableBorder>
             <Table.Tbody>{body}</Table.Tbody>
         </Table>
     );

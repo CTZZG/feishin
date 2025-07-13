@@ -202,10 +202,7 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                 order: itemOrder.recentAlbums,
                 title: (
                     <Group align="flex-end">
-                        <TextTitle
-                            fw={700}
-                            order={2}
-                        >
+                        <TextTitle fw={700} order={2}>
                             {t('page.albumArtistDetail.recentReleases', {
                                 postProcess: 'sentenceCase',
                             })}
@@ -232,10 +229,7 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                 loading: compilationAlbumsQuery?.isLoading || compilationAlbumsQuery.isFetching,
                 order: itemOrder.compilations,
                 title: (
-                    <TextTitle
-                        fw={700}
-                        order={2}
-                    >
+                    <TextTitle fw={700} order={2}>
                         {t('page.albumArtistDetail.appearsOn', { postProcess: 'sentenceCase' })}
                     </TextTitle>
                 ),
@@ -247,10 +241,7 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                 itemType: LibraryItem.ALBUM_ARTIST,
                 order: itemOrder.similarArtists,
                 title: (
-                    <TextTitle
-                        fw={700}
-                        order={2}
-                    >
+                    <TextTitle fw={700} order={2}>
                         {t('page.albumArtistDetail.relatedArtists', {
                             postProcess: 'sentenceCase',
                         })}
@@ -355,19 +346,10 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
         detailQuery?.isLoading ||
         (server?.type === ServerType.NAVIDROME && enabledItem.topSongs && topSongsQuery?.isLoading);
 
-    if (isLoading)
-        return (
-            <div
-                className={styles.contentContainer}
-                ref={cq.ref}
-            />
-        );
+    if (isLoading) return <div className={styles.contentContainer} ref={cq.ref} />;
 
     return (
-        <div
-            className={styles.contentContainer}
-            ref={cq.ref}
-        >
+        <div className={styles.contentContainer} ref={cq.ref}>
             <LibraryBackgroundOverlay backgroundColor={background} />
             <div className={styles.detailContainer}>
                 <Group gap="md">
@@ -481,15 +463,9 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                 ) : null}
                 <Grid gutter="xl">
                     {biography ? (
-                        <Grid.Col
-                            order={itemOrder.biography}
-                            span={12}
-                        >
+                        <Grid.Col order={itemOrder.biography} span={12}>
                             <section style={{ maxWidth: '1280px' }}>
-                                <TextTitle
-                                    fw={700}
-                                    order={2}
-                                >
+                                <TextTitle fw={700} order={2}>
                                     {t('page.albumArtistDetail.about', {
                                         artist: detailQuery?.data?.name,
                                     })}
@@ -499,23 +475,11 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                         </Grid.Col>
                     ) : null}
                     {showTopSongs ? (
-                        <Grid.Col
-                            order={itemOrder.topSongs}
-                            span={12}
-                        >
+                        <Grid.Col order={itemOrder.topSongs} span={12}>
                             <section>
-                                <Group
-                                    justify="space-between"
-                                    wrap="nowrap"
-                                >
-                                    <Group
-                                        align="flex-end"
-                                        wrap="nowrap"
-                                    >
-                                        <TextTitle
-                                            fw={700}
-                                            order={2}
-                                        >
+                                <Group justify="space-between" wrap="nowrap">
+                                    <Group align="flex-end" wrap="nowrap">
+                                        <TextTitle fw={700} order={2}>
                                             {t('page.albumArtistDetail.topSongs', {
                                                 postProcess: 'sentenceCase',
                                             })}

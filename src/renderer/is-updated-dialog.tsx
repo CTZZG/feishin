@@ -34,10 +34,7 @@ export function IsUpdatedDialog() {
         >
             <Stack>
                 <Text>{t('common.newVersion', { postProcess: 'sentenceCase', version })}</Text>
-                <Group
-                    justify="flex-end"
-                    wrap="nowrap"
-                >
+                <Group justify="flex-end" wrap="nowrap">
                     <Button
                         component="a"
                         href={`https://github.com/jeffvli/feishin/releases/tag/v${version}`}
@@ -48,10 +45,7 @@ export function IsUpdatedDialog() {
                     >
                         {t('common.viewReleaseNotes', { postProcess: 'sentenceCase' })}
                     </Button>
-                    <Button
-                        onClick={handleDismiss}
-                        variant="default"
-                    >
+                    <Button onClick={handleDismiss} variant="default">
                         {t('common.dismiss', { postProcess: 'titleCase' })}
                     </Button>
                 </Group>

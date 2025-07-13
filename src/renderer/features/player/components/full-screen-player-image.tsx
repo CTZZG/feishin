@@ -68,11 +68,7 @@ const ImageWithPlaceholder = ({
                     width: '100%',
                 }}
             >
-                <Icon
-                    color="muted"
-                    icon="itemAlbum"
-                    size="25%"
-                />
+                <Icon color="muted" icon="itemAlbum" size="25%" />
             </Center>
         );
     }
@@ -167,14 +163,8 @@ export const FullScreenPlayerImage = () => {
             justify="flex-start"
             p="1rem"
         >
-            <div
-                className={styles.imageContainer}
-                ref={mainImageRef}
-            >
-                <AnimatePresence
-                    initial={false}
-                    mode="sync"
-                >
+            <div className={styles.imageContainer} ref={mainImageRef}>
+                <AnimatePresence initial={false} mode="sync">
                     {imageState.current === 0 && (
                         <ImageWithPlaceholder
                             animate="open"
@@ -206,18 +196,8 @@ export const FullScreenPlayerImage = () => {
                     )}
                 </AnimatePresence>
             </div>
-            <Stack
-                className={styles.metadataContainer}
-                gap="md"
-                maw="100%"
-            >
-                <Text
-                    fw={900}
-                    lh="1.2"
-                    overflow="hidden"
-                    size="4xl"
-                    w="100%"
-                >
+            <Stack className={styles.metadataContainer} gap="md" maw="100%">
+                <Text fw={900} lh="1.2" overflow="hidden" size="4xl" w="100%">
                     {currentSong?.name}
                 </Text>
                 <Text
@@ -257,10 +237,7 @@ export const FullScreenPlayerImage = () => {
                         </Fragment>
                     ))}
                 </Text>
-                <Group
-                    justify="center"
-                    mt="sm"
-                >
+                <Group justify="center" mt="sm">
                     {currentSong?.container && (
                         <Badge variant="transparent">{currentSong?.container}</Badge>
                     )}

@@ -74,10 +74,7 @@ export const ServerList = () => {
                     {Object.keys(serverListQuery)?.map((serverId) => {
                         const server = serverListQuery[serverId];
                         return (
-                            <Accordion.Item
-                                key={server.id}
-                                value={server.name}
-                            >
+                            <Accordion.Item key={server.id} value={server.name}>
                                 <Accordion.Control>
                                     <Group>
                                         <img
@@ -106,10 +103,7 @@ export const ServerList = () => {
                             </Accordion.Item>
                         );
                     })}
-                    <Group
-                        grow
-                        pt="md"
-                    >
+                    <Group grow pt="md">
                         <Button
                             autoFocus
                             leftSection={<Icon icon="add" />}

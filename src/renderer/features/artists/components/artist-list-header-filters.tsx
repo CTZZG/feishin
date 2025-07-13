@@ -395,11 +395,7 @@ export const ArtistListHeaderFilters = ({ gridRef, tableRef }: ArtistListHeaderF
 
     return (
         <Flex justify="space-between">
-            <Group
-                gap="sm"
-                ref={cq.ref}
-                w="100%"
-            >
+            <Group gap="sm" ref={cq.ref} w="100%">
                 <DropdownMenu position="bottom-start">
                     <DropdownMenu.Target>
                         <Button variant="subtle">{sortByLabel}</Button>
@@ -418,19 +414,13 @@ export const ArtistListHeaderFilters = ({ gridRef, tableRef }: ArtistListHeaderF
                     </DropdownMenu.Dropdown>
                 </DropdownMenu>
                 <Divider orientation="vertical" />
-                <OrderToggleButton
-                    onToggle={handleToggleSortOrder}
-                    sortOrder={filter.sortOrder}
-                />
+                <OrderToggleButton onToggle={handleToggleSortOrder} sortOrder={filter.sortOrder} />
                 {server?.type === ServerType.JELLYFIN && (
                     <>
                         <Divider orientation="vertical" />
                         <DropdownMenu position="bottom-start">
                             <DropdownMenu.Target>
-                                <ActionIcon
-                                    icon="folder"
-                                    variant="subtle"
-                                />
+                                <ActionIcon icon="folder" variant="subtle" />
                             </DropdownMenu.Target>
                             <DropdownMenu.Dropdown>
                                 {musicFoldersQuery.data?.items.map((folder) => (
@@ -449,11 +439,7 @@ export const ArtistListHeaderFilters = ({ gridRef, tableRef }: ArtistListHeaderF
                 )}
                 {roles.data?.length && (
                     <>
-                        <Select
-                            data={roles.data}
-                            onChange={handleSetRole}
-                            value={filter.role}
-                        />
+                        <Select data={roles.data} onChange={handleSetRole} value={filter.role} />
                     </>
                 )}
                 <RefreshButton onClick={handleRefresh} />
@@ -473,10 +459,7 @@ export const ArtistListHeaderFilters = ({ gridRef, tableRef }: ArtistListHeaderF
                     </DropdownMenu.Dropdown>
                 </DropdownMenu>
             </Group>
-            <Group
-                gap="xs"
-                wrap="nowrap"
-            >
+            <Group gap="xs" wrap="nowrap">
                 <ListConfigMenu
                     autoFitColumns={table.autoFit}
                     displayType={display}

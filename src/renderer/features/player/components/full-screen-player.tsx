@@ -238,10 +238,7 @@ const Controls = ({ isPageHovered }: ControlsProps) => {
                             })}
                         </Option.Label>
                         <Option.Control>
-                            <Group
-                                w="100%"
-                                wrap="nowrap"
-                            >
+                            <Group w="100%" wrap="nowrap">
                                 <Slider
                                     defaultValue={lyricConfig.fontSize}
                                     label={(e) =>
@@ -278,10 +275,7 @@ const Controls = ({ isPageHovered }: ControlsProps) => {
                             })}
                         </Option.Label>
                         <Option.Control>
-                            <Group
-                                w="100%"
-                                wrap="nowrap"
-                            >
+                            <Group w="100%" wrap="nowrap">
                                 <Slider
                                     defaultValue={lyricConfig.gap}
                                     label={(e) => `Synchronized: ${e}px`}

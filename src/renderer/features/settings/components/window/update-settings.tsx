@@ -44,10 +44,5 @@ export const UpdateSettings = () => {
         },
     ];
 
-    return (
-        <SettingsSection
-            divider={utils?.isLinux()}
-            options={updateOptions}
-        />
-    );
+    return <SettingsSection divider={utils?.isLinux()} options={updateOptions} />;
 };
