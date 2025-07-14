@@ -16,6 +16,15 @@ import { ServerListItem } from '/@/shared/types/domain-types';
 const c = initContract();
 
 export const contract = c.router({
+    addTags: {
+        body: embyType._parameters.addTags,
+        method: 'POST',
+        path: 'items/:id/tags/add',
+        responses: {
+            204: embyType._response.addTags,
+            400: embyType._response.error,
+        },
+    },
     addToPlaylist: {
         body: z.null(),
         method: 'POST',
@@ -59,6 +68,15 @@ export const contract = c.router({
         path: 'items/:id',
         responses: {
             204: embyType._response.deletePlaylist,
+            400: embyType._response.error,
+        },
+    },
+    deleteRating: {
+        body: embyType._parameters.deleteRating,
+        method: 'DELETE',
+        path: 'users/:userId/items/:id/rating',
+        responses: {
+            200: embyType._response.deleteRating,
             400: embyType._response.error,
         },
     },
@@ -221,6 +239,24 @@ export const contract = c.router({
             404: embyType._response.error,
         },
     },
+    getTags: {
+        method: 'GET',
+        path: 'tags',
+        query: embyType._parameters.tagList,
+        responses: {
+            200: embyType._response.tagList,
+            400: embyType._response.error,
+        },
+    },
+    movePlaylistItem: {
+        body: z.null(),
+        method: 'POST',
+        path: 'playlists/:playlistId/items/:itemId/move/:newIndex',
+        responses: {
+            204: embyType._response.movePlaylistItem,
+            400: embyType._response.error,
+        },
+    },
     removeFavorite: {
         body: embyType._parameters.favorite,
         method: 'DELETE',
@@ -237,6 +273,15 @@ export const contract = c.router({
         query: embyType._parameters.removeFromPlaylist,
         responses: {
             204: embyType._response.removeFromPlaylist,
+            400: embyType._response.error,
+        },
+    },
+    removeTags: {
+        body: embyType._parameters.removeTags,
+        method: 'POST',
+        path: 'items/:id/tags/delete',
+        responses: {
+            204: embyType._response.removeTags,
             400: embyType._response.error,
         },
     },
@@ -268,12 +313,30 @@ export const contract = c.router({
             400: embyType._response.error,
         },
     },
+    scrobbleStopped: {
+        body: embyType._parameters.scrobbleStopped,
+        method: 'POST',
+        path: 'sessions/playing/stopped',
+        responses: {
+            204: embyType._response.scrobble,
+            400: embyType._response.error,
+        },
+    },
     search: {
         method: 'GET',
         path: 'items',
         query: embyType._parameters.search,
         responses: {
             200: embyType._response.search,
+            400: embyType._response.error,
+        },
+    },
+    setRating: {
+        body: embyType._parameters.setRating,
+        method: 'POST',
+        path: 'users/:userId/items/:id/rating',
+        responses: {
+            200: embyType._response.setRating,
             400: embyType._response.error,
         },
     },

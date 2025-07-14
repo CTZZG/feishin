@@ -5,17 +5,15 @@ import { embyApiClient } from '/@/renderer/api/emby/emby-api';
 import { EmbySongListSort, EmbySortOrder } from '/@/shared/api/emby.types';
 import { embyNormalize } from '/@/shared/api/emby/emby-normalize';
 import { embyType } from '/@/shared/api/emby/emby-types';
-import { getFeatures, VersionInfo } from '/@/shared/api/utils';
+import { getFeatures, hasFeature, VersionInfo } from '/@/shared/api/utils';
 import {
     albumArtistListSortMap,
     albumListSortMap,
     ControllerEndpoint,
-    GenreListSort,
     genreListSortMap,
     playlistListSortMap,
     Song,
     songListSortMap,
-    SortOrder,
     sortOrderMap,
 } from '/@/shared/types/domain-types';
 import { ServerFeature } from '/@/shared/types/features-types';
@@ -28,9 +26,41 @@ const MAX_ITEMS_PER_PLAYLIST_ADD = 50;
 
 let musicLibraryId: string | undefined;
 
-const VERSION_INFO: VersionInfo = [['4.8.0', { [ServerFeature.LYRICS_SINGLE_STRUCTURED]: [1] }]];
+const VERSION_INFO: VersionInfo = [
+    [
+        '4.8.0',
+        {
+            [ServerFeature.LYRICS_SINGLE_STRUCTURED]: [1],
+            [ServerFeature.TAGS]: [1],
+        },
+    ],
+];
 
 export const EmbyController: ControllerEndpoint = {
+    addTags: async (args) => {
+        const { apiClientProps, body, query } = args;
+
+        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
+            throw new Error('Tags feature not supported');
+        }
+
+        for (const id of query.id) {
+            const res = await embyApiClient(apiClientProps).addTags({
+                body: {
+                    Tags: body.tags,
+                },
+                params: {
+                    id,
+                },
+            });
+
+            if (res.status !== 204) {
+                throw new Error('Failed to add tags');
+            }
+        }
+
+        return null;
+    },
     addToPlaylist: async (args) => {
         const { apiClientProps, body, query } = args;
 
@@ -243,13 +273,13 @@ export const EmbyController: ControllerEndpoint = {
                 userId: apiClientProps.server.userId,
             },
             query: {
-                Fields: 'Genres,DateCreated,ChildCount,MediaSources',
+                Fields: 'Genres,DateCreated,ChildCount,MediaSources,Tags',
             },
         });
 
         const songsRes = await embyApiClient(apiClientProps).getSongList({
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 IncludeItemTypes: 'Audio',
                 ParentId: query.id,
                 SortBy: embyType._enum.songList.ALBUM_DETAIL,
@@ -282,7 +312,7 @@ export const EmbyController: ControllerEndpoint = {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
-                Fields: 'ChildCount,DateCreated,MediaSources,ProductionYear,Genres,DatePlayed',
+                Fields: 'ChildCount,DateCreated,MediaSources,ProductionYear,Genres,DatePlayed,Tags',
                 GenreIds: query.genres ? query.genres.join(',') : undefined,
                 IncludeItemTypes: 'MusicAlbum',
                 IsFavorite: query.favorite,
@@ -575,7 +605,7 @@ export const EmbyController: ControllerEndpoint = {
                 id: query.id,
             },
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
                 SortBy: query.sortBy ? songListSortMap.emby[query.sortBy] : undefined,
@@ -607,7 +637,7 @@ export const EmbyController: ControllerEndpoint = {
 
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 GenreIds: query.genre ? query.genre : undefined,
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -658,7 +688,7 @@ export const EmbyController: ControllerEndpoint = {
                 id: query.songId,
             },
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 Limit: query.count,
                 UserId: apiClientProps.server?.userId || undefined,
             },
@@ -670,7 +700,7 @@ export const EmbyController: ControllerEndpoint = {
                     id: query.songId,
                 },
                 query: {
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                     Limit: query.count,
                     UserId: apiClientProps.server?.userId || undefined,
                 },
@@ -724,7 +754,7 @@ export const EmbyController: ControllerEndpoint = {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 GenreIds: query.genreIds?.join(','),
                 IncludeItemTypes: 'Audio',
                 IsFavorite: query.favorite,
@@ -758,27 +788,29 @@ export const EmbyController: ControllerEndpoint = {
         }).then((result) => result!.totalRecordCount!),
     getTags: async (args) => {
         const { apiClientProps } = args;
-        const genres = await EmbyController.getGenreList({
-            apiClientProps,
+
+        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
+            return { boolTags: undefined, enumTags: undefined };
+        }
+
+        const res = await embyApiClient(apiClientProps).getTags({
             query: {
-                sortBy: GenreListSort.NAME,
-                sortOrder: SortOrder.ASC,
-                startIndex: 0,
+                Limit: 1000,
+                StartIndex: 0,
             },
         });
 
-        if (!genres?.items.length) {
-            return { boolTags: [], enumTags: [] };
+        if (res.status !== 200) {
+            throw new Error('failed to get tags');
         }
 
+        const tags = res.body.Items || [];
+
         return {
-            boolTags: [],
-            enumTags: [
-                {
-                    name: '流派',
-                    options: genres.items.map((genre) => genre.name),
-                },
-            ],
+            boolTags: tags
+                .map((tag) => tag.Name)
+                .sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase())),
+            enumTags: undefined,
         };
     },
     getTopSongs: async (args) => {
@@ -792,7 +824,7 @@ export const EmbyController: ControllerEndpoint = {
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
                 ArtistIds: query.artistId,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 Filters: 'IsPlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -827,8 +859,21 @@ export const EmbyController: ControllerEndpoint = {
         }
         return url;
     },
-    movePlaylistItem: async () => {
-        return;
+    movePlaylistItem: async (args) => {
+        const { apiClientProps, query } = args;
+
+        const res = await embyApiClient(apiClientProps).movePlaylistItem({
+            body: null,
+            params: {
+                itemId: query.trackId,
+                newIndex: query.endingIndex.toString(),
+                playlistId: query.playlistId,
+            },
+        });
+
+        if (res.status !== 204) {
+            throw new Error('Failed to move item in playlist');
+        }
     },
     removeFromPlaylist: async (args) => {
         const { apiClientProps, query } = args;
@@ -852,6 +897,30 @@ export const EmbyController: ControllerEndpoint = {
 
         return null;
     },
+    removeTags: async (args) => {
+        const { apiClientProps, body, query } = args;
+
+        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
+            throw new Error('Tags feature not supported');
+        }
+
+        for (const id of query.id) {
+            const res = await embyApiClient(apiClientProps).removeTags({
+                body: {
+                    Tags: body.tags,
+                },
+                params: {
+                    id,
+                },
+            });
+
+            if (res.status !== 204) {
+                throw new Error('Failed to remove tags');
+            }
+        }
+
+        return null;
+    },
     scrobble: async (args) => {
         const { apiClientProps, query } = args;
         const playSessionId = apiClientProps.server?.id + '-' + query.id;
@@ -862,6 +931,16 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         if (query.submission) {
+            // Send stopped scrobble for proper Last.fm integration
+            await embyApiClient(apiClientProps).scrobbleStopped({
+                body: {
+                    ItemId: query.id,
+                    PlaySessionId: playSessionId,
+                    PositionTicks: position || 0,
+                },
+            });
+
+            // Also mark as played in Emby
             await embyApiClient(apiClientProps).scrobbleMarkPlayed({
                 params: {
                     id: query.id,
@@ -953,7 +1032,7 @@ export const EmbyController: ControllerEndpoint = {
             const res = await embyApiClient(apiClientProps).getSongList({
                 query: {
                     EnableTotalRecordCount: true,
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                     IncludeItemTypes: 'Audio',
                     Limit: query.songLimit,
                     ParentId: musicLibraryId,
@@ -987,6 +1066,45 @@ export const EmbyController: ControllerEndpoint = {
             ),
             songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server, '')),
         };
+    },
+    setRating: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        // Handle rating deletion (rating = 0)
+        if (query.rating === 0) {
+            const res = await embyApiClient(apiClientProps).deleteRating({
+                body: {},
+                params: {
+                    id: query.item[0].id,
+                    userId: apiClientProps.server.userId,
+                },
+            });
+
+            if (res.status !== 200) {
+                throw new Error('Failed to delete rating');
+            }
+        } else {
+            // Handle rating setting (rating > 0)
+            const res = await embyApiClient(apiClientProps).setRating({
+                body: {
+                    rating: query.rating,
+                },
+                params: {
+                    id: query.item[0].id,
+                    userId: apiClientProps.server.userId,
+                },
+            });
+
+            if (res.status !== 200) {
+                throw new Error('Failed to set rating');
+            }
+        }
+
+        return null;
     },
     updatePlaylist: async (args) => {
         const { apiClientProps, body, query } = args;

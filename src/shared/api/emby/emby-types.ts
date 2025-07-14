@@ -71,6 +71,7 @@ const userData = z.object({
     PlaybackPositionTicks: z.number().optional(),
     PlayCount: z.number().optional(),
     Played: z.boolean(),
+    Rating: z.number().optional(),
 });
 
 const mediaStream = z.object({
@@ -232,6 +233,7 @@ const song = z.object({
     ProductionYear: z.number().optional(),
     RunTimeTicks: z.number().optional(),
     ServerId: z.string(),
+    Tags: z.array(z.string()).optional(),
     Type: z.string(),
     UserData: userData.optional(),
 });
@@ -267,6 +269,7 @@ const album = z.object({
     RunTimeTicks: z.number().optional(),
     ServerId: z.string(),
     Songs: z.array(song).optional(), // Not a native Emby property
+    Tags: z.array(z.string()).optional(),
     Type: z.string(),
     UserData: userData.optional(),
 });
@@ -375,6 +378,14 @@ const removeFromPlaylistParameters = z.object({
     EntryIds: z.string(),
 });
 
+const movePlaylistItem = z.null();
+
+const movePlaylistItemParameters = z.object({
+    itemId: z.string(),
+    newIndex: z.number(),
+    playlistId: z.string(),
+});
+
 const deletePlaylist = z.null();
 
 const scrobblePlayingParameters = z.object({
@@ -394,6 +405,12 @@ const scrobbleProgressParameters = z.object({
 
 const scrobbleMarkPlayedParameters = z.object({
     datePlayed: z.string().optional(),
+});
+
+const scrobbleStoppedParameters = z.object({
+    ItemId: z.string(),
+    PlaySessionId: z.string(),
+    PositionTicks: z.number().optional(),
 });
 
 const scrobble = z.any();
@@ -448,9 +465,47 @@ const filters = z.object({
     Years: z.number().array().optional(),
 });
 
+const setRatingParameters = z.object({
+    rating: z.number(),
+});
+
+const setRating = z.null();
+
+const deleteRatingParameters = z.object({});
+
+const deleteRating = z.null();
+
 const songDetailParameters = baseParameters.extend({
     Fields: z.string().optional(),
 });
+
+// Tag-related types
+const tag = z.object({
+    Id: z.string(),
+    Name: z.string(),
+});
+
+const tagList = z.object({
+    Items: z.array(tag),
+    TotalRecordCount: z.number(),
+});
+
+const tagListParameters = z.object({
+    Limit: z.number().optional(),
+    StartIndex: z.number().optional(),
+});
+
+const addTagsParameters = z.object({
+    Tags: z.array(z.string()),
+});
+
+const addTags = z.null();
+
+const removeTagsParameters = z.object({
+    Tags: z.array(z.string()),
+});
+
+const removeTags = z.null();
 
 export const embyType = {
     _enum: {
@@ -463,6 +518,7 @@ export const embyType = {
         songList: songListSort,
     },
     _parameters: {
+        addTags: addTagsParameters,
         addToPlaylist: addToPlaylistParameters,
         albumArtistDetail: baseParameters,
         albumArtistList: albumArtistListParameters,
@@ -471,24 +527,31 @@ export const embyType = {
         authenticate: authenticateParameters,
         createPlaylist: createPlaylistParameters,
         deletePlaylist: z.object({}),
+        deleteRating: deleteRatingParameters,
         favorite: favoriteParameters,
         filterList: filterListParameters,
         genreList: genreListParameters,
+        movePlaylistItem: movePlaylistItemParameters,
         musicFolderList: musicFolderListParameters,
         playlistDetail: baseParameters,
         playlistList: playlistListParameters,
         removeFromPlaylist: removeFromPlaylistParameters,
+        removeTags: removeTagsParameters,
         scrobbleMarkPlayed: scrobbleMarkPlayedParameters,
         scrobblePlaying: scrobblePlayingParameters,
         scrobbleProgress: scrobbleProgressParameters,
+        scrobbleStopped: scrobbleStoppedParameters,
         search: searchParameters,
+        setRating: setRatingParameters,
         similarArtistList: similarArtistListParameters,
         similarSongs: similarSongsParameters,
         songDetail: songDetailParameters,
         songList: songListParameters,
+        tagList: tagListParameters,
         updatePlaylist: updatePlaylistParameters,
     },
     _response: {
+        addTags,
         addToPlaylist,
         album,
         albumArtist,
@@ -497,23 +560,29 @@ export const embyType = {
         authenticate,
         createPlaylist,
         deletePlaylist,
+        deleteRating,
         error,
         favorite,
         filters,
         genre,
         genreList,
         lyrics,
+        movePlaylistItem,
         musicFolderList,
         playlist,
         playlistList,
         playlistSongList,
         removeFromPlaylist,
+        removeTags,
         scrobble,
         search,
         serverInfo,
+        setRating,
         similarSongs,
         song,
         songList,
+        tag,
+        tagList,
         updatePlaylist,
         user,
     },

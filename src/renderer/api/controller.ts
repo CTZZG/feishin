@@ -70,6 +70,9 @@ export interface GeneralController extends Omit<Required<ControllerEndpoint>, 'a
 }
 
 export const controller: GeneralController = {
+    addTags(args) {
+        return apiController('addTags', args.apiClientProps.server?.type)?.(args);
+    },
     addToPlaylist(args) {
         return apiController('addToPlaylist', args.apiClientProps.server?.type)?.(args);
     },
@@ -180,6 +183,9 @@ export const controller: GeneralController = {
     },
     removeFromPlaylist(args) {
         return apiController('removeFromPlaylist', args.apiClientProps.server?.type)?.(args);
+    },
+    removeTags(args) {
+        return apiController('removeTags', args.apiClientProps.server?.type)?.(args);
     },
     scrobble(args) {
         return apiController('scrobble', args.apiClientProps.server?.type)?.(args);

@@ -44,12 +44,32 @@ const extractAudioMetadata = (mediaSources: any[]) => {
         (stream: any) => stream.Type === 'Audio',
     );
 
+    if (!audioStream) {
+        return {
+            bitDepth: null,
+            bitRate: 0,
+            channels: null,
+            sampleRate: null,
+        };
+    }
+
     return {
-        bitDepth: audioStream?.BitDepth ?? null,
-        bitRate: audioStream?.BitRate ?? 0,
-        channels: audioStream?.Channels ?? null,
-        sampleRate: audioStream?.SampleRate ?? null,
+        bitDepth: audioStream.BitDepth ?? null,
+        bitRate: audioStream.BitRate ?? 0,
+        channels: audioStream.Channels ?? null,
+        sampleRate: audioStream.SampleRate ?? null,
     };
+};
+
+const getTags = (item: { Tags?: string[] }): null | Record<string, string[]> => {
+    if (item.Tags && item.Tags.length > 0) {
+        const tags: Record<string, string[]> = {};
+        for (const tag of item.Tags) {
+            tags[tag] = [];
+        }
+        return tags;
+    }
+    return null;
 };
 
 const normalizeSong = (
@@ -87,7 +107,7 @@ const normalizeSong = (
         discNumber: item.ParentIndexNumber || 1,
         discSubtitle: null,
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
-        gain: null, // Emby does not provide normalization data
+        gain: null,
         genres:
             item.GenreItems?.map((entry) => ({
                 id: entry.Id,
@@ -128,12 +148,12 @@ const normalizeSong = (
             id: item.Id,
             server,
         }),
-        tags: null,
+        tags: getTags(item),
         trackNumber: item.IndexNumber ?? 1,
         uniqueId: nanoid(),
         updatedAt: item.DateCreated ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
-        userRating: null,
+        userRating: item.UserData?.Rating || null,
     };
 };
 
@@ -223,11 +243,11 @@ const normalizeAlbum = async (
         size: null,
         songCount: item.Songs?.length ?? item.ChildCount ?? null,
         songs: item.Songs?.map((song) => normalizeSong(song, server, deviceId, imageSize)),
-        tags: null,
+        tags: getTags(item),
         uniqueId: nanoid(),
         updatedAt: (item?.DateLastMediaAdded || item.DateCreated) ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
-        userRating: null,
+        userRating: item.UserData?.Rating || null,
     };
 };
 
@@ -283,7 +303,7 @@ const normalizeAlbumArtist = (
         similarArtists,
         songCount: item.SongCount ?? null,
         userFavorite: item.UserData?.IsFavorite || false,
-        userRating: null,
+        userRating: item.UserData?.Rating || null,
     };
 };
 
