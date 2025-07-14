@@ -605,7 +605,7 @@ export const EmbyController: ControllerEndpoint = {
                 id: query.id,
             },
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags',
+                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
                 SortBy: query.sortBy ? songListSortMap.emby[query.sortBy] : undefined,
@@ -637,7 +637,7 @@ export const EmbyController: ControllerEndpoint = {
 
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                 GenreIds: query.genre ? query.genre : undefined,
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -688,7 +688,7 @@ export const EmbyController: ControllerEndpoint = {
                 id: query.songId,
             },
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                 Limit: query.count,
                 UserId: apiClientProps.server?.userId || undefined,
             },
@@ -700,7 +700,7 @@ export const EmbyController: ControllerEndpoint = {
                     id: query.songId,
                 },
                 query: {
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                     Limit: query.count,
                     UserId: apiClientProps.server?.userId || undefined,
                 },
@@ -754,7 +754,7 @@ export const EmbyController: ControllerEndpoint = {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                 GenreIds: query.genreIds?.join(','),
                 IncludeItemTypes: 'Audio',
                 IsFavorite: query.favorite,
@@ -824,7 +824,7 @@ export const EmbyController: ControllerEndpoint = {
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
                 ArtistIds: query.artistId,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                 Filters: 'IsPlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -1032,7 +1032,7 @@ export const EmbyController: ControllerEndpoint = {
             const res = await embyApiClient(apiClientProps).getSongList({
                 query: {
                     EnableTotalRecordCount: true,
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
                     IncludeItemTypes: 'Audio',
                     Limit: query.songLimit,
                     ParentId: musicLibraryId,

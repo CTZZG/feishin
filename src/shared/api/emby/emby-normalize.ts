@@ -125,7 +125,7 @@ const normalizeSong = (
             tag: item.ImageTags?.Primary,
         }),
         itemType: LibraryItem.SONG,
-        lastPlayedAt: null,
+        lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         lyrics: null,
         name: item.Name,
         participants: null, // Emby does not have a 'People' field in the same way
@@ -226,7 +226,7 @@ const normalizeAlbum = async (
         imageUrl,
         isCompilation: null,
         itemType: LibraryItem.ALBUM,
-        lastPlayedAt: null,
+        lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         mbzId: null,
         name: item.Name,
         originalDate: null,
