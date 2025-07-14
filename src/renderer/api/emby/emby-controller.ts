@@ -600,15 +600,15 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getPlaylistSongList({
-            params: {
-                id: query.id,
-            },
+        const res = await embyApiClient(apiClientProps).getSongList({
             query: {
                 Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
-                SortBy: query.sortBy ? songListSortMap.emby[query.sortBy] : undefined,
+                ParentId: query.id,
+                SortBy: query.sortBy
+                    ? songListSortMap.emby[query.sortBy as keyof typeof songListSortMap.emby]
+                    : undefined,
                 SortOrder: query.sortOrder ? sortOrderMap.emby[query.sortOrder] : undefined,
                 StartIndex: query.startIndex,
                 UserId: apiClientProps.server?.userId,

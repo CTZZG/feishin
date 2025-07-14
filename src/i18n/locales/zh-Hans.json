@@ -476,7 +476,8 @@
         "id": "id",
         "disc": "碟片",
         "duration": "时长",
-        "album": "$t(entity.album_one)"
+        "album": "$t(entity.album_one)",
+        "playlistOrder": "播放列表顺序"
     },
     "page": {
         "sidebar": {

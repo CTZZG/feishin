@@ -71,6 +71,16 @@ const FILTERS = {
             name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
             value: SongListSort.RECENTLY_ADDED,
         },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.playlistOrder', { postProcess: 'titleCase' }),
+            value: SongListSort.LIST_ITEM_ORDER,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.duration', { postProcess: 'titleCase' }),
+            value: SongListSort.DURATION,
+        },
     ],
     jellyfin: [
         {
@@ -292,8 +302,15 @@ export const PlaylistDetailSongListHeaderFilters = ({
     const setPage = useSetPlaylistStore();
     const setFilter = useSetPlaylistDetailFilters();
     const page = usePlaylistDetailStore();
+    const getDefaultSortBy = (serverType?: ServerType) => {
+        if (serverType === ServerType.EMBY) {
+            return SongListSort.LIST_ITEM_ORDER;
+        }
+        return SongListSort.ID;
+    };
+
     const filters: Partial<PlaylistSongListQuery> = {
-        sortBy: page?.table.id[playlistId]?.filter?.sortBy || SongListSort.ID,
+        sortBy: page?.table.id[playlistId]?.filter?.sortBy || getDefaultSortBy(server?.type),
         sortOrder: page?.table.id[playlistId]?.filter?.sortOrder || SortOrder.ASC,
     };
 

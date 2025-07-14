@@ -325,13 +325,17 @@ const songListSort = {
     ALBUM_ARTIST: 'AlbumArtist,Album,SortName',
     ALBUM_DETAIL: 'ParentIndexNumber,IndexNumber',
     ARTIST: 'Artist,Album,SortName',
+    COMMUNITY_RATING: 'CommunityRating,SortName',
     DURATION: 'Runtime',
-    NAME: 'Name',
+    ID: 'SortName',
+    LIST_ITEM_ORDER: 'ListItemOrder',
+    NAME: 'SortName',
     PLAY_COUNT: 'PlayCount,SortName',
     RANDOM: 'Random',
     RECENTLY_ADDED: 'DateCreated,SortName',
     RECENTLY_PLAYED: 'DatePlayed,SortName',
     RELEASE_DATE: 'PremiereDate,AlbumArtist,Album,SortName',
+    YEAR: 'ProductionYear,SortName',
 } as const;
 
 const songListParameters = paginationParameters.merge(
