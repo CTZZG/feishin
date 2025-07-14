@@ -339,6 +339,7 @@ export type Song = {
     albumId: string;
     artistName: string;
     artists: RelatedArtist[];
+    bitDepth: null | number;
     bitRate: number;
     bpm: null | number;
     channels: null | number;
@@ -365,6 +366,7 @@ export type Song = {
     playlistItemId?: string;
     releaseDate: null | string;
     releaseYear: null | string;
+    sampleRate: null | number;
     serverId: string;
     serverType: ServerType;
     size: number;

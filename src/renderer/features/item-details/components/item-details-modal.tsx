@@ -274,6 +274,8 @@ const SongPropertyMapping: ItemDetailRow<Song>[] = [
     { label: 'filter.isCompilation', render: (song) => BoolField(song.compilation || false) },
     { key: 'container', label: 'common.codec' },
     { key: 'bitRate', label: 'common.bitrate', render: (song) => `${song.bitRate} kbps` },
+    { key: 'sampleRate', label: 'common.sampleRate' },
+    { key: 'bitDepth', label: 'common.bitDepth' },
     { key: 'channels', label: 'common.channel_other' },
     { key: 'size', label: 'common.size', render: (song) => formatSizeString(song.size) },
     {
