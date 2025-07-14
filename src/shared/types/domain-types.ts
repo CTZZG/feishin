@@ -1262,7 +1262,23 @@ export enum LyricSource {
     NETEASE = 'NetEase',
 }
 
+export type AddTagsArgs = BaseEndpointArgs & {
+    body: AddTagsBody;
+    query: AddTagsQuery;
+};
+
+export type AddTagsBody = {
+    tags: string[];
+};
+
+export type AddTagsQuery = {
+    id: string[];
+};
+
+export type AddTagsResponse = null | undefined;
+
 export type ControllerEndpoint = {
+    addTags?: (args: AddTagsArgs) => Promise<AddTagsResponse>;
     addToPlaylist: (args: AddToPlaylistArgs) => Promise<AddToPlaylistResponse>;
     authenticate: (
         url: string,
@@ -1304,6 +1320,7 @@ export type ControllerEndpoint = {
     getUserList?: (args: UserListArgs) => Promise<UserListResponse>;
     movePlaylistItem?: (args: MoveItemArgs) => Promise<void>;
     removeFromPlaylist: (args: RemoveFromPlaylistArgs) => Promise<RemoveFromPlaylistResponse>;
+    removeTags?: (args: RemoveTagsArgs) => Promise<RemoveTagsResponse>;
     scrobble: (args: ScrobbleArgs) => Promise<ScrobbleResponse>;
     search: (args: SearchArgs) => Promise<SearchResponse>;
     setRating?: (args: SetRatingArgs) => Promise<RatingResponse>;
@@ -1353,6 +1370,21 @@ export type MoveItemQuery = {
     startingIndex: number;
     trackId: string;
 };
+
+export type RemoveTagsArgs = BaseEndpointArgs & {
+    body: RemoveTagsBody;
+    query: RemoveTagsQuery;
+};
+
+export type RemoveTagsBody = {
+    tags: string[];
+};
+
+export type RemoveTagsQuery = {
+    id: string[];
+};
+
+export type RemoveTagsResponse = null | undefined;
 
 export type ServerInfo = {
     features: ServerFeatures;
