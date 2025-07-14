@@ -74,9 +74,13 @@ const userData = z.object({
 });
 
 const mediaStream = z.object({
+    BitDepth: z.number().optional(),
+    BitRate: z.number().optional(),
+    Channels: z.number().optional(),
     Codec: z.string(),
     Index: z.number(),
     IsDefault: z.boolean(),
+    SampleRate: z.number().optional(),
     Type: z.string(),
 });
 

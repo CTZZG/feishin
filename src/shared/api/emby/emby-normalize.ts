@@ -39,12 +39,27 @@ const getImageUrl = (args: {
     return `${baseUrl}/Items/${itemId}/Images/${imageType}?width=${size}&quality=96&tag=${tag}`;
 };
 
+const extractAudioMetadata = (mediaSources: any[]) => {
+    const audioStream = mediaSources?.[0]?.MediaStreams?.find(
+        (stream: any) => stream.Type === 'Audio',
+    );
+
+    return {
+        bitDepth: audioStream?.BitDepth ?? null,
+        bitRate: audioStream?.BitRate ?? 0,
+        channels: audioStream?.Channels ?? null,
+        sampleRate: audioStream?.SampleRate ?? null,
+    };
+};
+
 const normalizeSong = (
     item: z.infer<typeof embyType._response.song>,
     server: null | ServerListItem,
     deviceId: string,
     imageSize?: number,
 ): Song => {
+    const audioMetadata = extractAudioMetadata(item.MediaSources || []);
+
     return {
         album: item.Album ?? null,
         albumArtists:
@@ -61,9 +76,10 @@ const normalizeSong = (
                 imageUrl: null,
                 name: entry.Name,
             })) ?? [],
-        bitRate: 0, // Emby does not provide this directly in the main song object
+        bitDepth: audioMetadata.bitDepth,
+        bitRate: audioMetadata.bitRate,
         bpm: null,
-        channels: null,
+        channels: audioMetadata.channels,
         comment: null,
         compilation: null,
         container: item.MediaSources?.[0]?.Container || null,
@@ -103,6 +119,7 @@ const normalizeSong = (
               ? new Date(item.ProductionYear, 0, 1).toISOString()
               : null,
         releaseYear: item.ProductionYear ? String(item.ProductionYear) : null,
+        sampleRate: audioMetadata.sampleRate,
         serverId: server?.id || '',
         serverType: ServerType.EMBY,
         size: item.MediaSources?.[0]?.Size ?? 0,
