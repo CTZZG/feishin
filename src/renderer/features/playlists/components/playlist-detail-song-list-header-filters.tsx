@@ -4,7 +4,7 @@ import { IDatasource } from '@ag-grid-community/core';
 import { closeAllModals, openModal } from '@mantine/modals';
 import { useQueryClient } from '@tanstack/react-query';
 import debounce from 'lodash/debounce';
-import { MouseEvent, MutableRefObject, useCallback } from 'react';
+import { MouseEvent, MutableRefObject, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 
@@ -394,6 +394,19 @@ export const PlaylistDetailSongListHeaderFilters = ({
         },
         [tableRef, page.display, server, playlistId, queryClient, setPagination],
     );
+
+    useEffect(() => {
+        if (server?.type === ServerType.EMBY) {
+            const currentSortBy = page?.table.id[playlistId]?.filter?.sortBy;
+            if (currentSortBy !== SongListSort.LIST_ITEM_ORDER) {
+                const updatedFilters = setFilter(playlistId, {
+                    sortBy: SongListSort.LIST_ITEM_ORDER,
+                    sortOrder: SortOrder.ASC,
+                });
+                handleFilterChange(updatedFilters);
+            }
+        }
+    }, [server?.type, playlistId, handleFilterChange, page, setFilter]);
 
     const handleRefresh = () => {
         queryClient.invalidateQueries(queryKeys.albums.list(server?.id || ''));
