@@ -9,12 +9,17 @@ import { usePlayQueueAdd } from '/@/renderer/features/player';
 import { PlaylistDetailSongListHeaderFilters } from '/@/renderer/features/playlists/components/playlist-detail-song-list-header-filters';
 import { usePlaylistDetail } from '/@/renderer/features/playlists/queries/playlist-detail-query';
 import { FilterBar, LibraryHeaderBar } from '/@/renderer/features/shared';
-import { useCurrentServer } from '/@/renderer/store';
+import { useCurrentServer, usePlaylistDetailStore } from '/@/renderer/store';
 import { usePlayButtonBehavior } from '/@/renderer/store/settings.store';
 import { Badge } from '/@/shared/components/badge/badge';
 import { SpinnerIcon } from '/@/shared/components/spinner/spinner';
 import { Stack } from '/@/shared/components/stack/stack';
-import { LibraryItem } from '/@/shared/types/domain-types';
+import {
+    LibraryItem,
+    PlaylistSongListQuery,
+    SongListSort,
+    SortOrder,
+} from '/@/shared/types/domain-types';
 import { Play } from '/@/shared/types/types';
 
 interface PlaylistDetailHeaderProps {
@@ -34,10 +39,18 @@ export const PlaylistDetailSongListHeader = ({
     const detailQuery = usePlaylistDetail({ query: { id: playlistId }, serverId: server?.id });
     const handlePlayQueueAdd = usePlayQueueAdd();
 
+    // 获取当前页面的排序状态
+    const page = usePlaylistDetailStore();
+    const currentFilters: Partial<PlaylistSongListQuery> = {
+        sortBy: page?.table.id[playlistId]?.filter?.sortBy || SongListSort.ID,
+        sortOrder: page?.table.id[playlistId]?.filter?.sortOrder || SortOrder.ASC,
+    };
+
     const handlePlay = async (playType: Play) => {
         handlePlayQueueAdd?.({
             byItemType: { id: [playlistId], type: LibraryItem.PLAYLIST },
             playType,
+            query: currentFilters, // 传递当前的排序状态
         });
     };
 

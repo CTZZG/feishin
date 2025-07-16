@@ -484,6 +484,7 @@ export const PlaylistDetailSongListHeaderFilters = ({
         handlePlayQueueAdd?.({
             byItemType: { id: [playlistId], type: LibraryItem.PLAYLIST },
             playType,
+            query: filters, // 传递当前的排序状态
         });
     };
 
