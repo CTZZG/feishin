@@ -7,6 +7,7 @@ import { embyNormalize } from '/@/shared/api/emby/emby-normalize';
 import { embyType } from '/@/shared/api/emby/emby-types';
 import { getFeatures, hasFeature, VersionInfo } from '/@/shared/api/utils';
 import {
+    Album,
     albumArtistListSortMap,
     albumListSortMap,
     ControllerEndpoint,
@@ -453,8 +454,11 @@ export const EmbyController: ControllerEndpoint = {
             return [];
         }
 
+        // 支持两种歌词格式
         const lrcStream = embySong.MediaSources[0].MediaStreams?.find(
-            (s) => s.Type === 'Subtitle' && s.Codec === 'lrc',
+            (s) =>
+                s.Type === 'Subtitle' &&
+                (s.Codec === 'lrc' || (s.Codec === 'text' && (s as any).Title === 'Lyrics')),
         );
 
         if (!lrcStream) {
@@ -602,7 +606,7 @@ export const EmbyController: ControllerEndpoint = {
 
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed',
+                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
                 ParentId: query.id,
@@ -619,10 +623,19 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get playlist song list');
         }
 
-        return {
-            items: res.body.Items.map((item) =>
-                embyNormalize.song(item, apiClientProps.server, ''),
+        const items = await Promise.all(
+            res.body.Items.map((item) =>
+                embyNormalize.songWithArtistFallback(
+                    item,
+                    apiClientProps.server,
+                    '',
+                    embyApiClient(apiClientProps),
+                ),
             ),
+        );
+
+        return {
+            items,
             startIndex: query.startIndex,
             totalRecordCount: res.body.TotalRecordCount,
         };
@@ -637,7 +650,7 @@ export const EmbyController: ControllerEndpoint = {
 
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 GenreIds: query.genre ? query.genre : undefined,
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -660,6 +673,79 @@ export const EmbyController: ControllerEndpoint = {
             ),
             startIndex: 0,
             totalRecordCount: res.body.Items.length || 0,
+        };
+    },
+    getRecentlyPlayedAlbums: async (args) => {
+        const { apiClientProps, query } = args;
+        await EmbyController.getMusicFolderList({ apiClientProps });
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        // 1. 查询最近播放的歌曲
+        const songQuery = {
+            limit: 100, // 获取更多歌曲以确保有足够的专辑多样性
+            sortBy: songListSortMap.emby.recentlyPlayed,
+            sortOrder: sortOrderMap.emby.DESC,
+            startIndex: 0,
+        };
+
+        const songsRes = await embyApiClient(apiClientProps).getSongList({
+            query: {
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
+                Filters: 'IsPlayed',
+                IncludeItemTypes: 'Audio',
+                Limit: songQuery.limit,
+                ParentId: musicLibraryId,
+                Recursive: true,
+                SortBy: songQuery.sortBy,
+                SortOrder: songQuery.sortOrder,
+                StartIndex: songQuery.startIndex,
+                UserId: apiClientProps.server.userId,
+            },
+        });
+
+        if (songsRes.status !== 200) {
+            throw new Error('Failed to get recently played songs');
+        }
+
+        // 2. 按专辑ID分组并保持最新播放时间
+        const albumMap = new Map<string, { lastPlayed: string; song: any }>();
+
+        for (const song of songsRes.body.Items) {
+            if (song.AlbumId) {
+                // AlbumId 是专辑ID
+                const existing = albumMap.get(song.AlbumId);
+                const songLastPlayed = song.DatePlayed || '';
+
+                if (!existing || songLastPlayed > existing.lastPlayed) {
+                    albumMap.set(song.AlbumId, {
+                        lastPlayed: songLastPlayed,
+                        song: song,
+                    });
+                }
+            }
+        }
+
+        // 3. 按播放时间排序并获取专辑详情
+        const sortedAlbums = Array.from(albumMap.values())
+            .sort((a, b) => new Date(b.lastPlayed).getTime() - new Date(a.lastPlayed).getTime())
+            .slice(0, query.limit || 15);
+
+        const albumPromises = sortedAlbums.map(({ song }) =>
+            EmbyController.getAlbumDetail({
+                apiClientProps,
+                query: { id: song.AlbumId },
+            }),
+        );
+
+        const albums = await Promise.all(albumPromises);
+
+        return {
+            items: albums.filter((album): album is Album => album !== null),
+            startIndex: query.startIndex || 0,
+            totalRecordCount: albumMap.size,
         };
     },
     getRoles: async () => [],
@@ -688,7 +774,7 @@ export const EmbyController: ControllerEndpoint = {
                 id: query.songId,
             },
             query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 Limit: query.count,
                 UserId: apiClientProps.server?.userId || undefined,
             },
@@ -700,7 +786,7 @@ export const EmbyController: ControllerEndpoint = {
                     id: query.songId,
                 },
                 query: {
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                     Limit: query.count,
                     UserId: apiClientProps.server?.userId || undefined,
                 },
@@ -754,7 +840,7 @@ export const EmbyController: ControllerEndpoint = {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 GenreIds: query.genreIds?.join(','),
                 IncludeItemTypes: 'Audio',
                 IsFavorite: query.favorite,
@@ -773,10 +859,20 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get song list');
         }
 
-        return {
-            items: res.body.Items.map((item) =>
-                embyNormalize.song(item, apiClientProps.server, '', query.imageSize),
+        const items = await Promise.all(
+            res.body.Items.map((item) =>
+                embyNormalize.songWithArtistFallback(
+                    item,
+                    apiClientProps.server,
+                    '',
+                    embyApiClient(apiClientProps),
+                    query.imageSize,
+                ),
             ),
+        );
+
+        return {
+            items,
             startIndex: query.startIndex,
             totalRecordCount: res.body.TotalRecordCount,
         };
@@ -824,7 +920,7 @@ export const EmbyController: ControllerEndpoint = {
         const res = await embyApiClient(apiClientProps).getSongList({
             query: {
                 ArtistIds: query.artistId,
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 Filters: 'IsPlayed',
                 IncludeItemTypes: 'Audio',
                 Limit: query.limit,
@@ -1032,7 +1128,7 @@ export const EmbyController: ControllerEndpoint = {
             const res = await embyApiClient(apiClientProps).getSongList({
                 query: {
                     EnableTotalRecordCount: true,
-                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed',
+                    Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                     IncludeItemTypes: 'Audio',
                     Limit: query.songLimit,
                     ParentId: musicLibraryId,

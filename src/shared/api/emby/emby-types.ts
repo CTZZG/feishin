@@ -218,6 +218,7 @@ const song = z.object({
     AlbumArtist: z.string().optional(),
     AlbumArtists: z.array(artistItem).optional(),
     AlbumId: z.string().optional(),
+    AlbumPrimaryImageTag: z.string().optional(),
     ArtistItems: z.array(artistItem).optional(),
     Artists: z.array(z.string()).optional(),
     DateCreated: z.string().optional(),

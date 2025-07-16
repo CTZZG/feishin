@@ -145,6 +145,9 @@ export const controller: GeneralController = {
     getRandomSongList(args) {
         return apiController('getRandomSongList', args.apiClientProps.server?.type)?.(args);
     },
+    getRecentlyPlayedAlbums(args) {
+        return apiController('getRecentlyPlayedAlbums', args.apiClientProps.server?.type)?.(args);
+    },
     getRoles(args) {
         return apiController('getRoles', args.apiClientProps.server?.type)?.(args);
     },

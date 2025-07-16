@@ -1312,6 +1312,7 @@ export type ControllerEndpoint = {
     getPlaylistListCount: (args: PlaylistListArgs) => Promise<number>;
     getPlaylistSongList: (args: PlaylistSongListArgs) => Promise<SongListResponse>;
     getRandomSongList: (args: RandomSongListArgs) => Promise<SongListResponse>;
+    getRecentlyPlayedAlbums?: (args: AlbumListArgs) => Promise<AlbumListResponse>;
     getRoles: (args: BaseEndpointArgs) => Promise<Array<string | { label: string; value: string }>>;
     getServerInfo: (args: ServerInfoArgs) => Promise<ServerInfo>;
     getSimilarSongs: (args: SimilarSongsArgs) => Promise<Song[]>;

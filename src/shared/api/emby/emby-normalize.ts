@@ -80,6 +80,40 @@ const normalizeSong = (
 ): Song => {
     const audioMetadata = extractAudioMetadata(item.MediaSources || []);
 
+    // 三级图片回退逻辑
+    const getSongImageUrl = () => {
+        // 第一级：检查歌曲自身封面
+        let imageUrl = getImageUrl({
+            baseUrl: server?.url || '',
+            imageType: 'Primary',
+            itemId: item.Id,
+            size: imageSize || 100,
+            tag: item.ImageTags?.Primary,
+        });
+
+        if (imageUrl) {
+            return imageUrl;
+        }
+
+        // 第二级：检查专辑封面
+        if (item.AlbumPrimaryImageTag && item.AlbumId) {
+            imageUrl = getImageUrl({
+                baseUrl: server?.url || '',
+                imageType: 'Primary',
+                itemId: item.AlbumId,
+                size: imageSize || 100,
+                tag: item.AlbumPrimaryImageTag,
+            });
+
+            if (imageUrl) {
+                return imageUrl;
+            }
+        }
+
+        // 第三级：歌手封面获取将在异步函数中处理
+        return null;
+    };
+
     return {
         album: item.Album ?? null,
         albumArtists:
@@ -117,13 +151,7 @@ const normalizeSong = (
             })) ?? [],
         id: item.Id,
         imagePlaceholderUrl: null,
-        imageUrl: getImageUrl({
-            baseUrl: server?.url || '',
-            imageType: 'Primary',
-            itemId: item.Id,
-            size: imageSize || 100,
-            tag: item.ImageTags?.Primary,
-        }),
+        imageUrl: getSongImageUrl(),
         itemType: LibraryItem.SONG,
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         lyrics: null,
@@ -155,6 +183,48 @@ const normalizeSong = (
         userFavorite: item.UserData?.IsFavorite || false,
         userRating: item.UserData?.Rating || null,
     };
+};
+
+const normalizeSongWithArtistFallback = async (
+    item: z.infer<typeof embyType._response.song>,
+    server: null | ServerListItem,
+    deviceId: string,
+    apiClient: any,
+    imageSize?: number,
+): Promise<Song> => {
+    const song = normalizeSong(item, server, deviceId, imageSize);
+
+    // 如果前两级都没有获取到图片，尝试第三级：歌手封面
+    if (!song.imageUrl && item.ArtistItems && item.ArtistItems.length > 0) {
+        try {
+            const firstArtist = item.ArtistItems[0];
+
+            const artistRes = await apiClient.getAlbumArtistDetail({
+                params: {
+                    id: firstArtist.Id,
+                    userId: server?.userId || '',
+                },
+                query: {
+                    Fields: 'ImageTags',
+                },
+            });
+
+            if (artistRes.status === 200 && artistRes.body.ImageTags?.Primary) {
+                const artistImageUrl = getImageUrl({
+                    baseUrl: server?.url || '',
+                    imageType: 'Primary',
+                    itemId: firstArtist.Id,
+                    size: imageSize || 100,
+                    tag: artistRes.body.ImageTags.Primary,
+                });
+                song.imageUrl = artistImageUrl;
+            }
+        } catch {
+            // 歌手封面获取失败时不影响其他功能，静默处理
+        }
+    }
+
+    return song;
 };
 
 const normalizeAlbum = async (
@@ -372,4 +442,5 @@ export const embyNormalize = {
     musicFolder: normalizeMusicFolder,
     playlist: normalizePlaylist,
     song: normalizeSong,
+    songWithArtistFallback: normalizeSongWithArtistFallback,
 };
