@@ -31,7 +31,7 @@ export const GoToCommands = ({ handleClose, setPages, setQuery }: GoToCommandsPr
                 <Command.Item onSelect={() => goTo(AppRoute.HOME)}>
                     {t('page.sidebar.home', { postProcess: 'titleCase' })}
                 </Command.Item>
-                <Command.Item onSelect={() => goTo(AppRoute.SEARCH)}>
+                <Command.Item onSelect={() => goTo('/search/song')}>
                     {t('page.sidebar.search', { postProcess: 'titleCase' })}
                 </Command.Item>
                 <Command.Item onSelect={() => goTo(AppRoute.SETTINGS)}>
