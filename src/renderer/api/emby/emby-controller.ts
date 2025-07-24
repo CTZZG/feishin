@@ -253,7 +253,7 @@ export const EmbyController: ControllerEndpoint = {
                 embyNormalize.albumArtist(item, apiClientProps.server),
             ),
             startIndex: query.startIndex,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getAlbumArtistListCount: async ({ apiClientProps, query }) =>
@@ -346,7 +346,7 @@ export const EmbyController: ControllerEndpoint = {
         return {
             items,
             startIndex: query.startIndex,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getAlbumListCount: async ({ apiClientProps, query }) =>
@@ -382,7 +382,7 @@ export const EmbyController: ControllerEndpoint = {
                 embyNormalize.albumArtist(item, apiClientProps.server),
             ),
             startIndex: query.startIndex,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getArtistListCount: async ({ apiClientProps, query }) =>
@@ -422,7 +422,7 @@ export const EmbyController: ControllerEndpoint = {
         return {
             items: res.body.Items.map((item) => embyNormalize.genre(item, apiClientProps.server)),
             startIndex: query.startIndex || 0,
-            totalRecordCount: res.body?.TotalRecordCount || 0,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getLyrics: async (args) => {
@@ -589,7 +589,7 @@ export const EmbyController: ControllerEndpoint = {
                 embyNormalize.playlist(item, apiClientProps.server),
             ),
             startIndex: 0,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getPlaylistListCount: async ({ apiClientProps, query }) =>
@@ -637,7 +637,7 @@ export const EmbyController: ControllerEndpoint = {
         return {
             items,
             startIndex: query.startIndex,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getRandomSongList: async (args) => {
@@ -672,7 +672,7 @@ export const EmbyController: ControllerEndpoint = {
                 embyNormalize.song(item, apiClientProps.server, ''),
             ),
             startIndex: 0,
-            totalRecordCount: res.body.Items.length || 0,
+            totalRecordCount: res.body?.Items?.length || 0,
         };
     },
     getRecentlyPlayedAlbums: async (args) => {
@@ -874,7 +874,7 @@ export const EmbyController: ControllerEndpoint = {
         return {
             items,
             startIndex: query.startIndex,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getSongListCount: async ({ apiClientProps, query }) =>
@@ -941,7 +941,7 @@ export const EmbyController: ControllerEndpoint = {
                 embyNormalize.song(item, apiClientProps.server, ''),
             ),
             startIndex: 0,
-            totalRecordCount: res.body.TotalRecordCount,
+            totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
     getTranscodingUrl: (args) => {
