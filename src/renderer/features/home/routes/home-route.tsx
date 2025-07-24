@@ -101,7 +101,10 @@ const HomeRoute = () => {
 
     const mostPlayedAlbums = useAlbumList({
         options: {
-            enabled: server?.type === ServerType.SUBSONIC || server?.type === ServerType.NAVIDROME,
+            enabled:
+                server?.type === ServerType.EMBY ||
+                server?.type === ServerType.SUBSONIC ||
+                server?.type === ServerType.NAVIDROME,
             staleTime: 1000 * 60 * 5,
         },
         query: {
@@ -135,7 +138,9 @@ const HomeRoute = () => {
         recentlyPlayed.isLoading ||
         recentlyAdded.isLoading ||
         (server?.type === ServerType.JELLYFIN && mostPlayedSongs.isLoading) ||
-        ((server?.type === ServerType.SUBSONIC || server?.type === ServerType.NAVIDROME) &&
+        ((server?.type === ServerType.EMBY ||
+            server?.type === ServerType.SUBSONIC ||
+            server?.type === ServerType.NAVIDROME) &&
             mostPlayedAlbums.isLoading);
 
     if (isLoading) {
