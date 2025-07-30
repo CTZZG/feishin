@@ -26,10 +26,8 @@ export const useDiscordRpc = () => {
         ) => {
             if (
                 !current[0] || // No track
-                (current[0] &&
-                    current[2] === 'paused' && // Track paused
-                    (discordSettings.showPaused ? current[1] === 0 : true)) || // Beginning of track (only if show paused setting enabled)
-                (discordSettings.showPaused ? false : current[1] === 0) // Beginning of track (only if show paused setting disabled)
+                current[1] === 0 || // Start of track
+                (current[2] === 'paused' && !discordSettings.showPaused) // Track paused with show paused setting disabled
             )
                 return discordRpc?.clearActivity();
 
@@ -38,11 +36,13 @@ export const useDiscordRpc = () => {
             const trackChanged = lastUniqueId !== song.uniqueId;
 
             /*
-                1. If we jump more then 1.2 seconds from last state, update status to match
-                2. If the current song id is completely different, update status
-                3. If the player state changed, update status
+                1. If the song has just started, update status
+                2. If we jump more then 1.2 seconds from last state, update status to match
+                3. If the current song id is completely different, update status
+                4. If the player state changed, update status
             */
             if (
+                previous[1] === 0 ||
                 Math.abs((current[1] as number) - (previous[1] as number)) > 1.2 ||
                 trackChanged ||
                 current[2] !== previous[2]
