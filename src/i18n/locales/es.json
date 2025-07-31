@@ -271,7 +271,9 @@
         "discordPausedStatus": "Mostrar estado de actividad cuando esté en pausa",
         "discordPausedStatus_description": "Cuando está activado, el estado mostrará cuando el reproductor esté en pausa",
         "preservePitch": "Mantener el tono",
-        "preservePitch_description": "Mantiene el tono cuando se modifica la velocidad de reproducción"
+        "preservePitch_description": "Mantiene el tono cuando se modifica la velocidad de reproducción",
+        "notify": "Activar notificaciones de canciones",
+        "notify_description": "Muestra notificaciones cuando se cambia la canción actual"
     },
     "action": {
         "editPlaylist": "editar $t(entity.playlist_one)",
@@ -393,7 +395,9 @@
         "additionalParticipants": "Participantes adicionales",
         "tags": "Etiquetas",
         "newVersion": "Una nueva versión ha sido instalada ({{version}})",
-        "viewReleaseNotes": "Ver notas de lanzamiento"
+        "viewReleaseNotes": "Ver notas de lanzamiento",
+        "bitDepth": "Profundidad de bit",
+        "sampleRate": "Frecuencia de muestreo"
     },
     "error": {
         "remotePortWarning": "reiniciar el servidor para aplicar el nuevo puerto",
@@ -418,7 +422,8 @@
         "badAlbum": "Estás viendo esta página porque esta canción no forma parte de un álbum. Este problema puede ocurrir si tienes una canción en el nivel superior de tu carpeta de música. Jellyfin solo agrupa pistas si están en una carpeta.",
         "networkError": "Ocurrió un error de red",
         "openError": "No se pudo abrir el archivo",
-        "badValue": "Opción inválida \"{{value}}\". Este valor ya no existe"
+        "badValue": "Opción inválida \"{{value}}\". Este valor ya no existe",
+        "notificationDenied": "Se denegaron los permisos para notificaciones. Esta configuración no tiene efecto"
     },
     "filter": {
         "mostPlayed": "más reproducido",

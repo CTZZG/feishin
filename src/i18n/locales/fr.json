@@ -155,7 +155,9 @@
         "additionalParticipants": "participants additionnels",
         "tags": "tags",
         "newVersion": "une nouvelle version vient d'être installé ({{version}})",
-        "viewReleaseNotes": "voir la note de version"
+        "viewReleaseNotes": "voir la note de version",
+        "sampleRate": "taux d'échantillonnage",
+        "bitDepth": "bit par échantillon"
     },
     "error": {
         "remotePortWarning": "redémarrer le serveur pour appliquer le nouveau port",
@@ -180,7 +182,8 @@
         "openError": "impossible d'ouvrir le fichier",
         "networkError": "une erreur de réseau est survenue",
         "badAlbum": "vous voyez cette page parce que cette chanson ne fait pas parti d'un album. vous rencontrez probablement cette erreur si vous avez une chanson qui n'est pas dans votre répertoire de musique. jellyfin gère les chansons uniquement si elles sont dans un sous-dossier, qui est lui-même dans un dossier \"Musique(s)\".",
-        "badValue": "option {{value}} invalide. Cette valeur n'existe plus"
+        "badValue": "option {{value}} invalide. Cette valeur n'existe plus",
+        "notificationDenied": "les autorisations pour les notifications ont été refusées. ce paramètre n'a aucun effet"
     },
     "filter": {
         "mostPlayed": "plus joués",
@@ -616,7 +619,9 @@
         "discordPausedStatus_description": "quand activé, le status s'affichera lorsque le lecteur est en pause",
         "discordPausedStatus": "afficher le status d'activité en pause",
         "preservePitch": "préserver la hauteur",
-        "preservePitch_description": "préserver la hauteur lors du changement de la vitesse de lecture"
+        "preservePitch_description": "préserver la hauteur lors du changement de la vitesse de lecture",
+        "notify": "activer les notifications des chansons",
+        "notify_description": "affiche une notification lors du changement de chanson"
     },
     "form": {
         "deletePlaylist": {

@@ -271,7 +271,9 @@
         "discordPausedStatus": "zobrazit rich presence při pozastavení",
         "discordPausedStatus_description": "pokud je povoleno, bude při pozastavení přehrávače zobrazen stav",
         "preservePitch": "zachovat výšku",
-        "preservePitch_description": "zachová výšku při úpravě rychlosti přehrávání"
+        "preservePitch_description": "zachová výšku při úpravě rychlosti přehrávání",
+        "notify": "povolit oznámení o skladbách",
+        "notify_description": "zobrazit oznámení při změně aktuální skladby"
     },
     "action": {
         "editPlaylist": "upravit $t(entity.playlist_one)",
@@ -393,7 +395,9 @@
         "additionalParticipants": "další přispívající",
         "tags": "štítky",
         "viewReleaseNotes": "zobrazit seznam změn",
-        "newVersion": "byla nainstalována nová verze ({{version}})"
+        "newVersion": "byla nainstalována nová verze ({{version}})",
+        "bitDepth": "bitová hloubka",
+        "sampleRate": "vzorkovací frekvence"
     },
     "table": {
         "config": {
@@ -495,7 +499,8 @@
         "badAlbum": "tuto stránku vidíte, protože tato skladba není součástí alba. tento problém může nastat, pokud máte skladbu na nejvyšší úrovni vaší složky s hudbou. jellyfin seskupuje skladby pouze, pokud se nacházejí ve složce.",
         "networkError": "vyskytla se chyba sítě",
         "openError": "nepodařilo se otevřít soubor",
-        "badValue": "neplatná možnost „{{value}}“. tato možnost již neexistuje"
+        "badValue": "neplatná možnost „{{value}}“. tato možnost již neexistuje",
+        "notificationDenied": "oprávnění k posílání oznámení byla zamítnuta. toto nastavení nemá žádný vliv"
     },
     "filter": {
         "mostPlayed": "nejvíce přehráváno",
