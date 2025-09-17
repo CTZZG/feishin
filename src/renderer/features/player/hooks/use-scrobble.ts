@@ -108,11 +108,11 @@ export const useScrobble = () => {
                     ) {
                         const artists =
                             currentSong.artists?.length > 0
-                                ? currentSong.artists.map((artist) => artist.name).join(', ')
+                                ? currentSong.artists.map((artist) => artist.name).join(' · ')
                                 : currentSong.artistName;
 
-                        new Notification(`Now playing ${currentSong.name}`, {
-                            body: `by ${artists} on ${currentSong.album}`,
+                        new Notification(`${currentSong.name}`, {
+                            body: `${artists}\n${currentSong.album}`,
                             icon: currentSong.imageUrl || undefined,
                         });
                     }
