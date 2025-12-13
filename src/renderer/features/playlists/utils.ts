@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid/non-secure';
 
-import { NDSongQueryFields } from '/@/shared/api/navidrome.types';
+import { NDSongQueryFields } from '/@/shared/api/navidrome/navidrome-types';
 import { QueryBuilderGroup } from '/@/shared/types/types';
 
 export const parseQueryBuilderChildren = (groups: QueryBuilderGroup[], data: any[]) => {
@@ -19,8 +19,17 @@ export const parseQueryBuilderChildren = (groups: QueryBuilderGroup[], data: any
         for (const rule of group.rules) {
             if (rule.field && rule.operator) {
                 const [table, field] = rule.field.split('.');
-                const operator = rule.operator;
+                let operator = rule.operator;
                 const value = field !== 'releaseDate' ? rule.value : new Date(rule.value);
+
+                // Transform date picker operators back to original operators
+                if (operator === 'beforeDate') {
+                    operator = 'before';
+                } else if (operator === 'afterDate') {
+                    operator = 'after';
+                } else if (operator === 'inTheRangeDate') {
+                    operator = 'inTheRange';
+                }
 
                 switch (table) {
                     default:
@@ -56,7 +65,7 @@ export const convertQueryGroupToNDQuery = (filter: QueryBuilderGroup) => {
     for (const rule of filter.rules) {
         if (rule.field && rule.operator) {
             const [field] = rule.field.split('.');
-            const operator = rule.operator;
+            let operator = rule.operator;
             let value = rule.value;
 
             const booleanFields = NDSongQueryFields.filter(
@@ -66,6 +75,14 @@ export const convertQueryGroupToNDQuery = (filter: QueryBuilderGroup) => {
             // Convert string values to boolean
             if (booleanFields.includes(field)) {
                 value = value === 'true';
+            }
+
+            if (operator === 'beforeDate') {
+                operator = 'before';
+            } else if (operator === 'afterDate') {
+                operator = 'after';
+            } else if (operator === 'inTheRangeDate') {
+                operator = 'inTheRange';
             }
 
             switch (field) {
@@ -103,7 +120,7 @@ export const convertNDQueryToQueryGroup = (query: Record<string, any>) => {
             const group = convertNDQueryToQueryGroup(rule);
             rootGroup.group.push(group);
         } else {
-            const operator = Object.keys(rule)[0];
+            let operator = Object.keys(rule)[0];
             const field = Object.keys(rule[operator])[0];
             let value = rule[operator][field];
 
@@ -114,6 +131,20 @@ export const convertNDQueryToQueryGroup = (query: Record<string, any>) => {
             // Convert boolean values to string
             if (booleanFields.includes(field)) {
                 value = value.toString();
+            }
+
+            const dateFields = NDSongQueryFields.filter(
+                (queryField) => queryField.type === 'date' || queryField.type === 'dateRange',
+            ).map((field) => field.value);
+
+            if (dateFields.includes(field)) {
+                if (operator === 'before') {
+                    operator = 'beforeDate';
+                } else if (operator === 'after') {
+                    operator = 'afterDate';
+                } else if (operator === 'inTheRange') {
+                    operator = 'inTheRangeDate';
+                }
             }
 
             rootGroup.rules.push({

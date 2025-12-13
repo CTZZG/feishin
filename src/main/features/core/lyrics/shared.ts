@@ -23,10 +23,10 @@ export const orderSearchResults = (args: {
 
     const fuse = new Fuse(results, options);
 
-    const searchResults = fuse.search<InternetProviderLyricSearchResponse>({
+    const searchResults = fuse.search({
         ...(params.artist && { artist: params.artist }),
         ...(params.name && { name: params.name }),
-    });
+    } as any);
 
     return searchResults.map((result) => ({
         ...result.item,

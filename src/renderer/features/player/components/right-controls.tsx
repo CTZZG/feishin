@@ -1,58 +1,194 @@
-import { useHotkeys, useMediaQuery } from '@mantine/hooks';
-import isElectron from 'is-electron';
-import { useEffect } from 'react';
+import { t } from 'i18next';
+import { useCallback, WheelEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PlayerbarSlider } from '/@/renderer/features/player/components/playerbar-slider';
-import { useRightControls } from '/@/renderer/features/player/hooks/use-right-controls';
-import { useCreateFavorite, useDeleteFavorite, useSetRating } from '/@/renderer/features/shared';
+import { PopoverPlayQueue } from '/@/renderer/features/now-playing/components/popover-play-queue';
+import { PlayerConfig } from '/@/renderer/features/player/components/player-config';
+import { CustomPlayerbarSlider } from '/@/renderer/features/player/components/playerbar-slider';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
+import { useCreateFavorite } from '/@/renderer/features/shared/mutations/create-favorite-mutation';
+import { useDeleteFavorite } from '/@/renderer/features/shared/mutations/delete-favorite-mutation';
+import { useSetRating } from '/@/renderer/features/shared/mutations/set-rating-mutation';
 import {
     useAppStoreActions,
+    useAutoDJSettings,
     useCurrentServer,
-    useCurrentSong,
+    useFullScreenPlayerStore,
+    useGeneralSettings,
     useHotkeySettings,
-    useMuted,
-    usePreviousSong,
+    usePlayerData,
+    usePlayerMuted,
+    usePlayerSong,
+    usePlayerVolume,
+    useSetFullScreenPlayerStore,
     useSettingsStore,
-    useSidebarStore,
-    useSpeed,
-    useVolume,
+    useSettingsStoreActions,
+    useSidebarRightExpanded,
 } from '/@/renderer/store';
+import { useFullScreenPlayerStoreActions } from '/@/renderer/store/full-screen-player.store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
-import { DropdownMenu } from '/@/shared/components/dropdown-menu/dropdown-menu';
+import { Button } from '/@/shared/components/button/button';
 import { Flex } from '/@/shared/components/flex/flex';
 import { Group } from '/@/shared/components/group/group';
 import { Rating } from '/@/shared/components/rating/rating';
-import { Slider } from '/@/shared/components/slider/slider';
-import { LibraryItem, QueueSong, ServerType, Song } from '/@/shared/types/domain-types';
+import { useHotkeys } from '/@/shared/hooks/use-hotkeys';
+import { useMediaQuery } from '/@/shared/hooks/use-media-query';
+import { useThrottledCallback } from '/@/shared/hooks/use-throttled-callback';
+import { LibraryItem, QueueSong, ServerType } from '/@/shared/types/domain-types';
 
-const ipc = isElectron() ? window.api.ipc : null;
-const remote = isElectron() ? window.api.remote : null;
+const calculateVolumeUp = (volume: number, volumeWheelStep: number) => {
+    let volumeToSet;
+    const newVolumeGreaterThanHundred = volume + volumeWheelStep > 100;
+    if (newVolumeGreaterThanHundred) {
+        volumeToSet = 100;
+    } else {
+        volumeToSet = volume + volumeWheelStep;
+    }
+
+    return volumeToSet;
+};
+
+const calculateVolumeDown = (volume: number, volumeWheelStep: number) => {
+    let volumeToSet;
+    const newVolumeLessThanZero = volume - volumeWheelStep < 0;
+    if (newVolumeLessThanZero) {
+        volumeToSet = 0;
+    } else {
+        volumeToSet = volume - volumeWheelStep;
+    }
+
+    return volumeToSet;
+};
 
 export const RightControls = () => {
+    return (
+        <Flex align="flex-end" direction="column" h="100%" px="1rem" py="0.5rem">
+            <Group h="calc(100% / 3)">
+                <RatingButton />
+                <AutoDJButton />
+            </Group>
+            <Group align="center" gap="xs" wrap="nowrap">
+                <PlayerConfig />
+                <LyricsButton />
+                <FavoriteButton />
+                <QueueButton />
+                <VolumeButton />
+            </Group>
+            <Group h="calc(100% / 3)" />
+        </Flex>
+    );
+};
+
+const AutoDJButton = () => {
     const { t } = useTranslation();
-    const isMinWidth = useMediaQuery('(max-width: 480px)');
-    const volume = useVolume();
-    const muted = useMuted();
-    const server = useCurrentServer();
-    const currentSong = useCurrentSong();
-    const previousSong = usePreviousSong();
+    const settings = useAutoDJSettings();
+    const { setSettings } = useSettingsStoreActions();
+
+    const toggleAutoDJ = () => {
+        setSettings({
+            autoDJ: {
+                ...settings,
+                enabled: !settings.enabled,
+            },
+        });
+    };
+
+    return (
+        <Button
+            onClick={toggleAutoDJ}
+            size="compact-xs"
+            style={{ color: settings.enabled ? 'var(--theme-colors-primary)' : undefined }}
+            uppercase
+            variant="transparent"
+        >
+            {t('setting.autoDJ')}
+        </Button>
+    );
+};
+
+const QueueButton = () => {
+    const { t } = useTranslation();
+    const isSidebarRightExpanded = useSidebarRightExpanded();
     const { setSideBar } = useAppStoreActions();
-    const { rightExpanded: isQueueExpanded } = useSidebarStore();
+    const { sideQueueType } = useGeneralSettings();
+
     const { bindings } = useHotkeySettings();
-    const {
-        handleMute,
-        handleSpeed,
-        handleVolumeDown,
-        handleVolumeSlider,
-        handleVolumeUp,
-        handleVolumeWheel,
-    } = useRightControls();
 
-    const speed = useSpeed();
-    const volumeWidth = useSettingsStore((state) => state.general.volumeWidth);
+    const handleToggleQueue = () => {
+        setSideBar({ rightExpanded: !isSidebarRightExpanded });
+    };
 
-    const updateRatingMutation = useSetRating({});
+    useHotkeys([
+        [bindings.toggleQueue.isGlobal ? '' : bindings.toggleQueue.hotkey, handleToggleQueue],
+    ]);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+
+        if (sideQueueType === 'sideQueue') {
+            return handleToggleQueue();
+        }
+    };
+
+    if (sideQueueType === 'sideQueue') {
+        return (
+            <ActionIcon
+                icon={isSidebarRightExpanded ? 'panelRightClose' : 'panelRightOpen'}
+                iconProps={{
+                    size: 'lg',
+                }}
+                onClick={handleClick}
+                size="sm"
+                tooltip={{
+                    label: t('player.viewQueue', { postProcess: 'titleCase' }),
+                    openDelay: 0,
+                }}
+                variant="subtle"
+            />
+        );
+    }
+
+    return <PopoverPlayQueue />;
+};
+
+const LyricsButton = () => {
+    const setFullScreenPlayerStore = useSetFullScreenPlayerStore();
+    const activeTab = useFullScreenPlayerStore((state) => state.activeTab);
+
+    const { setStore } = useFullScreenPlayerStoreActions();
+    const { expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
+
+    const expandFullScreenPlayer = () => {
+        setFullScreenPlayerStore({ expanded: !isFullScreenPlayerExpanded });
+    };
+
+    return (
+        <ActionIcon
+            icon="microphone"
+            iconProps={{
+                color: activeTab === 'lyrics' && isFullScreenPlayerExpanded ? 'primary' : undefined,
+                size: 'lg',
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                if (!isFullScreenPlayerExpanded) setStore({ activeTab: 'lyrics' });
+                expandFullScreenPlayer();
+            }}
+            role="button"
+            size="sm"
+            tooltip={{
+                label: t('player.lyrics', { postProcess: 'titleCase' }) as string,
+                openDelay: 0,
+            }}
+            variant="subtle"
+        />
+    );
+};
+
+const FavoriteButton = () => {
+    const currentSong = usePlayerSong();
+    const { bindings } = useHotkeySettings();
+
     const addToFavoritesMutation = useCreateFavorite({});
     const removeFromFavoritesMutation = useDeleteFavorite({});
 
@@ -60,23 +196,11 @@ export const RightControls = () => {
         if (!song?.id) return;
 
         addToFavoritesMutation.mutate({
+            apiClientProps: { serverId: song?._serverId || '' },
             query: {
                 id: [song.id],
                 type: LibraryItem.SONG,
             },
-            serverId: song?.serverId,
-        });
-    };
-
-    const handleUpdateRating = (rating: number) => {
-        if (!currentSong) return;
-
-        updateRatingMutation.mutate({
-            query: {
-                item: [currentSong],
-                rating,
-            },
-            serverId: currentSong?.serverId,
         });
     };
 
@@ -84,11 +208,11 @@ export const RightControls = () => {
         if (!song?.id) return;
 
         removeFromFavoritesMutation.mutate({
+            apiClientProps: { serverId: song?._serverId || '' },
             query: {
                 id: [song.id],
                 type: LibraryItem.SONG,
             },
-            serverId: song?.serverId,
         });
     };
 
@@ -102,28 +226,13 @@ export const RightControls = () => {
         }
     };
 
-    const handleToggleQueue = () => {
-        setSideBar({ rightExpanded: !isQueueExpanded });
-    };
-
-    const formatPlaybackSpeedSliderLabel = (value: number) => {
-        const bpm = Number(currentSong?.bpm);
-        if (bpm > 0) {
-            return `${value} x / ${(bpm * value).toFixed(1)} BPM`;
-        }
-        return `${value} x`;
-    };
-
-    const isSongDefined = Boolean(currentSong?.id);
-    const showRating =
-        isSongDefined &&
-        (server?.type === ServerType.NAVIDROME || server?.type === ServerType.SUBSONIC);
+    useFavoritePreviousSongHotkeys({
+        handleAddToFavorites,
+        handleRemoveFromFavorites,
+        handleToggleFavorite,
+    });
 
     useHotkeys([
-        [bindings.volumeDown.isGlobal ? '' : bindings.volumeDown.hotkey, handleVolumeDown],
-        [bindings.volumeUp.isGlobal ? '' : bindings.volumeUp.hotkey, handleVolumeUp],
-        [bindings.volumeMute.isGlobal ? '' : bindings.volumeMute.hotkey, handleMute],
-        [bindings.toggleQueue.isGlobal ? '' : bindings.toggleQueue.hotkey, handleToggleQueue],
         [
             bindings.favoriteCurrentAdd.isGlobal ? '' : bindings.favoriteCurrentAdd.hotkey,
             () => handleAddToFavorites(currentSong),
@@ -136,6 +245,44 @@ export const RightControls = () => {
             bindings.favoriteCurrentToggle.isGlobal ? '' : bindings.favoriteCurrentToggle.hotkey,
             () => handleToggleFavorite(currentSong),
         ],
+    ]);
+
+    return (
+        <ActionIcon
+            icon="favorite"
+            iconProps={{
+                fill: currentSong?.userFavorite ? 'primary' : undefined,
+                size: 'lg',
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                handleToggleFavorite(currentSong);
+            }}
+            size="sm"
+            tooltip={{
+                label: currentSong?.userFavorite
+                    ? (t('player.unfavorite', { postProcess: 'titleCase' }) as string)
+                    : (t('player.favorite', { postProcess: 'titleCase' }) as string),
+                openDelay: 0,
+            }}
+            variant="subtle"
+        />
+    );
+};
+
+const useFavoritePreviousSongHotkeys = ({
+    handleAddToFavorites,
+    handleRemoveFromFavorites,
+    handleToggleFavorite,
+}: {
+    handleAddToFavorites: (song: QueueSong | undefined) => void;
+    handleRemoveFromFavorites: (song: QueueSong | undefined) => void;
+    handleToggleFavorite: (song: QueueSong | undefined) => void;
+}) => {
+    const { bindings } = useHotkeySettings();
+    const { previousSong } = usePlayerData();
+
+    useHotkeys([
         [
             bindings.favoritePreviousAdd.isGlobal ? '' : bindings.favoritePreviousAdd.hotkey,
             () => handleAddToFavorites(previousSong),
@@ -148,6 +295,37 @@ export const RightControls = () => {
             bindings.favoritePreviousToggle.isGlobal ? '' : bindings.favoritePreviousToggle.hotkey,
             () => handleToggleFavorite(previousSong),
         ],
+    ]);
+
+    return null;
+};
+
+const RatingButton = () => {
+    const server = useCurrentServer();
+    const currentSong = usePlayerSong();
+    const updateRatingMutation = useSetRating({});
+
+    const isSongDefined = Boolean(currentSong?.id);
+    const showRating =
+        isSongDefined &&
+        (server?.type === ServerType.NAVIDROME || server?.type === ServerType.SUBSONIC);
+
+    const handleUpdateRating = (rating: number) => {
+        if (!currentSong) return;
+
+        updateRatingMutation.mutate({
+            apiClientProps: { serverId: currentSong?._serverId || '' },
+            query: {
+                id: [currentSong.id],
+                rating,
+                type: LibraryItem.SONG,
+            },
+        });
+    };
+
+    const { bindings } = useHotkeySettings();
+
+    useHotkeys([
         [bindings.rate0.isGlobal ? '' : bindings.rate0.hotkey, () => handleUpdateRating(0)],
         [bindings.rate1.isGlobal ? '' : bindings.rate1.hotkey, () => handleUpdateRating(1)],
         [bindings.rate2.isGlobal ? '' : bindings.rate2.hotkey, () => handleUpdateRating(2)],
@@ -156,167 +334,103 @@ export const RightControls = () => {
         [bindings.rate5.isGlobal ? '' : bindings.rate5.hotkey, () => handleUpdateRating(5)],
     ]);
 
-    useEffect(() => {
-        if (remote) {
-            remote.requestFavorite((_event, { favorite, id, serverId }) => {
-                const mutator = favorite ? addToFavoritesMutation : removeFromFavoritesMutation;
-                mutator.mutate({
-                    query: {
-                        id: [id],
-                        type: LibraryItem.SONG,
-                    },
-                    serverId,
-                });
-            });
+    return (
+        <>
+            {showRating && (
+                <Rating
+                    onChange={handleUpdateRating}
+                    size="xs"
+                    value={currentSong?.userRating || 0}
+                />
+            )}
+        </>
+    );
+};
 
-            remote.requestRating((_event, { id, rating, serverId }) => {
-                updateRatingMutation.mutate({
-                    query: {
-                        item: [
-                            {
-                                id,
-                                itemType: LibraryItem.SONG,
-                                serverId,
-                            } as Song, // This is not a type-safe cast, but it works because those are all the prop
-                        ],
-                        rating,
-                    },
-                    serverId,
-                });
-            });
+const VolumeButton = () => {
+    const { bindings } = useHotkeySettings();
+    const volume = usePlayerVolume();
+    const muted = usePlayerMuted();
+    const { volumeWheelStep } = useGeneralSettings();
+    const volumeWidth = useSettingsStore((state) => state.general.volumeWidth);
+    const { mediaToggleMute, setVolume } = usePlayer();
+    const isMinWidth = useMediaQuery('(max-width: 480px)');
 
-            return () => {
-                ipc?.removeAllListeners('request-favorite');
-                ipc?.removeAllListeners('request-rating');
-            };
-        }
+    const handleVolumeDown = useCallback(() => {
+        setVolume(Math.max(0, volume - 1));
+    }, [setVolume, volume]);
 
-        return () => {};
-    }, [addToFavoritesMutation, removeFromFavoritesMutation, updateRatingMutation]);
+    const handleVolumeUp = useCallback(() => {
+        setVolume(Math.min(100, volume + 1));
+    }, [setVolume, volume]);
+
+    const handleVolumeSlider = useCallback(
+        (e: number) => {
+            setVolume(e);
+        },
+        [setVolume],
+    );
+
+    const handleMute = useCallback(() => {
+        mediaToggleMute();
+    }, [mediaToggleMute]);
+
+    const handleVolumeWheel = useCallback(
+        (e: WheelEvent<HTMLButtonElement | HTMLDivElement>) => {
+            let volumeToSet;
+            if (e.deltaY > 0 || e.deltaX > 0) {
+                volumeToSet = calculateVolumeDown(volume, volumeWheelStep);
+            } else {
+                volumeToSet = calculateVolumeUp(volume, volumeWheelStep);
+            }
+
+            setVolume(volumeToSet);
+        },
+        [setVolume, volume, volumeWheelStep],
+    );
+
+    const handleVolumeDownThrottled = useThrottledCallback(handleVolumeDown, 50);
+    const handleVolumeUpThrottled = useThrottledCallback(handleVolumeUp, 50);
+
+    useHotkeys([
+        [bindings.volumeDown.isGlobal ? '' : bindings.volumeDown.hotkey, handleVolumeDownThrottled],
+        [bindings.volumeUp.isGlobal ? '' : bindings.volumeUp.hotkey, handleVolumeUpThrottled],
+        [bindings.volumeMute.isGlobal ? '' : bindings.volumeMute.hotkey, handleMute],
+    ]);
 
     return (
-        <Flex align="flex-end" direction="column" h="100%" px="1rem" py="0.5rem">
-            <Group h="calc(100% / 3)">
-                {showRating && (
-                    <Rating
-                        onChange={handleUpdateRating}
-                        size="xs"
-                        value={currentSong?.userRating || 0}
-                    />
-                )}
-            </Group>
-            <Group align="center" gap="xs" wrap="nowrap">
-                <DropdownMenu arrowOffset={12} offset={0} position="top-end" width={425} withArrow>
-                    <DropdownMenu.Target>
-                        <ActionIcon
-                            icon="mediaSpeed"
-                            iconProps={{
-                                size: 'lg',
-                            }}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                            }}
-                            size="sm"
-                            tooltip={{
-                                label: t('player.playbackSpeed', { postProcess: 'sentenceCase' }),
-                                openDelay: 0,
-                            }}
-                            variant="subtle"
-                        />
-                    </DropdownMenu.Target>
-                    <DropdownMenu.Dropdown>
-                        <Slider
-                            label={formatPlaybackSpeedSliderLabel}
-                            marks={[
-                                { label: '0.5', value: 0.5 },
-                                { label: '0.75', value: 0.75 },
-                                { label: '1', value: 1 },
-                                { label: '1.25', value: 1.25 },
-                                { label: '1.5', value: 1.5 },
-                            ]}
-                            max={1.5}
-                            min={0.5}
-                            onChange={handleSpeed}
-                            onDoubleClick={() => handleSpeed(1)}
-                            step={0.01}
-                            styles={{
-                                markLabel: {
-                                    paddingTop: '0.5rem',
-                                },
-                                root: {
-                                    margin: '1rem 1rem 2rem 1rem',
-                                },
-                            }}
-                            value={speed}
-                        />
-                    </DropdownMenu.Dropdown>
-                </DropdownMenu>
-                <ActionIcon
-                    icon="favorite"
-                    iconProps={{
-                        fill: currentSong?.userFavorite ? 'primary' : undefined,
-                        size: 'lg',
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(currentSong);
-                    }}
-                    size="sm"
-                    tooltip={{
-                        label: currentSong?.userFavorite
-                            ? t('player.unfavorite', { postProcess: 'titleCase' })
-                            : t('player.favorite', { postProcess: 'titleCase' }),
-                        openDelay: 0,
-                    }}
-                    variant="subtle"
-                />
-                <ActionIcon
-                    icon={isQueueExpanded ? 'panelRightClose' : 'panelRightOpen'}
-                    iconProps={{
-                        size: 'lg',
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleQueue();
-                    }}
-                    size="sm"
-                    tooltip={{
-                        label: t('player.viewQueue', { postProcess: 'titleCase' }),
-                        openDelay: 0,
-                    }}
-                    variant="subtle"
-                />
-                <ActionIcon
-                    icon={muted ? 'volumeMute' : volume > 50 ? 'volumeMax' : 'volumeNormal'}
-                    iconProps={{
-                        color: muted ? 'muted' : undefined,
-                        size: 'xl',
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleMute();
-                    }}
+        <>
+            <ActionIcon
+                icon={muted ? 'volumeMute' : volume > 50 ? 'volumeMax' : 'volumeNormal'}
+                iconProps={{
+                    color: muted ? 'muted' : undefined,
+                    size: 'xl',
+                }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleMute();
+                }}
+                onWheel={handleVolumeWheel}
+                size="sm"
+                tooltip={{
+                    label: muted
+                        ? (t('player.muted', { postProcess: 'titleCase' }) as string)
+                        : (volume as unknown as number),
+                    openDelay: 0,
+                }}
+                variant="subtle"
+            />
+            {!isMinWidth ? (
+                <CustomPlayerbarSlider
+                    max={100}
+                    min={0}
+                    onChange={handleVolumeSlider}
                     onWheel={handleVolumeWheel}
-                    size="sm"
-                    tooltip={{
-                        label: muted ? t('player.muted', { postProcess: 'titleCase' }) : volume,
-                        openDelay: 0,
-                    }}
-                    variant="subtle"
+                    size={6}
+                    value={volume}
+                    w={volumeWidth}
                 />
-                {!isMinWidth ? (
-                    <PlayerbarSlider
-                        max={100}
-                        min={0}
-                        onChange={handleVolumeSlider}
-                        onWheel={handleVolumeWheel}
-                        size={6}
-                        value={volume}
-                        w={volumeWidth}
-                    />
-                ) : null}
-            </Group>
-            <Group h="calc(100% / 3)" />
-        </Flex>
+            ) : null}
+        </>
     );
 };

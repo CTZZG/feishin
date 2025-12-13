@@ -1,17 +1,16 @@
 .library-header {
     position: relative;
     display: grid;
-    grid-template-areas: 'image info';
-    grid-template-rows: 100%;
-    grid-template-columns: 175px minmax(0, 1fr);
-    gap: 1rem;
-    align-items: flex-end;
+    grid-template-areas: 'image' 'info';
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr;
+    gap: var(--theme-spacing-md);
+    align-items: center;
+    justify-items: center;
     width: 100%;
     max-width: 100%;
-    height: 30vh;
-    min-height: 340px;
-    max-height: 500px;
-    padding: 5rem 2rem 2rem;
+    height: auto;
+    padding: 2rem 1rem;
 
     :global(.item-image-placeholder) {
         width: 175px !important;
@@ -19,52 +18,19 @@
     }
 
     .image {
-        width: 175px !important;
-        height: 175px;
+        width: 250px !important;
+        height: 250px;
     }
 
-    @container (max-width: 599px) {
-        grid-template-columns: 175px minmax(0, 1fr);
-
-        h1 {
-            height: 40px;
-        }
-
-        .image {
-            width: 175px !important;
-            height: 175px;
-        }
-
-        :global(.item-image-placeholder) {
-            width: 175px !important;
-            height: 175px;
-        }
-    }
-
-    @container (min-width: 600px) {
-        grid-template-columns: 200px minmax(0, 1fr);
-
-        h1 {
-            height: 80px;
-        }
-
-        .image {
-            width: 200px !important;
-            height: 200px;
-        }
-
-        :global(.item-image-placeholder) {
-            width: 200px !important;
-            height: 200px;
-        }
-    }
-
-    @container (min-width: 768px) {
+    @container (min-width: $mantine-breakpoint-sm) {
+        grid-template-areas: 'image info';
+        grid-template-rows: auto;
         grid-template-columns: 225px minmax(0, 1fr);
-
-        h1 {
-            height: 100px;
-        }
+        align-items: center;
+        justify-items: start;
+        height: auto;
+        min-height: 340px;
+        padding: 5rem 2rem 2rem;
 
         .image {
             width: 225px !important;
@@ -77,11 +43,10 @@
         }
     }
 
-    @container (min-width: 1200px) {
+    @container (min-width: $mantine-breakpoint-lg) {
         grid-template-columns: 250px minmax(0, 1fr);
 
-        .image,
-        .image-section {
+        .image {
             width: 250px !important;
             height: 250px;
         }
@@ -97,10 +62,13 @@
     z-index: 15;
     display: flex;
     grid-area: image;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    height: 100%;
     filter: drop-shadow(0 0 8px rgb(0 0 0 / 50%));
+
+    @container (min-width: $mantine-breakpoint-sm) {
+        align-items: flex-end;
+    }
 }
 
 .metadata-section {
@@ -108,8 +76,18 @@
     display: flex;
     flex-direction: column;
     grid-area: info;
-    justify-content: flex-end;
+    gap: var(--theme-spacing-sm);
+    align-items: center;
+    justify-content: center;
     width: 100%;
+    height: 100%;
+    text-align: center;
+
+    @container (min-width: $mantine-breakpoint-sm) {
+        align-items: flex-start;
+        justify-content: flex-end;
+        text-align: left;
+    }
 }
 
 .image {
@@ -117,40 +95,24 @@
     border-radius: 5px;
 }
 
-.background {
-    position: absolute;
-    top: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    background-position: center !important;
-    background-size: cover !important;
-    opacity: 0.9;
-}
-
-.background-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--theme-overlay-header);
-}
-
-.opaque-overlay {
-    opacity: 0.5;
-}
-
 .title {
     display: flex;
-    align-items: center !important;
     margin: var(--theme-spacing-sm) 0;
-    overflow: hidden;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    font-size: 2rem;
+    font-size: clamp(2rem, 3.5dvw, 3.25rem);
     line-height: 1.2;
-    color: var(--theme-colors-foreground);
-    -webkit-box-orient: vertical;
+}
+
+.library-header-menu {
+    display: flex;
+    flex-direction: column;
+    gap: var(--theme-spacing-sm);
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    @container (min-width: $mantine-breakpoint-sm) {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }

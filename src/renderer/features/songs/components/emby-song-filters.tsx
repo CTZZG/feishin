@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
-import { useGenreList } from '/@/renderer/features/genres';
+import { useGenreList } from '/@/renderer/features/genres/api/genres-api';
 import { useTagList } from '/@/renderer/features/tag/queries/use-tag-list';
-import { SongListFilter, useListFilterByKey, useListStoreActions } from '/@/renderer/store';
+import { useListFilterByKey, useListStoreActions } from '/@/renderer/store';
 import { Divider } from '/@/shared/components/divider/divider';
 import { Group } from '/@/shared/components/group/group';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
@@ -15,8 +15,8 @@ import { YesNoSelect } from '/@/shared/components/yes-no-select/yes-no-select';
 import { GenreListSort, LibraryItem, SongListQuery, SortOrder } from '/@/shared/types/domain-types';
 
 interface EmbySongFiltersProps {
-    customFilters?: Partial<SongListFilter>;
-    onFilterChange: (filters: SongListFilter) => void;
+    customFilters?: Partial<any>;
+    onFilterChange: (filters: any) => void;
     pageKey: string;
     serverId?: string;
 }
@@ -61,13 +61,15 @@ export const EmbySongFilters = ({
         serverId,
     });
 
+    const embyGenreIds = filter?._custom?.emby?.GenreIds;
     const selectedGenres = useMemo(() => {
-        return filter?._custom?.emby?.GenreIds?.split(',');
-    }, [filter?._custom?.emby?.GenreIds]);
+        return embyGenreIds?.split(',');
+    }, [embyGenreIds]);
 
+    const embyTags = filter?._custom?.emby?.Tags;
     const selectedTags = useMemo(() => {
-        return filter?._custom?.emby?.Tags?.split('|');
-    }, [filter?._custom?.emby?.Tags]);
+        return embyTags?.split('|');
+    }, [embyTags]);
 
     const yesNoFilters = [
         {
@@ -87,7 +89,7 @@ export const EmbySongFilters = ({
                     },
                     itemType: LibraryItem.SONG,
                     key: pageKey,
-                }) as SongListFilter;
+                }) as any;
                 onFilterChange(updatedFilters);
             },
             value: filter.favorite,
@@ -110,7 +112,7 @@ export const EmbySongFilters = ({
             },
             itemType: LibraryItem.SONG,
             key: pageKey,
-        }) as SongListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 500);
 
@@ -130,7 +132,7 @@ export const EmbySongFilters = ({
             },
             itemType: LibraryItem.SONG,
             key: pageKey,
-        }) as SongListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 500);
 
@@ -149,7 +151,7 @@ export const EmbySongFilters = ({
             },
             itemType: LibraryItem.SONG,
             key: pageKey,
-        }) as SongListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 250);
 
@@ -168,20 +170,19 @@ export const EmbySongFilters = ({
             },
             itemType: LibraryItem.SONG,
             key: pageKey,
-        }) as SongListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 250);
 
     return (
         <Stack p="0.8rem">
             {yesNoFilters.map((filter) => (
-                <Group
-                    justify="space-between"
-                    key={`nd-filter-${filter.label}`}
-                >
+                <Group justify="space-between" key={`nd-filter-${filter.label}`}>
                     <Text>{filter.label}</Text>
                     <YesNoSelect
-                        onChange={filter.onChange}
+                        onChange={(val) =>
+                            filter.onChange(val === 'yes' ? true : val === 'no' ? false : undefined)
+                        }
                         size="xs"
                         value={filter.value}
                     />

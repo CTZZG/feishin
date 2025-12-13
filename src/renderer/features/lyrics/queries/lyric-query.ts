@@ -75,7 +75,10 @@ export const useServerLyrics = (
             if (!server) throw new Error('Server not found');
             // This should only be called for Jellyfin. Return null to ignore errors
             if (server.type !== ServerType.JELLYFIN) return null;
-            return api.controller.getLyrics({ apiClientProps: { server, signal }, query });
+            return api.controller.getLyrics({
+                apiClientProps: { server, serverId: server.id, signal },
+                query,
+            });
         },
         queryKey: queryKeys.songs.lyrics(server?.id || '', query),
     });
@@ -87,7 +90,7 @@ export const useSongLyricsBySong = (
 ): UseQueryResult<FullLyricsMetadata | StructuredLyric[]> => {
     const { query } = args;
     const { fetch, preferLocalLyrics } = useLyricsSettings();
-    const server = getServerById(song?.serverId);
+    const server = getServerById(song?._serverId);
 
     return useQuery({
         cacheTime: Infinity,
@@ -106,7 +109,7 @@ export const useSongLyricsBySong = (
             ) {
                 const embyLyrics = await api.controller
                     .getLyrics({
-                        apiClientProps: { server, signal },
+                        apiClientProps: { server, serverId: server.id, signal },
                         query: { songId: song.id },
                     })
                     .catch(console.error);
@@ -123,7 +126,7 @@ export const useSongLyricsBySong = (
             } else if (hasFeature(server, ServerFeature.LYRICS_MULTIPLE_STRUCTURED)) {
                 const subsonicLyrics = await api.controller
                     .getStructuredLyrics({
-                        apiClientProps: { server, signal },
+                        apiClientProps: { server, serverId: server.id, signal },
                         query: { songId: song.id },
                     })
                     .catch(console.error);
@@ -134,7 +137,7 @@ export const useSongLyricsBySong = (
             } else if (hasFeature(server, ServerFeature.LYRICS_SINGLE_STRUCTURED)) {
                 const jfLyrics = await api.controller
                     .getLyrics({
-                        apiClientProps: { server, signal },
+                        apiClientProps: { server, serverId: server.id, signal },
                         query: { songId: song.id },
                     })
                     .catch((err) => console.error(err));
@@ -186,7 +189,6 @@ export const useSongLyricsBySong = (
             return null;
         },
         queryKey: queryKeys.songs.lyrics(server?.id || '', query),
-        staleTime: Infinity,
     });
 };
 

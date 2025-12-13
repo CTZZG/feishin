@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
-import { useAlbumArtistList } from '/@/renderer/features/artists/queries/album-artist-list-query';
-import { useGenreList } from '/@/renderer/features/genres';
+import { useAlbumArtistList } from '/@/renderer/features/artists/hooks/use-album-artist-list';
+import { useGenreList } from '/@/renderer/features/genres/api/genres-api';
 import { useTagList } from '/@/renderer/features/tag/queries/use-tag-list';
-import { AlbumListFilter, useListFilterByKey, useListStoreActions } from '/@/renderer/store';
+import { useListFilterByKey, useListStoreActions } from '/@/renderer/store';
 import { Divider } from '/@/shared/components/divider/divider';
 import { Group } from '/@/shared/components/group/group';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
@@ -23,9 +23,9 @@ import {
 } from '/@/shared/types/domain-types';
 
 interface EmbyAlbumFiltersProps {
-    customFilters?: Partial<AlbumListFilter>;
+    customFilters?: Partial<any>;
     disableArtistFilter?: boolean;
-    onFilterChange: (filters: AlbumListFilter) => void;
+    onFilterChange: (filters: any) => void;
     pageKey: string;
     serverId?: string;
 }
@@ -68,9 +68,10 @@ export const EmbyAlbumFilters = ({
         serverId,
     });
 
+    const embyTags = filter?._custom?.emby?.Tags;
     const selectedTags = useMemo(() => {
-        return filter?._custom?.emby?.Tags?.split('|');
-    }, [filter?._custom?.emby?.Tags]);
+        return embyTags?.split('|');
+    }, [embyTags]);
 
     const yesNoFilter = [
         {
@@ -84,7 +85,7 @@ export const EmbyAlbumFilters = ({
                     },
                     itemType: LibraryItem.ALBUM,
                     key: pageKey,
-                }) as AlbumListFilter;
+                }) as any;
                 onFilterChange(updatedFilters);
             },
             value: filter?.favorite,
@@ -101,7 +102,7 @@ export const EmbyAlbumFilters = ({
             },
             itemType: LibraryItem.ALBUM,
             key: pageKey,
-        }) as AlbumListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 500);
 
@@ -115,7 +116,7 @@ export const EmbyAlbumFilters = ({
             },
             itemType: LibraryItem.ALBUM,
             key: pageKey,
-        }) as AlbumListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 500);
 
@@ -128,7 +129,7 @@ export const EmbyAlbumFilters = ({
             },
             itemType: LibraryItem.ALBUM,
             key: pageKey,
-        }) as AlbumListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 250);
 
@@ -147,14 +148,15 @@ export const EmbyAlbumFilters = ({
         serverId,
     });
 
+    const artistItems = albumArtistListQuery?.data?.items;
     const selectableAlbumArtists = useMemo(() => {
-        if (!albumArtistListQuery?.data?.items) return [];
+        if (!artistItems) return [];
 
-        return albumArtistListQuery?.data?.items?.map((artist) => ({
+        return artistItems.map((artist: any) => ({
             label: artist.name,
             value: artist.id,
         }));
-    }, [albumArtistListQuery?.data?.items]);
+    }, [artistItems]);
 
     const handleAlbumArtistFilter = (e: null | string[]) => {
         const updatedFilters = setFilter({
@@ -165,7 +167,7 @@ export const EmbyAlbumFilters = ({
             },
             itemType: LibraryItem.ALBUM,
             key: pageKey,
-        }) as AlbumListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     };
 
@@ -183,20 +185,19 @@ export const EmbyAlbumFilters = ({
             },
             itemType: LibraryItem.SONG,
             key: pageKey,
-        }) as AlbumListFilter;
+        }) as any;
         onFilterChange(updatedFilters);
     }, 250);
 
     return (
         <Stack p="0.8rem">
             {yesNoFilter.map((filter) => (
-                <Group
-                    justify="space-between"
-                    key={`nd-filter-${filter.label}`}
-                >
+                <Group justify="space-between" key={`nd-filter-${filter.label}`}>
                     <Text>{filter.label}</Text>
                     <YesNoSelect
-                        onChange={filter.onChange}
+                        onChange={(val) =>
+                            filter.onChange(val === 'yes' ? true : val === 'no' ? false : undefined)
+                        }
                         size="xs"
                         value={filter.value}
                     />

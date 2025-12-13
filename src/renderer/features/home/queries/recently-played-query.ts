@@ -28,6 +28,7 @@ export const useRecentlyPlayed = (args: QueryHookArgs<Partial<AlbumListQuery>>) 
                 return api.controller.getRecentlyPlayedAlbums({
                     apiClientProps: {
                         server,
+                        serverId: server.id,
                         signal,
                     },
                     query: requestQuery,
@@ -38,6 +39,7 @@ export const useRecentlyPlayed = (args: QueryHookArgs<Partial<AlbumListQuery>>) 
             return api.controller.getAlbumList({
                 apiClientProps: {
                     server,
+                    serverId: server.id,
                     signal,
                 },
                 query: requestQuery,

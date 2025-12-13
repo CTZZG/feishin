@@ -1,288 +1,354 @@
-import type {
-    CellDoubleClickedEvent,
-    RowClassRules,
-    RowDragEvent,
-    RowNode,
-} from '@ag-grid-community/core';
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
-import type { Ref } from 'react';
+import clsx from 'clsx';
+import { forwardRef, ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useMergedRef } from '@mantine/hooks';
-import '@ag-grid-community/styles/ag-theme-alpine.css';
-import isElectron from 'is-electron';
-import debounce from 'lodash/debounce';
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import styles from './play-queue.module.css';
 
-import { VirtualGridAutoSizerContainer } from '/@/renderer/components/virtual-grid';
-import { getColumnDefs, VirtualTable } from '/@/renderer/components/virtual-table';
-import { ErrorFallback } from '/@/renderer/features/action-required';
-import { useHandleTableContextMenu } from '/@/renderer/features/context-menu';
-import { QUEUE_CONTEXT_MENU_ITEMS } from '/@/renderer/features/context-menu/context-menu-items';
-import { PlayersRef } from '/@/renderer/features/player/ref/players-ref';
-import { updateSong } from '/@/renderer/features/player/update-remote-song';
-import { useAppFocus } from '/@/renderer/hooks';
+import { useItemListColumnReorder } from '/@/renderer/components/item-list/helpers/use-item-list-column-reorder';
+import { useItemListColumnResize } from '/@/renderer/components/item-list/helpers/use-item-list-column-resize';
 import {
-    useAppStoreActions,
-    useCurrentSong,
-    useCurrentStatus,
-    useDefaultQueue,
-    usePlayerControls,
-    usePreviousSong,
-    useQueueControls,
-    useVolume,
-} from '/@/renderer/store';
+    ItemTableList,
+    TableGroupHeader,
+} from '/@/renderer/components/item-list/item-table-list/item-table-list';
+import { ItemTableListColumn } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
+import { ItemListHandle } from '/@/renderer/components/item-list/types';
+import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
+import { searchLibraryItems } from '/@/renderer/features/shared/utils';
+import { useDragDrop } from '/@/renderer/hooks/use-drag-drop';
 import {
-    PersistedTableColumn,
-    usePlaybackType,
+    subscribeCurrentTrack,
+    subscribePlayerQueue,
+    useListSettings,
+    usePlayerActions,
+    usePlayerQueueType,
+    usePlayerSong,
     useSettingsStore,
-    useSettingsStoreActions,
-    useTableSettings,
-} from '/@/renderer/store/settings.store';
-import { setQueue, setQueueNext } from '/@/renderer/utils/set-transcoded-queue-data';
-import { LibraryItem, QueueSong } from '/@/shared/types/domain-types';
-import { PlaybackType, TableType } from '/@/shared/types/types';
-
-const mpvPlayer = isElectron() ? window.api.mpvPlayer : null;
+} from '/@/renderer/store';
+import { Flex } from '/@/shared/components/flex/flex';
+import { LoadingOverlay } from '/@/shared/components/loading-overlay/loading-overlay';
+import { Text } from '/@/shared/components/text/text';
+import { useDebouncedValue } from '/@/shared/hooks/use-debounced-value';
+import { useFocusWithin } from '/@/shared/hooks/use-focus-within';
+import { useHotkeys } from '/@/shared/hooks/use-hotkeys';
+import { useMergedRef } from '/@/shared/hooks/use-merged-ref';
+import { Folder, LibraryItem, QueueSong, Song } from '/@/shared/types/domain-types';
+import { DragTarget } from '/@/shared/types/drag-and-drop';
+import { ItemListKey, Play, PlayerQueueType } from '/@/shared/types/types';
 
 type QueueProps = {
-    type: TableType;
+    listKey: ItemListKey;
+    searchTerm: string | undefined;
 };
 
-export const PlayQueue = forwardRef(({ type }: QueueProps, ref: Ref<any>) => {
-    const tableRef = useRef<AgGridReactType | null>(null);
+export const PlayQueue = forwardRef<ItemListHandle, QueueProps>(({ listKey, searchTerm }, ref) => {
+    const { table } = useListSettings(listKey) || {};
+
+    const isFetching = useIsPlayerFetching();
+    const tableRef = useRef<ItemListHandle>(null);
     const mergedRef = useMergedRef(ref, tableRef);
-    const queue = useDefaultQueue();
-    const { reorderQueue, setCurrentTrack } = useQueueControls();
-    const currentSong = useCurrentSong();
-    const previousSong = usePreviousSong();
-    const status = useCurrentStatus();
-    const { setSettings } = useSettingsStoreActions();
-    const { setAppStore } = useAppStoreActions();
-    const tableConfig = useTableSettings(type);
-    const [gridApi, setGridApi] = useState<AgGridReactType | undefined>();
-    const playbackType = usePlaybackType();
-    const { play } = usePlayerControls();
-    const volume = useVolume();
-    const isFocused = useAppFocus();
-    const isFocusedRef = useRef<boolean>(isFocused);
+    const { getQueue } = usePlayerActions();
+    const queueType = usePlayerQueueType();
+    const followCurrentSong = useSettingsStore((state) => state.general.followCurrentSong);
+
+    const [debouncedSearchTerm] = useDebouncedValue(searchTerm, 200);
+
+    const [data, setData] = useState<QueueSong[]>([]);
+    const [groups, setGroups] = useState<TableGroupHeader[]>([]);
 
     useEffect(() => {
-        if (tableRef.current) {
-            setGridApi(tableRef.current);
-        }
-    }, []);
+        const setQueue = () => {
+            const queue = getQueue() || { groups: [], items: [] };
 
-    useImperativeHandle(ref, () => ({
-        get grid() {
-            return gridApi;
-        },
-    }));
+            setData(queue.items);
 
-    const columnDefs = useMemo(
-        () => getColumnDefs(tableConfig.columns, false, 'generic'),
-        [tableConfig.columns],
-    );
-
-    const handleDoubleClick = (e: CellDoubleClickedEvent) => {
-        const playerData = setCurrentTrack(e.data.uniqueId);
-        updateSong(playerData.current.song);
-
-        if (playbackType === PlaybackType.LOCAL) {
-            mpvPlayer!.volume(volume);
-            setQueue(playerData, false);
-        } else {
-            const player =
-                playerData.current.player === 1
-                    ? PlayersRef.current?.player1
-                    : PlayersRef.current?.player2;
-            const underlying = player?.getInternalPlayer();
-            if (underlying) {
-                underlying.currentTime = 0;
+            if (queueType === PlayerQueueType.PRIORITY && queue.groups && queue.groups.length > 0) {
+                const transformedGroups: TableGroupHeader[] = queue.groups.map((group) => ({
+                    itemCount: group.count,
+                    render: (): ReactElement => {
+                        return (
+                            <div className={styles.groupRow}>
+                                <Text
+                                    fw={600}
+                                    overflow="visible"
+                                    size="md"
+                                    style={{
+                                        textWrap: 'nowrap',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {group.name}
+                                </Text>
+                            </div>
+                        );
+                    },
+                    rowHeight: 40,
+                }));
+                setGroups(transformedGroups);
+            } else {
+                setGroups([]);
             }
-        }
+        };
 
-        play();
-    };
+        const unsub = subscribePlayerQueue(() => {
+            setQueue();
+        });
 
-    const handleDragStart = () => {
-        if (type === 'sideDrawerQueue') {
-            setAppStore({ isReorderingQueue: true });
-        }
-    };
-
-    let timeout: any;
-    const handleDragEnd = (e: RowDragEvent<QueueSong>) => {
-        if (!e.nodes.length) return;
-        const selectedUniqueIds = e.nodes
-            .map((node) => node.data?.uniqueId)
-            .filter((e) => e !== undefined);
-
-        const playerData = reorderQueue(selectedUniqueIds as string[], e.overNode?.data?.uniqueId);
-
-        if (playbackType === PlaybackType.LOCAL) {
-            setQueueNext(playerData);
-        }
-
-        if (type === 'sideDrawerQueue') {
-            setAppStore({ isReorderingQueue: false });
-        }
-
-        const { api } = tableRef?.current || {};
-        clearTimeout(timeout);
-        timeout = setTimeout(() => api?.redrawRows(), 250);
-    };
-
-    const handleGridReady = () => {
-        const { api } = tableRef?.current || {};
-
-        if (currentSong?.uniqueId) {
-            const currentNode = api?.getRowNode(currentSong?.uniqueId);
-
-            if (!currentNode) return;
-            api?.ensureNodeVisible(currentNode, 'middle');
-        }
-    };
-
-    const handleColumnChange = () => {
-        const { columnApi } = tableRef?.current || {};
-        const columnsOrder = columnApi?.getAllGridColumns();
-        if (!columnsOrder) return;
-
-        const columnsInSettings = useSettingsStore.getState().tables[type].columns;
-
-        const updatedColumns: PersistedTableColumn[] = [];
-        for (const column of columnsOrder) {
-            const columnInSettings = columnsInSettings.find(
-                (c) => c.column === column.getColDef().colId,
-            );
-
-            if (columnInSettings) {
-                updatedColumns.push({
-                    ...columnInSettings,
-                    ...(!useSettingsStore.getState().tables[type].autoFit && {
-                        width: column.getActualWidth(),
-                    }),
+        const unsubCurrentTrack = subscribeCurrentTrack((e) => {
+            if (followCurrentSong && e.index !== -1) {
+                tableRef.current?.scrollToIndex(e.index, {
+                    align: 'center',
+                    behavior: 'auto',
                 });
             }
-        }
-
-        setSettings({
-            tables: {
-                ...useSettingsStore.getState().tables,
-                [type]: {
-                    ...useSettingsStore.getState().tables[type],
-                    columns: updatedColumns,
-                },
-            },
         });
-    };
 
-    const debouncedColumnChange = debounce(handleColumnChange, 250);
+        setQueue();
 
-    const handleGridSizeChange = () => {
-        if (tableConfig.autoFit) {
-            tableRef?.current?.api?.sizeColumnsToFit();
-        }
-    };
-
-    const rowClassRules = useMemo<RowClassRules | undefined>(() => {
-        return {
-            'current-song': (params) => {
-                return params.data.uniqueId === currentSong?.uniqueId;
-            },
+        return () => {
+            unsub();
+            unsubCurrentTrack();
         };
-    }, [currentSong?.uniqueId]);
+    }, [getQueue, queueType, tableRef, followCurrentSong]);
 
-    // Redraw the current song row when the previous song changes
-    useEffect(() => {
-        if (tableRef?.current) {
-            const { api, columnApi } = tableRef?.current || {};
-            if (api == null || columnApi == null) {
-                return;
-            }
+    const filteredData: QueueSong[] = useMemo(() => {
+        if (debouncedSearchTerm) {
+            const searched = searchLibraryItems(data, debouncedSearchTerm, LibraryItem.SONG);
+            return searched;
+        }
 
-            const currentNode = currentSong?.uniqueId
-                ? api.getRowNode(currentSong.uniqueId)
-                : undefined;
-            const previousNode = previousSong?.uniqueId
-                ? api.getRowNode(previousSong?.uniqueId)
-                : undefined;
+        return data;
+    }, [data, debouncedSearchTerm]);
 
-            const rowNodes = [currentNode, previousNode].filter(
-                (e) => e !== undefined,
-            ) as RowNode<any>[];
+    const isEmpty = filteredData.length === 0;
 
-            if (rowNodes) {
-                api.redrawRows({ rowNodes });
-                if (tableConfig.followCurrentSong) {
-                    if (!currentNode) return;
-                    api.ensureNodeVisible(currentNode, 'middle');
+    const { handleColumnReordered } = useItemListColumnReorder({
+        itemListKey: listKey,
+    });
+
+    const { handleColumnResized } = useItemListColumnResize({
+        itemListKey: listKey,
+    });
+
+    const currentSong = usePlayerSong();
+
+    const currentSongUniqueId = currentSong?._uniqueId;
+
+    const { focused, ref: containerFocusRef } = useFocusWithin();
+    const player = usePlayer();
+
+    useHotkeys([
+        [
+            'delete',
+            () => {
+                if (focused) {
+                    const selectedItems =
+                        tableRef.current?.internalState.getSelected() as QueueSong[];
+
+                    if (!selectedItems || selectedItems.length === 0) {
+                        return;
+                    }
+
+                    player.clearSelected(selectedItems);
                 }
-            }
-        }
-    }, [currentSong, previousSong, tableConfig.followCurrentSong, status]);
-
-    // As a separate rule, update the current row when focus changes. This is
-    // to prevent queue scrolling when the application loses and then gains focus.
-    // The body should only fire when focus changes, even though it depends on current song
-    useEffect(() => {
-        if (isFocused !== isFocusedRef.current && tableRef?.current) {
-            const { api, columnApi } = tableRef.current;
-            if (api == null || columnApi == null) {
-                return;
-            }
-
-            const currentNode = currentSong?.uniqueId
-                ? api.getRowNode(currentSong.uniqueId)
-                : undefined;
-
-            if (currentNode) {
-                api.redrawRows({ rowNodes: [currentNode] });
-            }
-
-            isFocusedRef.current = isFocused;
-        }
-    }, [currentSong, isFocused]);
-
-    const onCellContextMenu = useHandleTableContextMenu(LibraryItem.SONG, QUEUE_CONTEXT_MENU_ITEMS);
+            },
+        ],
+    ]);
 
     return (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <VirtualGridAutoSizerContainer>
-                <VirtualTable
-                    alwaysShowHorizontalScroll
-                    autoFitColumns={tableConfig.autoFit}
-                    columnDefs={columnDefs}
-                    context={{
-                        currentSong,
-                        handleDoubleClick,
-                        isFocused,
-                        isQueue: true,
-                        itemType: LibraryItem.SONG,
-                        onCellContextMenu,
-                        status,
-                    }}
-                    deselectOnClickOutside={type === 'fullScreen'}
-                    getRowId={(data) => data.data.uniqueId}
-                    onCellContextMenu={onCellContextMenu}
-                    onCellDoubleClicked={handleDoubleClick}
-                    onColumnMoved={handleColumnChange}
-                    onColumnResized={debouncedColumnChange}
-                    onDragStarted={handleDragStart}
-                    onGridReady={handleGridReady}
-                    onGridSizeChanged={handleGridSizeChange}
-                    onRowDragEnd={handleDragEnd}
-                    ref={mergedRef}
-                    rowBuffer={50}
-                    rowClassRules={rowClassRules}
-                    rowData={queue}
-                    rowDragEntireRow
-                    rowDragMultiRow
-                    rowHeight={tableConfig.rowHeight || 40}
-                    suppressCellFocus={type === 'fullScreen'}
-                />
-            </VirtualGridAutoSizerContainer>
-        </ErrorBoundary>
+        <div className={styles.container} ref={containerFocusRef}>
+            <LoadingOverlay pos="absolute" visible={isFetching} />
+            <ItemTableList
+                activeRowId={currentSongUniqueId}
+                autoFitColumns={table.autoFitColumns}
+                CellComponent={ItemTableListColumn}
+                columns={table.columns}
+                data={filteredData}
+                enableAlternateRowColors={table.enableAlternateRowColors}
+                enableDrag
+                enableExpansion={false}
+                enableHeader
+                enableHorizontalBorders={table.enableHorizontalBorders}
+                enableRowHoverHighlight={table.enableRowHoverHighlight}
+                enableSelection
+                enableVerticalBorders={table.enableVerticalBorders}
+                getRowId="_uniqueId"
+                groups={groups.length > 0 ? groups : undefined}
+                initialTop={{
+                    to: 0,
+                    type: 'offset',
+                }}
+                itemType={LibraryItem.QUEUE_SONG}
+                onColumnReordered={handleColumnReordered}
+                onColumnResized={handleColumnResized}
+                ref={mergedRef}
+                size={table.size}
+            />
+            {isEmpty && <EmptyQueueDropZone />}
+        </div>
     );
 });
+
+const EmptyQueueDropZone = () => {
+    const playerContext = usePlayer();
+
+    const { isDraggedOver, ref } = useDragDrop<HTMLDivElement>({
+        drop: {
+            canDrop: () => {
+                return true;
+            },
+            getData: () => {
+                return {
+                    id: [],
+                    item: [],
+                    itemType: LibraryItem.QUEUE_SONG,
+                    type: DragTarget.QUEUE_SONG,
+                };
+            },
+            onDrag: () => {
+                return;
+            },
+            onDragLeave: () => {
+                return;
+            },
+            onDrop: (args) => {
+                if (args.self.type === DragTarget.QUEUE_SONG) {
+                    const sourceServerId = (
+                        args.source.item?.[0] as unknown as { _serverId: string }
+                    )?._serverId;
+
+                    const sourceItemType = args.source.itemType as LibraryItem;
+
+                    switch (args.source.type) {
+                        case DragTarget.ALBUM: {
+                            if (sourceServerId) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    args.source.id,
+                                    sourceItemType,
+                                    Play.NOW,
+                                );
+                            }
+                            break;
+                        }
+                        case DragTarget.ALBUM_ARTIST: {
+                            if (sourceServerId) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    args.source.id,
+                                    sourceItemType,
+                                    Play.NOW,
+                                );
+                            }
+                            break;
+                        }
+                        case DragTarget.ARTIST: {
+                            if (sourceServerId) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    args.source.id,
+                                    sourceItemType,
+                                    Play.NOW,
+                                );
+                            }
+                            break;
+                        }
+                        case DragTarget.FOLDER: {
+                            const items = args.source.item;
+
+                            const { folders, songs } = (items || []).reduce<{
+                                folders: Folder[];
+                                songs: Song[];
+                            }>(
+                                (acc, item) => {
+                                    if ((item as unknown as Song)._itemType === LibraryItem.SONG) {
+                                        acc.songs.push(item as unknown as Song);
+                                    } else if (
+                                        (item as unknown as Folder)._itemType === LibraryItem.FOLDER
+                                    ) {
+                                        acc.folders.push(item as unknown as Folder);
+                                    }
+                                    return acc;
+                                },
+                                { folders: [], songs: [] },
+                            );
+
+                            const folderIds = folders.map((folder) => folder.id);
+
+                            // Handle folders: fetch and add to queue
+                            if (folderIds.length > 0) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    folderIds,
+                                    LibraryItem.FOLDER,
+                                    Play.NOW,
+                                );
+                            }
+
+                            // Handle songs: add directly to queue
+                            if (songs.length > 0) {
+                                playerContext.addToQueueByData(songs, Play.NOW);
+                            }
+
+                            break;
+                        }
+                        case DragTarget.GENRE: {
+                            if (sourceServerId) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    args.source.id,
+                                    sourceItemType,
+                                    Play.NOW,
+                                );
+                            }
+                            break;
+                        }
+                        case DragTarget.PLAYLIST: {
+                            if (sourceServerId) {
+                                playerContext.addToQueueByFetch(
+                                    sourceServerId,
+                                    args.source.id,
+                                    sourceItemType,
+                                    Play.NOW,
+                                );
+                            }
+                            break;
+                        }
+                        case DragTarget.QUEUE_SONG: {
+                            const sourceItems = (args.source.item || []) as QueueSong[];
+                            if (sourceItems.length > 0) {
+                                playerContext.addToQueueByData(sourceItems, Play.NOW);
+                            }
+                            break;
+                        }
+                        case DragTarget.SONG: {
+                            const sourceItems = (args.source.item || []) as Song[];
+                            if (sourceItems.length > 0) {
+                                playerContext.addToQueueByData(sourceItems, Play.NOW);
+                            }
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
+                }
+
+                return;
+            },
+        },
+        isEnabled: true,
+    });
+
+    return (
+        <Flex
+            align="center"
+            className={clsx(styles.dropZone, {
+                [styles.draggedOver]: isDraggedOver,
+            })}
+            direction="column"
+            gap="md"
+            justify="center"
+            ref={ref}
+            w="100%"
+        />
+    );
+};

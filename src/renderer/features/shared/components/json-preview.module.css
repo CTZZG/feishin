@@ -1,0 +1,4 @@
+.preview {
+    font-size: var(--theme-font-size-md);
+    background: var(--theme-colors-surface);
+}

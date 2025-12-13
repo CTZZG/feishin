@@ -1,4 +1,5 @@
 import { Tooltip as MantineTooltip, TooltipProps as MantineTooltipProps } from '@mantine/core';
+import clsx from 'clsx';
 
 import styles from './tooltip.module.css';
 
@@ -6,6 +7,7 @@ export interface TooltipProps extends MantineTooltipProps {}
 
 export const Tooltip = ({
     children,
+    classNames,
     openDelay = 500,
     transitionProps = {
         duration: 250,
@@ -16,12 +18,15 @@ export const Tooltip = ({
 }: TooltipProps) => {
     return (
         <MantineTooltip
+            arrowSize={10}
             classNames={{
-                tooltip: styles.tooltip,
+                ...classNames,
+                tooltip: clsx(styles.tooltip, classNames?.['tooltip']),
             }}
             multiline
             openDelay={openDelay}
             transitionProps={transitionProps}
+            withArrow
             withinPortal={withinPortal}
             {...props}
         >
@@ -29,3 +34,5 @@ export const Tooltip = ({
         </MantineTooltip>
     );
 };
+
+Tooltip.Group = MantineTooltip.Group;

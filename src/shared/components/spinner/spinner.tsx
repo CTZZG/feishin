@@ -1,6 +1,6 @@
 import { Center } from '@mantine/core';
 import { IconBaseProps } from 'react-icons';
-import { RiLoader5Fill } from 'react-icons/ri';
+import { CgSpinnerTwo } from 'react-icons/cg';
 
 import styles from './spinner.module.css';
 
@@ -10,7 +10,7 @@ interface SpinnerProps extends IconBaseProps {
     size?: number;
 }
 
-export const SpinnerIcon = RiLoader5Fill;
+export const SpinnerIcon = CgSpinnerTwo;
 
 export const Spinner = ({ ...props }: SpinnerProps) => {
     if (props.container) {

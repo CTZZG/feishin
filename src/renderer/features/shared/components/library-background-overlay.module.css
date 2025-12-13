@@ -1,11 +1,51 @@
-.root {
+.overlay {
     position: absolute;
     z-index: -1;
     width: 100%;
-    height: 20vh;
     min-height: 200px;
     pointer-events: none;
     user-select: none;
     background-image: var(--theme-overlay-subheader);
-    opacity: 0.3;
+}
+
+.background-overlay {
+    --color-from: var(--background-base-min-contrast);
+    --color-to: transparent;
+    --dither: none;
+    --direction-and-possibly-color-interpolation: to bottom;
+
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    min-height: 200px;
+    pointer-events: none;
+    user-select: none;
+    background-color: var(--color-from);
+    background-image:
+        linear-gradient(
+            var(--direction-and-possibly-color-interpolation),
+            var(--color-from),
+            var(--color-to)
+        ),
+        var(--dither);
+}
+
+.background-image {
+    position: absolute;
+    top: 0;
+    z-index: 0;
+    width: 100%;
+    background-position: center !important;
+    background-size: cover !important;
+    opacity: 0.9;
+}
+
+.background-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    background: var(--theme-overlay-subheader);
+    opacity: 0.5;
 }

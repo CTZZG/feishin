@@ -5,20 +5,15 @@ import { useCallback, useEffect, useRef } from 'react';
 import styles from './synchronized-lyrics.module.css';
 
 import { LyricLine } from '/@/renderer/features/lyrics/lyric-line';
-import { useScrobble } from '/@/renderer/features/player/hooks/use-scrobble';
-import { PlayersRef } from '/@/renderer/features/player/ref/players-ref';
 import {
-    useCurrentPlayer,
-    useCurrentStatus,
-    useCurrentTime,
     useLyricsSettings,
     usePlaybackType,
-    usePlayerData,
-    useSeeked,
-    useSetCurrentTime,
+    usePlayerActions,
+    usePlayerStatus,
 } from '/@/renderer/store';
+import { usePlayerTimestamp } from '/@/renderer/store/timestamp.store';
 import { FullLyricsMetadata, SynchronizedLyricsArray } from '/@/shared/types/domain-types';
-import { PlaybackType, PlayerStatus } from '/@/shared/types/types';
+import { PlayerStatus, PlayerType } from '/@/shared/types/types';
 
 const mpvPlayer = isElectron() ? window.api.mpvPlayer : null;
 const utils = isElectron() ? window.api.utils : null;
@@ -26,6 +21,8 @@ const mpris = isElectron() && utils?.isLinux() ? window.api.mpris : null;
 
 export interface SynchronizedLyricsProps extends Omit<FullLyricsMetadata, 'lyrics'> {
     lyrics: SynchronizedLyricsArray;
+    offsetMs?: number;
+    style?: React.CSSProperties;
     translatedLyrics?: null | string;
 }
 
@@ -33,38 +30,33 @@ export const SynchronizedLyrics = ({
     artist,
     lyrics,
     name,
+    offsetMs,
     remote,
     source,
+    style,
     translatedLyrics,
 }: SynchronizedLyricsProps) => {
-    const playersRef = PlayersRef;
-    const status = useCurrentStatus();
     const playbackType = usePlaybackType();
-    const playerData = usePlayerData();
-    const now = useCurrentTime();
     const settings = useLyricsSettings();
-    const currentPlayer = useCurrentPlayer();
-    const currentPlayerRef =
-        currentPlayer === 1 ? playersRef.current?.player1 : playersRef.current?.player2;
-    const setCurrentTime = useSetCurrentTime();
-    const { handleScrobbleFromSeek } = useScrobble();
+    const { mediaSeekToTimestamp } = usePlayerActions();
+    const status = usePlayerStatus();
+    const timestamp = usePlayerTimestamp();
+
+    const effectiveOffsetMs = offsetMs ?? 0;
 
     const handleSeek = useCallback(
         (time: number) => {
-            if (playbackType === PlaybackType.LOCAL && mpvPlayer) {
+            if (playbackType === PlayerType.LOCAL && mpvPlayer) {
                 mpvPlayer.seekTo(time);
-                setCurrentTime(time, true);
             } else {
-                setCurrentTime(time, true);
-                handleScrobbleFromSeek(time);
                 mpris?.updateSeek(time);
-                currentPlayerRef?.seekTo(time);
+                mediaSeekToTimestamp(time);
             }
         },
-        [currentPlayerRef, handleScrobbleFromSeek, playbackType, setCurrentTime],
+        [mediaSeekToTimestamp, playbackType],
     );
 
-    const seeked = useSeeked();
+    // const seeked = useSeeked();
 
     // A reference to the timeout handler
     const lyricTimer = useRef<null | ReturnType<typeof setTimeout>>(null);
@@ -78,8 +70,12 @@ export const SynchronizedLyrics = ({
     // whether to proceed or stop
     const timerEpoch = useRef(0);
 
-    const delayMsRef = useRef(settings.delayMs);
+    const delayMsRef = useRef(effectiveOffsetMs);
     const followRef = useRef(settings.follow);
+    const userScrollingRef = useRef(false);
+    const scrollTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const programmaticScrollRef = useRef(false);
 
     const getCurrentLyric = (timeInMs: number) => {
         if (lyricRef.current) {
@@ -96,30 +92,9 @@ export const SynchronizedLyrics = ({
         return -1;
     };
 
-    const getCurrentTime = useCallback(async () => {
-        if (isElectron() && playbackType !== PlaybackType.WEB) {
-            if (mpvPlayer) {
-                return mpvPlayer.getCurrentTime();
-            }
-            return 0;
-        }
-
-        if (playersRef.current === undefined) {
-            return 0;
-        }
-
-        const player =
-            playerData.current.player === 1
-                ? playersRef.current.player1
-                : playersRef.current.player2;
-        const underlying = player?.getInternalPlayer();
-
-        // If it is null, this probably means we added a new song while the lyrics tab is open
-        // and the queue was previously empty
-        if (!underlying) return 0;
-
-        return underlying.currentTime;
-    }, [playbackType, playersRef, playerData]);
+    const setCurrentLyricRef = useRef<
+        (timeInMs: number, epoch?: number, targetIndex?: number) => void
+    >(() => {});
 
     const setCurrentLyric = useCallback(
         (timeInMs: number, epoch?: number, targetIndex?: number) => {
@@ -167,8 +142,12 @@ export const SynchronizedLyrics = ({
 
             currentLyric.classList.add('active');
 
-            if (followRef.current) {
+            if (followRef.current && !userScrollingRef.current) {
+                programmaticScrollRef.current = true;
                 doc?.scroll({ behavior: 'smooth', top: offsetTop });
+                setTimeout(() => {
+                    programmaticScrollRef.current = false;
+                }, 600);
             }
 
             if (index !== lyricRef.current!.length - 1) {
@@ -178,7 +157,7 @@ export const SynchronizedLyrics = ({
 
                 lyricTimer.current = setTimeout(
                     () => {
-                        setCurrentLyric(nextTime, nextEpoch, index + 1);
+                        setCurrentLyricRef.current(nextTime, nextEpoch, index + 1);
                     },
                     nextTime - timeInMs - elapsed,
                 );
@@ -186,6 +165,11 @@ export const SynchronizedLyrics = ({
         },
         [],
     );
+
+    // Store the callback in a ref so it can be called recursively
+    useEffect(() => {
+        setCurrentLyricRef.current = setCurrentLyric;
+    }, [setCurrentLyric]);
 
     useEffect(() => {
         // Copy the follow settings into a ref that can be accessed in the timeout
@@ -199,8 +183,7 @@ export const SynchronizedLyrics = ({
     useEffect(() => {
         // This handler is used to handle when lyrics change. It is in some sense the
         // 'primary' handler for parsing lyrics, as unlike the other callbacks, it will
-        // ALSO remove listeners on close. Use the promisified getCurrentTime(), because
-        // we don't want to be dependent on npw, which may not be precise
+        // ALSO remove listeners on close.
         lyricRef.current = lyrics;
 
         if (lyricTimer.current) {
@@ -208,82 +191,42 @@ export const SynchronizedLyrics = ({
         }
 
         if (status === PlayerStatus.PLAYING) {
-            let rejected = false;
-
-            getCurrentTime()
-                .then((timeInSec: number) => {
-                    if (rejected) {
-                        return false;
-                    }
-
-                    setCurrentLyric(timeInSec * 1000 - delayMsRef.current);
-
-                    return true;
-                })
-                .catch((err) => {
-                    console.error(
-                        'Failed to get current time for lyric sync, starting from 0.',
-                        err,
-                    );
-                    setCurrentLyric(0 - delayMsRef.current);
-                });
+            // Use the current timestamp from player events
+            setCurrentLyric(timestamp * 1000 + delayMsRef.current);
 
             return () => {
-                // Case 1: cleanup happens before we hear back from
-                // the main process. In this case, when the promise resolves, ignore the result
-                rejected = true;
-
-                // Case 2: Cleanup happens after we hear back from main process but
-                // (potentially) before the next lyric. In this case, clear the timer.
-                // Do NOT do this for other cleanup functions, as it should only be done
-                // when switching to a new song (or an empty one)
+                // Cleanup: clear the timer when lyrics change or component unmounts
                 if (lyricTimer.current) clearTimeout(lyricTimer.current);
             };
         }
 
         return () => {};
-    }, [getCurrentTime, lyrics, playbackType, setCurrentLyric, status]);
+    }, [lyrics, setCurrentLyric, status, timestamp]);
 
     useEffect(() => {
         // This handler is used to deal with changes to the current delay. If the offset
         // changes, we should immediately stop the current listening set and calculate
         // the correct one using the new offset. Afterwards, timing can be calculated like normal
-        const changed = delayMsRef.current !== settings.delayMs;
+        const newOffset = offsetMs ?? 0;
+        const changed = delayMsRef.current !== newOffset;
 
         if (!changed) {
-            return () => {};
+            return;
         }
 
         if (lyricTimer.current) {
             clearTimeout(lyricTimer.current);
         }
 
-        let rejected = false;
+        delayMsRef.current = newOffset;
 
-        delayMsRef.current = settings.delayMs;
-
-        getCurrentTime()
-            .then((timeInSec: number) => {
-                if (rejected) {
-                    return false;
-                }
-
-                setCurrentLyric(timeInSec * 1000 - delayMsRef.current);
-
-                return true;
-            })
-            .catch(console.error);
-
-        return () => {
-            // In the event this ends earlier, just kill the promise. Cleanup of
-            // timeouts is otherwise handled by another handler
-            rejected = true;
-        };
-    }, [getCurrentTime, setCurrentLyric, settings.delayMs]);
+        // Use the current timestamp from player events
+        setCurrentLyric(timestamp * 1000 + delayMsRef.current);
+    }, [setCurrentLyric, offsetMs, timestamp]);
 
     useEffect(() => {
-        // This handler is used specifically for dealing with seeking. In this case,
-        // we assume that now is the accurate time
+        // This handler is used specifically for dealing with seeking and progress updates.
+        // When the timestamp changes, update the current lyric position.
         if (status !== PlayerStatus.PLAYING) {
             if (lyricTimer.current) {
                 clearTimeout(lyricTimer.current);
@@ -292,20 +235,12 @@ export const SynchronizedLyrics = ({
             return;
         }
 
-        // If the time goes back to 0 and we are still playing, this suggests that
-        // we may be playing the same track (repeat one). In this case, we also
-        // need to restart playback
-        const restarted = status === PlayerStatus.PLAYING && now === 0;
-        if (!seeked && !restarted) {
-            return;
-        }
-
         if (lyricTimer.current) {
             clearTimeout(lyricTimer.current);
         }
 
-        setCurrentLyric(now * 1000 - delayMsRef.current);
-    }, [now, seeked, setCurrentLyric, status]);
+        setCurrentLyric(timestamp * 1000 + delayMsRef.current);
+    }, [timestamp, setCurrentLyric, status]);
 
     useEffect(() => {
         // Guaranteed cleanup; stop the timer, and just in case also increment
@@ -315,6 +250,41 @@ export const SynchronizedLyrics = ({
         }
 
         timerEpoch.current += 1;
+    }, []);
+
+    // Handle manual scrolling - pause auto-scroll when user scrolls
+    useEffect(() => {
+        const container =
+            containerRef.current ||
+            (document.getElementById('sychronized-lyrics-scroll-container') as HTMLElement);
+        if (!container) return;
+
+        const handleScroll = () => {
+            // Ignore programmatic scrolls (auto-scroll)
+            if (programmaticScrollRef.current) {
+                return;
+            }
+
+            userScrollingRef.current = true;
+
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+
+            // Re-enable auto-scroll after 3 seconds of no scrolling
+            scrollTimeoutRef.current = setTimeout(() => {
+                userScrollingRef.current = false;
+            }, 3000);
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
     }, []);
 
     const hideScrollbar = () => {
@@ -333,7 +303,8 @@ export const SynchronizedLyrics = ({
             id="sychronized-lyrics-scroll-container"
             onMouseEnter={showScrollbar}
             onMouseLeave={hideScrollbar}
-            style={{ gap: `${settings.gap}px` }}
+            ref={containerRef}
+            style={{ gap: `${settings.gap}px`, ...style }}
         >
             {settings.showProvider && source && (
                 <LyricLine
@@ -358,7 +329,11 @@ export const SynchronizedLyrics = ({
                     fontSize={settings.fontSize}
                     id={`lyric-${idx}`}
                     key={idx}
-                    onClick={() => handleSeek(time / 1000)}
+                    onClick={() => {
+                        if (time > 0 && Number.isFinite(time)) {
+                            handleSeek(time / 1000);
+                        }
+                    }}
                     text={
                         text +
                         (translatedLyrics ? `_BREAK_${translatedLyrics.split('\n')[idx]}` : '')

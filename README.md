@@ -57,6 +57,30 @@ If you're using a device running macOS 12 (Monterey) or higher, [check here](htt
 
 For media keys to work, you will be prompted to allow Feishin to be a Trusted Accessibility Client. After allowing, you will need to restart Feishin for the privacy settings to take effect.
 
+#### Linux Notes
+
+We provide a small install script to download the latest `.AppImage`, make it executable, and also download the icons required by Desktop Environments. Finally, it generates a `.desktop` file to add Feishin to your Application Launcher.
+
+Simply run the installer like this:
+```sh
+dir=/your/application/directory
+curl 'https://raw.githubusercontent.com/jeffvli/feishin/refs/heads/development/install-feishin-appimage' | sh -s -- "$dir"
+```
+
+The script also has an option to add launch arguments to run Feishin in native Wayland mode. Note that this is experimental in Electron and therefore not officially supported. If you want to use it, run this instead:
+```sh
+dir=/your/application/directory
+curl 'https://raw.githubusercontent.com/jeffvli/feishin/refs/heads/development/install-feishin-appimage' | sh -s -- "$dir" wayland-native
+```
+
+It also provides a simple uninstall routine, removing the downloaded files:
+```sh
+dir=/your/application/directory
+curl 'https://raw.githubusercontent.com/jeffvli/feishin/refs/heads/development/install-feishin-appimage' | sh -s -- "$dir" remove
+```
+
+The entry should show up in your Application Launcher immediately. If it does not, simply log out, wait 10 seconds, and log back in. Your Desktop Environment may alternatively provide a way to reload entries.
+
 ### Web and Docker
 
 Visit [https://feishin.vercel.app](https://feishin.vercel.app) to use the hosted web version of Feishin. The web client only supports the web player backend.
@@ -74,7 +98,7 @@ docker run --name feishin -p 9180:9180 feishin
 
 #### Docker Compose
 
-To install via Docker Compose use the following snippit. This also works on Portainer.
+To install via Docker Compose, use the following snippet. This also works on Portainer.
 
 ```yaml
 services:
@@ -102,11 +126,11 @@ services:
 2. After restarting the app, you will be prompted to select a server. Click the `Open menu` button and select `Manage servers`. Click the `Add server` button in the popup and fill out all applicable details. You will need to enter the full URL to your server, including the protocol and port if applicable (e.g. `https://navidrome.my-server.com` or `http://192.168.0.1:4533`).
 
 - **Navidrome** - For the best experience, select "Save password" when creating the server and configure the `SessionTimeout` setting in your Navidrome config to a larger value (e.g. 72h).
-    - **Linux users** - The default password store uses `libsecret`. `kwallet4/5/6` are also supported, but must be explicitly set in Settings > Window > Passwords/secret score.
+    - **Linux users** - The default password store uses `libsecret`. `kwallet4/5/6` are also supported, but must be explicitly set in Settings > Window > Passwords/secret store.
 
 3. _Optional_ - If you want to host Feishin on a subpath (not `/`), then pass in the following environment variable: `PUBLIC_PATH=PATH`. For example, to host on `/feishin`, pass in `PUBLIC_PATH=/feishin`.
 
-4. _Optional_ - To hard code the server url, pass the following environment variables: `SERVER_NAME`, `SERVER_TYPE` (one of `jellyfin` or `navidrome`), `SERVER_URL`. To prevent users from changing these settings, pass `SERVER_LOCK=true`. This can only be set if all three of the previous values are set.
+4. _Optional_ - To hard code the server url, pass the following environment variables: `SERVER_NAME`, `SERVER_TYPE` (one of `jellyfin` or `navidrome` or `subsonic`), `SERVER_URL`. To prevent users from changing these settings, pass `SERVER_LOCK=true`. This can only be set if all three of the previous values are set.
 
 ## FAQ
 
@@ -142,7 +166,7 @@ chmod 4755 chrome-sandbox
 sudo chown root:root chrome-sandbox
 ```
 
-Ubunutu 24.04 specifically introduced breaking changes that affect how namespaces work. Please see https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890#:~:text=security%20improvements%20 for possible fixes.
+Ubuntu 24.04 specifically introduced breaking changes that affect how namespaces work. Please see https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890#:~:text=security%20improvements%20 for possible fixes.
 
 ## Development
 
@@ -158,14 +182,18 @@ This project is built off of [electron-vite](https://github.com/alex8088/electro
 - `pnpm run build:remote` - Build the remote app (remote)
 - `pnpm run build:web` - Build the standalone web app (renderer)
 - `pnpm run package` - Package the project
-- `pnpm run package:dev` - Package the project for development
-- `pnpm run package:linux` - Package the project for Linux
-- `pnpm run package:mac` - Package the project for Mac
-- `pnpm run package:win` - Package the project for Windows
+- `pnpm run package:dev` - Package the project for development locally
+- `pnpm run package:linux` - Package the project for Linux locally
+- `pnpm run package:mac` - Package the project for Mac locally
+- `pnpm run package:win` - Package the project for Windows locally
 - `pnpm run publish:linux` - Publish the project for Linux
+- `pnpm run publish:linux:beta` - Publish the project for Linux (beta channel)
 - `pnpm run publish:linux-arm64` - Publish the project for Linux ARM64
+- `pnpm run publish:linux-arm64:beta` - Publish the project for Linux ARM64 (beta channel)
 - `pnpm run publish:mac` - Publish the project for Mac
+- `pnpm run publish:mac:beta` - Publish the project for Mac (beta channel)
 - `pnpm run publish:win` - Publish the project for Windows
+- `pnpm run publish:win:beta` - Publish the project for Windows (beta channel)
 - `pnpm run typecheck` - Type check the project
 - `pnpm run typecheck:node` - Type check the project with tsconfig.node.json
 - `pnpm run typecheck:web` - Type check the project with tsconfig.web.json

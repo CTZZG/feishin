@@ -1,6 +1,7 @@
 .content-container {
     position: relative;
     z-index: 0;
+    container-type: inline-size;
 }
 
 .detail-container {
@@ -8,5 +9,58 @@
     flex-direction: column;
     gap: var(--theme-spacing-lg);
     padding: 1rem 2rem 5rem;
-    overflow: hidden;
+}
+
+.content-layout {
+    display: grid;
+    grid-template-areas:
+        'metadata'
+        'songs';
+    grid-template-rows: auto auto;
+    grid-template-columns: 1fr;
+    gap: var(--theme-spacing-lg);
+    align-items: start;
+    width: 100%;
+    min-width: 0;
+}
+
+.metadata-column {
+    display: flex;
+    flex-direction: column;
+    grid-area: metadata;
+}
+
+.songs-column {
+    display: flex;
+    flex-direction: column;
+    grid-area: songs;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+@container (min-width: $mantine-breakpoint-lg) {
+    .content-layout {
+        grid-template-areas: 'songs metadata';
+        grid-template-rows: 1fr;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: var(--theme-spacing-xl);
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Prevent sticky headers from extending into the right margins */
+    .songs-column :global(.fs-item-table-list-module-sticky-header),
+    .songs-column :global(.fs-item-table-list-module-sticky-group-row) {
+        padding-right: 0;
+        margin-right: 0;
+    }
+
+    .metadata-column {
+        position: sticky;
+        top: calc(var(--theme-spacing-lg) + 4rem);
+        align-self: start;
+        width: 300px;
+        max-height: calc(100vh - 90px - var(--theme-spacing-lg) - 4rem);
+        overflow-y: auto;
+    }
 }

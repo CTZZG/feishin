@@ -8,7 +8,6 @@ import { SettingsOptions } from '/@/renderer/features/settings/components/settin
 import { useSettingSearchContext } from '/@/renderer/features/settings/context/search-context';
 import { SortableItem } from '/@/renderer/store';
 import { Button } from '/@/shared/components/button/button';
-import { Divider } from '/@/shared/components/divider/divider';
 
 export type DraggableItemsProps<K, T> = {
     description: string;
@@ -122,7 +121,6 @@ export const DraggableItems = <K extends string, T extends SortableItem<K>>({
                     ))}
                 </Reorder.Group>
             )}
-            <Divider />
         </>
     );
 };

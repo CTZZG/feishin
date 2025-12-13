@@ -1,6 +1,6 @@
 import { AppRoute } from '@ts-rest/core';
+import { TFunction } from 'i18next';
 import { ReactNode } from 'react';
-import { Song } from 'src/main/features/core/lyrics/netease';
 
 import {
     Album,
@@ -9,15 +9,38 @@ import {
     LibraryItem,
     Playlist,
     QueueSong,
+    Song,
 } from '/@/shared/types/domain-types';
 import { ServerFeatures } from '/@/shared/types/features-types';
 
+export enum ItemListKey {
+    ALBUM = LibraryItem.ALBUM,
+    ALBUM_ARTIST = LibraryItem.ALBUM_ARTIST,
+    ALBUM_ARTIST_ALBUM = 'albumArtistAlbum',
+    ALBUM_ARTIST_SONG = 'albumArtistSong',
+    ALBUM_DETAIL = 'albumDetail',
+    ARTIST = LibraryItem.ARTIST,
+    FOLDER = LibraryItem.FOLDER,
+    FULL_SCREEN = 'fullScreen',
+    GENRE = LibraryItem.GENRE,
+    GENRE_ALBUM = 'genreAlbum',
+    GENRE_SONG = 'genreSong',
+    PLAYLIST = LibraryItem.PLAYLIST,
+    PLAYLIST_SONG = LibraryItem.PLAYLIST_SONG,
+    QUEUE_SONG = LibraryItem.QUEUE_SONG,
+    SIDE_QUEUE = 'sideQueue',
+    SONG = LibraryItem.SONG,
+}
+
 export enum ListDisplayType {
-    CARD = 'card',
     GRID = 'poster',
     LIST = 'list',
     TABLE = 'table',
-    TABLE_PAGINATED = 'paginatedTable',
+}
+
+export enum ListPaginationType {
+    INFINITE = 'infinite',
+    PAGINATED = 'paginated',
 }
 
 export enum Platform {
@@ -41,30 +64,22 @@ export type CardRoute = {
 
 export type CardRow<T> = {
     arrayProperty?: string;
-    format?: (value: T) => ReactNode;
+    format?: (value: T, t: TFunction) => ReactNode;
     property: keyof T;
     route?: CardRoute;
 };
 
-export type RouteSlug = {
-    idProperty: string;
-    slugProperty: string;
-};
-
-export type TablePagination = {
+export type ListPagination = {
     currentPage: number;
     itemsPerPage: number;
     totalItems: number;
     totalPages: number;
 };
 
-export type TableType =
-    | 'albumDetail'
-    | 'fullScreen'
-    | 'nowPlaying'
-    | 'sideDrawerQueue'
-    | 'sideQueue'
-    | 'songs';
+export type RouteSlug = {
+    idProperty: string;
+    slugProperty: string;
+};
 
 export const toServerType = (value?: string): null | ServerType => {
     switch (value?.toLowerCase()) {
@@ -88,12 +103,10 @@ export enum AuthState {
 }
 
 export enum CrossfadeStyle {
-    CONSTANT_POWER = 'constantPower',
-    CONSTANT_POWER_SLOW_CUT = 'constantPowerSlowCut',
-    CONSTANT_POWER_SLOW_FADE = 'constantPowerSlowFade',
-    DIPPED = 'dipped',
-    EQUALPOWER = 'equalPower',
+    EQUAL_POWER = 'equalPower',
+    EXPONENTIAL = 'exponential',
     LINEAR = 'linear',
+    S_CURVE = 'sCurve',
 }
 
 export enum FontType {
@@ -103,20 +116,18 @@ export enum FontType {
 }
 
 export enum Play {
+    INDEX = 'index',
     LAST = 'last',
+    LAST_SHUFFLE = 'lastShuffle',
     NEXT = 'next',
+    NEXT_SHUFFLE = 'nextShuffle',
     NOW = 'now',
     SHUFFLE = 'shuffle',
 }
 
-export enum PlaybackStyle {
-    CROSSFADE = 'crossfade',
-    GAPLESS = 'gapless',
-}
-
-export enum PlaybackType {
-    LOCAL = 'local',
-    WEB = 'web',
+export enum PlayerQueueType {
+    DEFAULT = 'default',
+    PRIORITY = 'priority',
 }
 
 export enum PlayerRepeat {
@@ -136,38 +147,60 @@ export enum PlayerStatus {
     PLAYING = 'playing',
 }
 
+export enum PlayerStyle {
+    CROSSFADE = 'crossfade',
+    GAPLESS = 'gapless',
+}
+
+export enum PlayerType {
+    LOCAL = 'local',
+    WEB = 'web',
+}
+
 export enum TableColumn {
     ACTIONS = 'actions',
     ALBUM = 'album',
-    ALBUM_ARTIST = 'albumArtist',
+    ALBUM_ARTIST = 'albumArtists',
     ALBUM_COUNT = 'albumCount',
-    ARTIST = 'artist',
+    ARTIST = 'artists',
     BIOGRAPHY = 'biography',
+    BIT_DEPTH = 'bitDepth',
     BIT_RATE = 'bitRate',
     BPM = 'bpm',
     CHANNELS = 'channels',
-    CODEC = 'codec',
+    CODEC = 'container',
     COMMENT = 'comment',
-    DATE_ADDED = 'dateAdded',
+    DATE_ADDED = 'createdAt',
     DISC_NUMBER = 'discNumber',
     DURATION = 'duration',
-    GENRE = 'genre',
+    GENRE = 'genres',
+    GENRE_BADGE = 'genreBadge',
+    ID = 'id',
+    IMAGE = 'imageUrl',
     LAST_PLAYED = 'lastPlayedAt',
     OWNER = 'username',
     PATH = 'path',
     PLAY_COUNT = 'playCount',
+    PLAYLIST_REORDER = 'playlistReorder',
     RELEASE_DATE = 'releaseDate',
     ROW_INDEX = 'rowIndex',
+    SAMPLE_RATE = 'sampleRate',
     SIZE = 'size',
     SKIP = 'skip',
     SONG_COUNT = 'songCount',
-    TITLE = 'title',
+    TITLE = 'name',
     TITLE_COMBINED = 'titleCombined',
     TRACK_NUMBER = 'trackNumber',
     USER_FAVORITE = 'userFavorite',
     USER_RATING = 'userRating',
     YEAR = 'releaseYear',
 }
+
+export type DiscoveredServerItem = {
+    name: string;
+    type: ServerType;
+    url: string;
+};
 
 export type GridCardData = {
     cardControls: any;
@@ -245,5 +278,5 @@ export interface UniqueId {
 
 export type WebAudio = {
     context: AudioContext;
-    gain: GainNode;
+    gains: GainNode[];
 };

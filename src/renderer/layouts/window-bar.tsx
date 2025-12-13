@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import isElectron from 'is-electron';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiCheckboxBlankLine, RiCloseLine, RiSubtractLine } from 'react-icons/ri';
 
 import appIcon from '../../../assets/icons/32x32.png';
@@ -12,9 +12,9 @@ import macMinHover from './assets/min-mac-hover.png';
 import macMin from './assets/min-mac.png';
 import styles from './window-bar.module.css';
 
-import { useWindowSettings } from '/@/renderer/store';
+import { useAppStore, usePlayerData, usePlayerStatus, useWindowSettings } from '/@/renderer/store';
 import { Text } from '/@/shared/components/text/text';
-import { Platform } from '/@/shared/types/types';
+import { Platform, PlayerStatus } from '/@/shared/types/types';
 
 const localSettings = isElectron() ? window.api.localSettings : null;
 
@@ -121,14 +121,13 @@ const MacOsControls = ({ controls, title }: WindowBarControlsProps) => {
     );
 };
 
-interface WindowBarProps {
-    title: string;
-}
-
-export const WindowBar = ({ title }: WindowBarProps) => {
+export const WindowBar = () => {
     const { windowBarStyle } = useWindowSettings();
+    const playerStatus = usePlayerStatus();
+    const privateMode = useAppStore((state) => state.privateMode);
     const handleMinimize = () => minimize();
 
+    const { currentSong, index, queueLength } = usePlayerData();
     const [max, setMax] = useState(localSettings?.env.START_MAXIMIZED || false);
 
     const handleMaximize = useCallback(() => {
@@ -141,6 +140,26 @@ export const WindowBar = ({ title }: WindowBarProps) => {
     }, [max]);
 
     const handleClose = useCallback(() => close(), []);
+
+    const title = useMemo(() => {
+        const statusString = playerStatus === PlayerStatus.PAUSED ? '(Paused) ' : '';
+        const queueString = queueLength ? `(${index + 1} / ${queueLength}) ` : '';
+        const privateModeString = privateMode ? '(Private mode)' : '';
+        const title = `${
+            queueLength
+                ? `${statusString}${queueString}${currentSong?.name}${currentSong?.artistName ? ` — ${currentSong?.artistName} — Feishin` : ''}`
+                : 'Feishin'
+        }${privateMode ? ` ${privateModeString}` : ''}`;
+        return title;
+    }, [currentSong?.artistName, currentSong?.name, index, playerStatus, privateMode, queueLength]);
+
+    useEffect(() => {
+        document.title = title;
+    }, [title]);
+
+    if (windowBarStyle === Platform.WEB) {
+        return null;
+    }
 
     return (
         <>

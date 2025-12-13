@@ -1,0 +1,48 @@
+.play-queue-section {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.lyrics-section {
+    position: relative;
+    display: flex;
+    flex: 0 0 300px;
+    flex-direction: column;
+    min-height: 200px;
+    max-height: 400px;
+    overflow: hidden;
+    background: var(--theme-colors-background);
+}
+
+.lyrics-section :global(.synchronized-lyrics) {
+    padding: 2rem 0 4rem !important;
+    transform: translateY(0) !important;
+}
+
+.lyrics-section :global(.synchronized-lyrics .lyric-line) {
+    padding: 0.25rem 0;
+}
+
+.visualizer-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.visualizer-section {
+    position: relative;
+    display: flex;
+    flex: 0 0 300px;
+    flex-direction: column;
+    min-height: 200px;
+    max-height: 400px;
+    overflow: hidden;
+    background: var(--theme-colors-background);
+}

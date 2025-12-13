@@ -1,11 +1,311 @@
+import i18n from 'i18next';
 import { z } from 'zod';
 
-import {
-    NDAlbumArtistListSort,
-    NDAlbumListSort,
-    NDPlaylistListSort,
-    NDSongListSort,
-} from '/@/shared/api/navidrome.types';
+export enum NDAlbumArtistListSort {
+    ALBUM_COUNT = 'albumCount',
+    FAVORITED = 'starred_at',
+    NAME = 'name',
+    PLAY_COUNT = 'playCount',
+    RATING = 'rating',
+    SONG_COUNT = 'songCount',
+}
+
+export enum NDAlbumListSort {
+    ALBUM_ARTIST = 'album_artist',
+    ARTIST = 'artist',
+    DURATION = 'duration',
+    EXPLICIT_STATUS = 'explicitStatus',
+    NAME = 'name',
+    PLAY_COUNT = 'play_count',
+    PLAY_DATE = 'play_date',
+    RANDOM = 'random',
+    RATING = 'rating',
+    RECENTLY_ADDED = 'recently_added',
+    SONG_COUNT = 'songCount',
+    STARRED = 'starred_at',
+    YEAR = 'max_year',
+}
+
+export enum NDGenreListSort {
+    NAME = 'name',
+}
+
+export enum NDPlaylistListSort {
+    DURATION = 'duration',
+    NAME = 'name',
+    OWNER = 'owner_name',
+    PUBLIC = 'public',
+    SONG_COUNT = 'songCount',
+    UPDATED_AT = 'updatedAt',
+}
+
+export enum NDSongListSort {
+    ALBUM = 'album',
+    ALBUM_ARTIST = 'order_album_artist_name',
+    ALBUM_SONGS = 'album',
+    ARTIST = 'artist',
+    BPM = 'bpm',
+    CHANNELS = 'channels',
+    COMMENT = 'comment',
+    DURATION = 'duration',
+    EXPLICIT_STATUS = 'explicitStatus',
+    FAVORITED = 'starred_at',
+    GENRE = 'genre',
+    ID = 'id',
+    PLAY_COUNT = 'playCount',
+    PLAY_DATE = 'playDate',
+    RANDOM = 'random',
+    RATING = 'rating',
+    RECENTLY_ADDED = 'createdAt',
+    TITLE = 'title',
+    TRACK = 'track',
+    YEAR = 'year',
+}
+
+export enum NDSortOrder {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
+
+export const NDSongQueryFields = [
+    { label: 'Album', type: 'string', value: 'album' },
+    { label: 'Album Artist', type: 'string', value: 'albumartist' },
+    { label: 'Album Artists', type: 'string', value: 'albumartists' },
+    { label: 'Album Comment', type: 'string', value: 'albumcomment' },
+    { label: 'Album Type', type: 'string', value: 'albumtype' },
+    { label: 'Album Version', type: 'string', value: 'albumversion' },
+    { label: 'Arranger', type: 'string', value: 'arranger' },
+    { label: 'Artist', type: 'string', value: 'artist' },
+    { label: 'Artists', type: 'string', value: 'artists' },
+    { label: 'ASIN', type: 'string', value: 'asin' },
+    { label: 'Barcode', type: 'string', value: 'barcode' },
+    { label: 'Bit Depth', type: 'number', value: 'bitdepth' },
+    { label: 'Bitrate', type: 'number', value: 'bitrate' },
+    { label: 'BPM', type: 'number', value: 'bpm' },
+    { label: 'Catalog Number', type: 'string', value: 'catalognumber' },
+    { label: 'Channels', type: 'number', value: 'channels' },
+    { label: 'Comment', type: 'string', value: 'comment' },
+    { label: 'Composer', type: 'string', value: 'composer' },
+    { label: 'Conductor', type: 'string', value: 'conductor' },
+    { label: 'Copyright', type: 'string', value: 'copyright' },
+    { label: 'Date Added', type: 'date', value: 'dateadded' },
+    { label: 'Date Favorited', type: 'date', value: 'dateloved' },
+    { label: 'Date Last Played', type: 'date', value: 'lastplayed' },
+    { label: 'Date Modified', type: 'date', value: 'datemodified' },
+    { label: 'DJ Mixer', type: 'string', value: 'djmixer' },
+    { label: 'Director', type: 'string', value: 'director' },
+    { label: 'Disc Number', type: 'number', value: 'discnumber' },
+    { label: 'Disc Subtitle', type: 'string', value: 'discsubtitle' },
+    { label: 'Disc Total', type: 'number', value: 'disctotal' },
+    { label: 'Duration', type: 'number', value: 'duration' },
+    { label: 'Encoded By', type: 'string', value: 'encodedby' },
+    { label: 'Encoder Settings', type: 'string', value: 'encodersettings' },
+    { label: 'Engineer', type: 'string', value: 'engineer' },
+    { label: 'Explicit Status', type: 'string', value: 'explicitstatus' },
+    { label: 'File Path', type: 'string', value: 'filepath' },
+    { label: 'File Type', type: 'string', value: 'filetype' },
+    { label: 'Genre', type: 'string', value: 'genre' },
+    { label: 'Grouping', type: 'string', value: 'grouping' },
+    { label: 'Has CoverArt', type: 'boolean', value: 'hascoverart' },
+    { label: 'Is Compilation', type: 'boolean', value: 'compilation' },
+    { label: 'Is Favorite', type: 'boolean', value: 'loved' },
+    { label: 'ISRC', type: 'string', value: 'isrc' },
+    { label: 'Key', type: 'string', value: 'key' },
+    { label: 'Language', type: 'string', value: 'language' },
+    { label: 'License', type: 'string', value: 'license' },
+    { label: 'Library Id', type: 'string', value: 'library_id' },
+    { label: 'Lyricist', type: 'string', value: 'lyricist' },
+    { label: 'Lyrics', type: 'string', value: 'lyrics' },
+    { label: 'Media', type: 'string', value: 'media' },
+    { label: 'Mixer', type: 'string', value: 'mixer' },
+    { label: 'Mood', type: 'string', value: 'mood' },
+    { label: 'Movement', type: 'string', value: 'movement' },
+    { label: 'Movement Name', type: 'string', value: 'movementname' },
+    { label: 'Movement Total', type: 'number', value: 'movementtotal' },
+    { label: 'MusicBrainz Album Artist Id', type: 'string', value: 'mbz_album_artist_id' },
+    { label: 'MusicBrainz Album Id', type: 'string', value: 'mbz_album_id' },
+    { label: 'MusicBrainz Artist Id', type: 'string', value: 'mbz_artist_id' },
+    { label: 'MusicBrainz Arranger Id', type: 'string', value: 'musicbrainz_arrangerid' },
+    { label: 'MusicBrainz Composer Id', type: 'string', value: 'musicbrainz_composerid' },
+    { label: 'MusicBrainz Conductor Id', type: 'string', value: 'musicbrainz_conductorid' },
+    { label: 'MusicBrainz Director Id', type: 'string', value: 'musicbrainz_directorid' },
+    { label: 'MusicBrainz Disc Id', type: 'string', value: 'musicbrainz_discid' },
+    { label: 'MusicBrainz DJ Mixer Id', type: 'string', value: 'musicbrainz_djmixerid' },
+    { label: 'MusicBrainz Engineer Id', type: 'string', value: 'musicbrainz_engineerid' },
+    { label: 'MusicBrainz Lyricist Id', type: 'string', value: 'musicbrainz_lyricistid' },
+    { label: 'MusicBrainz Mixer Id', type: 'string', value: 'musicbrainz_mixerid' },
+    { label: 'MusicBrainz Performer Id', type: 'string', value: 'musicbrainz_performerid' },
+    { label: 'MusicBrainz Producer Id', type: 'string', value: 'musicbrainz_producerid' },
+    { label: 'MusicBrainz Recording Id', type: 'string', value: 'mbz_recording_id' },
+    { label: 'MusicBrainz Release Group Id', type: 'string', value: 'mbz_release_group_id' },
+    { label: 'MusicBrainz Release Track Id', type: 'string', value: 'mbz_release_track_id' },
+    { label: 'MusicBrainz Remixer Id', type: 'string', value: 'musicbrainz_remixerid' },
+    { label: 'MusicBrainz Track Id', type: 'string', value: 'musicbrainz_trackid' },
+    { label: 'MusicBrainz Work Id', type: 'string', value: 'musicbrainz_workid' },
+    { label: 'Name', type: 'string', value: 'title' },
+    { label: 'Original Date', type: 'date', value: 'originaldate' },
+    { label: 'Performer', type: 'string', value: 'performer' },
+    { label: 'Play Count', type: 'number', value: 'playcount' },
+    { label: 'Playlist', type: 'playlist', value: 'id' },
+    { label: 'Producer', type: 'string', value: 'producer' },
+    { label: 'R128 Album Gain', type: 'number', value: 'r128_album_gain' },
+    { label: 'R128 Track Gain', type: 'number', value: 'r128_track_gain' },
+    { label: 'Rating', type: 'number', value: 'rating' },
+    { label: 'Record Label', type: 'string', value: 'recordlabel' },
+    { label: 'Recording Date', type: 'date', value: 'recordingdate' },
+    { label: 'Release Country', type: 'string', value: 'releasecountry' },
+    { label: 'Release Date', type: 'date', value: 'releasedate' },
+    { label: 'Release Status', type: 'string', value: 'releasestatus' },
+    { label: 'Release Type', type: 'string', value: 'releasetype' },
+    { label: 'ReplayGain Album Gain', type: 'number', value: 'replaygain_album_gain' },
+    { label: 'ReplayGain Album Peak', type: 'number', value: 'replaygain_album_peak' },
+    { label: 'ReplayGain Track Gain', type: 'number', value: 'replaygain_track_gain' },
+    { label: 'ReplayGain Track Peak', type: 'number', value: 'replaygain_track_peak' },
+    { label: 'Remixer', type: 'string', value: 'remixer' },
+    { label: 'Script', type: 'string', value: 'script' },
+    { label: 'Size', type: 'number', value: 'size' },
+    { label: 'Sort Album', type: 'string', value: 'albumsort' },
+    { label: 'Sort Album Artist', type: 'string', value: 'albumartistsort' },
+    { label: 'Sort Album Artists', type: 'string', value: 'albumartistssort' },
+    { label: 'Sort Artist', type: 'string', value: 'artistsort' },
+    { label: 'Sort Artists', type: 'string', value: 'artistssort' },
+    { label: 'Sort Composer', type: 'string', value: 'composersort' },
+    { label: 'Sort Lyricist', type: 'string', value: 'lyricistsort' },
+    { label: 'Sort Name', type: 'string', value: 'titlesort' },
+    { label: 'Subtitle', type: 'string', value: 'subtitle' },
+    { label: 'Track Number', type: 'number', value: 'track' },
+    { label: 'Track Total', type: 'number', value: 'tracktotal' },
+    { label: 'Website', type: 'string', value: 'website' },
+    { label: 'Work', type: 'string', value: 'work' },
+    { label: 'Year', type: 'number', value: 'year' },
+];
+
+export const NDSongQueryPlaylistOperators = [
+    {
+        label: i18n.t('filterOperator.inPlaylist', { postProcess: 'titleCase' }),
+        value: 'inPlaylist',
+    },
+    {
+        label: i18n.t('filterOperator.notInPlaylist', { postProcess: 'titleCase' }),
+        value: 'notInPlaylist',
+    },
+];
+
+export const NDSongQueryDateOperators = [
+    {
+        label: i18n.t('filterOperator.is', { postProcess: 'titleCase' }),
+        value: 'is',
+    },
+    {
+        label: i18n.t('filterOperator.isNot', { postProcess: 'titleCase' }),
+        value: 'isNot',
+    },
+    {
+        label: i18n.t('filterOperator.before', { postProcess: 'titleCase' }),
+        value: 'before',
+    },
+    {
+        label: i18n.t('filterOperator.after', { postProcess: 'titleCase' }),
+        value: 'after',
+    },
+    {
+        label: i18n.t('filterOperator.inTheLast', { postProcess: 'titleCase' }),
+        value: 'inTheLast',
+    },
+    {
+        label: i18n.t('filterOperator.notInTheLast', { postProcess: 'titleCase' }),
+        value: 'notInTheLast',
+    },
+    {
+        label: i18n.t('filterOperator.inTheRange', { postProcess: 'titleCase' }),
+        value: 'inTheRange',
+    },
+    {
+        label: i18n.t('filterOperator.beforeDate', { postProcess: 'titleCase' }),
+        value: 'beforeDate',
+    },
+    {
+        label: i18n.t('filterOperator.afterDate', { postProcess: 'titleCase' }),
+        value: 'afterDate',
+    },
+    {
+        label: i18n.t('filterOperator.inTheRangeDate', { postProcess: 'titleCase' }),
+        value: 'inTheRangeDate',
+    },
+];
+
+export const NDSongQueryStringOperators = [
+    {
+        label: i18n.t('filterOperator.is', { postProcess: 'titleCase' }),
+        value: 'is',
+    },
+    {
+        label: i18n.t('filterOperator.isNot', { postProcess: 'titleCase' }),
+        value: 'isNot',
+    },
+    {
+        label: i18n.t('filterOperator.contains', { postProcess: 'titleCase' }),
+        value: 'contains',
+    },
+    {
+        label: i18n.t('filterOperator.notContains', { postProcess: 'titleCase' }),
+        value: 'notContains',
+    },
+    {
+        label: i18n.t('filterOperator.startsWith', { postProcess: 'titleCase' }),
+        value: 'startsWith',
+    },
+    {
+        label: i18n.t('filterOperator.endsWith', { postProcess: 'titleCase' }),
+        value: 'endsWith',
+    },
+];
+
+export const NDSongQueryBooleanOperators = [
+    {
+        label: i18n.t('filterOperator.is', { postProcess: 'titleCase' }),
+        value: 'is',
+    },
+    {
+        label: i18n.t('filterOperator.isNot', { postProcess: 'titleCase' }),
+        value: 'isNot',
+    },
+];
+
+export const NDSongQueryNumberOperators = [
+    {
+        label: i18n.t('filterOperator.is', { postProcess: 'titleCase' }),
+        value: 'is',
+    },
+    {
+        label: i18n.t('filterOperator.isNot', { postProcess: 'titleCase' }),
+        value: 'isNot',
+    },
+    {
+        label: i18n.t('filterOperator.contains', { postProcess: 'titleCase' }),
+        value: 'contains',
+    },
+    {
+        label: i18n.t('filterOperator.notContains', { postProcess: 'titleCase' }),
+        value: 'notContains',
+    },
+    {
+        label: i18n.t('filterOperator.isGreaterThan', { postProcess: 'titleCase' }),
+        value: 'gt',
+    },
+    {
+        label: i18n.t('filterOperator.isLessThan', { postProcess: 'titleCase' }),
+        value: 'lt',
+    },
+    {
+        label: i18n.t('filterOperator.inTheRange', { postProcess: 'titleCase' }),
+        value: 'inTheRange',
+    },
+];
+
+export enum NDUserListSort {
+    NAME = 'name',
+}
 
 const sortOrderValues = ['ASC', 'DESC'] as const;
 
@@ -16,6 +316,8 @@ const paginationParameters = z.object({
     _order: z.enum(sortOrderValues),
     _start: z.number().optional(),
 });
+
+const optionalPaginationParameters = paginationParameters.partial();
 
 const authenticate = z.object({
     id: z.string(),
@@ -66,6 +368,7 @@ const genreListSort = {
 
 const genreListParameters = paginationParameters.extend({
     _sort: z.nativeEnum(genreListSort).optional(),
+    library_id: z.array(z.string()).optional(),
     name: z.string().optional(),
 });
 
@@ -80,6 +383,7 @@ const stats = z.object({
 const albumArtist = z.object({
     albumCount: z.number(),
     biography: z.string(),
+    createdAt: z.string().optional(),
     externalInfoUpdatedAt: z.string(),
     externalUrl: z.string(),
     fullText: z.string(),
@@ -99,6 +403,7 @@ const albumArtist = z.object({
     starred: z.boolean(),
     starredAt: z.string(),
     stats: z.record(z.string(), stats).optional(),
+    updatedAt: z.string().optional(),
 });
 
 const albumArtistList = z.array(albumArtist);
@@ -106,6 +411,7 @@ const albumArtistList = z.array(albumArtist);
 const albumArtistListParameters = paginationParameters.extend({
     _sort: z.nativeEnum(NDAlbumArtistListSort).optional(),
     genre_id: z.string().optional(),
+    library_id: z.array(z.string()).optional(),
     missing: z.boolean().optional(),
     name: z.string().optional(),
     role: z.string().optional(),
@@ -132,6 +438,7 @@ const album = z.object({
     coverArtPath: z.string().optional(), // Removed after v0.48.0
     createdAt: z.string(),
     duration: z.number().optional(),
+    explicitStatus: z.string().optional(),
     fullText: z.string(),
     genre: z.string(),
     genres: z.array(genre).nullable(),
@@ -167,9 +474,11 @@ const albumListParameters = paginationParameters.extend({
     album_id: z.string().optional(),
     artist_id: z.string().optional(),
     compilation: z.boolean().optional(),
-    genre_id: z.string().optional(),
+    // in older versions, this was a single string. post BFR, you can repeat it multiple times
+    genre_id: z.union([z.string(), z.string().array()]).optional(),
     has_rating: z.boolean().optional(),
     id: z.string().optional(),
+    library_id: z.array(z.string()).optional(),
     name: z.string().optional(),
     recently_added: z.boolean().optional(),
     recently_played: z.boolean().optional(),
@@ -197,6 +506,7 @@ const song = z.object({
     discSubtitle: z.string().optional(),
     duration: z.number(),
     embedArtPath: z.string().optional(),
+    explicitStatus: z.string().optional(),
     externalInfoUpdatedAt: z.string().optional(),
     externalUrl: z.string().optional(),
     fullText: z.string(),
@@ -211,7 +521,7 @@ const song = z.object({
     mbzAlbumArtistId: z.string().optional(),
     mbzAlbumId: z.string().optional(),
     mbzArtistId: z.string().optional(),
-    mbzTrackId: z.string().optional(),
+    mbzReleaseTrackId: z.string().optional(),
     mediumImageUrl: z.string().optional(),
     orderAlbumArtistName: z.string(),
     orderAlbumName: z.string(),
@@ -249,7 +559,9 @@ const songListParameters = paginationParameters.extend({
     album_artist_id: z.array(z.string()).optional(),
     album_id: z.array(z.string()).optional(),
     artist_id: z.array(z.string()).optional(),
+    artists_id: z.array(z.string()).optional(),
     genre_id: z.array(z.string()).optional(),
+    library_id: z.array(z.string()).optional(),
     path: z.string().optional(),
     starred: z.boolean().optional(),
     title: z.string().optional(),
@@ -297,6 +609,7 @@ const createPlaylist = playlist.pick({
 const createPlaylistParameters = z.object({
     comment: z.string().optional(),
     name: z.string(),
+    ownerId: z.string().optional(),
     public: z.boolean().optional(),
     rules: z.record(z.any()).optional(),
     sync: z.boolean().optional(),
@@ -350,7 +663,18 @@ const tag = z.object({
     tagValue: z.string(),
 });
 
-const tags = z.array(tag);
+const tagList = z.array(tag);
+
+export enum NDTagListSort {
+    TAG_VALUE = 'tagValue',
+}
+
+const tagListParameters = optionalPaginationParameters.extend({
+    _sort: z.nativeEnum(NDTagListSort).optional(),
+    library_id: z.array(z.string()).optional(),
+    tag_name: z.string().optional(),
+    tag_value: z.string().optional(), // Search
+});
 
 export const ndType = {
     _enum: {
@@ -359,6 +683,7 @@ export const ndType = {
         genreList: genreListSort,
         playlistList: NDPlaylistListSort,
         songList: NDSongListSort,
+        tagList: NDTagListSort,
         userList: ndUserListSort,
     },
     _parameters: {
@@ -373,6 +698,7 @@ export const ndType = {
         removeFromPlaylist: removeFromPlaylistParameters,
         shareItem: shareItemParameters,
         songList: songListParameters,
+        tagList: tagListParameters,
         updatePlaylist: updatePlaylistParameters,
         userList: userListParameters,
     },
@@ -397,7 +723,7 @@ export const ndType = {
         shareItem,
         song,
         songList,
-        tags,
+        tagList,
         updatePlaylist,
         user,
         userList,

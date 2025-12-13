@@ -1,18 +1,17 @@
-import { RowDoubleClickedEvent } from '@ag-grid-community/core';
-import { AgGridReact } from '@ag-grid-community/react';
-import { useMemo, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { VirtualGridAutoSizerContainer } from '/@/renderer/components/virtual-grid';
-import { getColumnDefs, VirtualTable } from '/@/renderer/components/virtual-table';
-import { ErrorFallback } from '/@/renderer/features/action-required';
-import { useHandleTableContextMenu } from '/@/renderer/features/context-menu';
-import { SONG_CONTEXT_MENU_ITEMS } from '/@/renderer/features/context-menu/context-menu-items';
-import { useHandlePlayQueueAdd } from '/@/renderer/features/player/hooks/use-handle-playqueue-add';
-import { useSimilarSongs } from '/@/renderer/features/similar-songs/queries/similar-song-queries';
-import { usePlayButtonBehavior, useTableSettings } from '/@/renderer/store';
+import { useItemListColumnReorder } from '/@/renderer/components/item-list/helpers/use-item-list-column-reorder';
+import { useItemListColumnResize } from '/@/renderer/components/item-list/helpers/use-item-list-column-resize';
+import { ItemTableList } from '/@/renderer/components/item-list/item-table-list/item-table-list';
+import { ItemTableListColumn } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
+import { ErrorFallback } from '/@/renderer/features/action-required/components/error-fallback';
+import { songsQueries } from '/@/renderer/features/songs/api/songs-api';
+import { useListSettings } from '/@/renderer/store';
 import { Spinner } from '/@/shared/components/spinner/spinner';
 import { LibraryItem, Song } from '/@/shared/types/domain-types';
+import { ItemListKey } from '/@/shared/types/types';
 
 export type SimilarSongsListProps = {
     count?: number;
@@ -20,63 +19,58 @@ export type SimilarSongsListProps = {
     song: Song;
 };
 
-export const SimilarSongsList = ({ count, fullScreen, song }: SimilarSongsListProps) => {
-    const tableRef = useRef<AgGridReact<Song> | null>(null);
-    const tableConfig = useTableSettings(fullScreen ? 'fullScreen' : 'songs');
-    const handlePlayQueueAdd = useHandlePlayQueueAdd();
-    const playButtonBehavior = usePlayButtonBehavior();
-
-    const songQuery = useSimilarSongs({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
-        },
-        query: { albumArtistIds: song.albumArtists.map((art) => art.id), count, songId: song.id },
-        serverId: song?.serverId,
-    });
-
-    const columnDefs = useMemo(
-        () => getColumnDefs(tableConfig.columns, false, 'generic'),
-        [tableConfig.columns],
+export const SimilarSongsList = ({ count, song }: SimilarSongsListProps) => {
+    const songQuery = useQuery(
+        songsQueries.similar({
+            options: {
+                gcTime: 1000 * 60 * 2,
+            },
+            query: {
+                count,
+                songId: song.id,
+            },
+            serverId: song?._serverId,
+        }),
     );
 
-    const onCellContextMenu = useHandleTableContextMenu(LibraryItem.SONG, SONG_CONTEXT_MENU_ITEMS);
+    const { table } = useListSettings(ItemListKey.FULL_SCREEN);
+    const { table: fullScreenTable } = useListSettings(ItemListKey.FULL_SCREEN);
 
-    const handleRowDoubleClick = (e: RowDoubleClickedEvent<Song>) => {
-        if (!e.data || !songQuery.data) return;
+    const { handleColumnReordered } = useItemListColumnReorder({
+        itemListKey: ItemListKey.FULL_SCREEN,
+    });
 
-        handlePlayQueueAdd?.({
-            byData: songQuery.data,
-            initialSongId: e.data.id,
-            playType: playButtonBehavior,
-        });
-    };
+    const { handleColumnResized } = useItemListColumnResize({
+        itemListKey: ItemListKey.FULL_SCREEN,
+    });
 
-    return songQuery.isLoading ? (
-        <Spinner container size={25} />
-    ) : (
+    const tableData = useMemo(() => {
+        return songQuery.data || [];
+    }, [songQuery.data]);
+
+    if (songQuery.isLoading || songQuery.isRefetching) {
+        return <Spinner container size={25} />;
+    }
+
+    return (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <VirtualGridAutoSizerContainer>
-                <VirtualTable
-                    autoFitColumns={tableConfig.autoFit}
-                    columnDefs={columnDefs}
-                    context={{
-                        count,
-                        itemType: LibraryItem.SONG,
-                        onCellContextMenu,
-                        song,
-                    }}
-                    deselectOnClickOutside={fullScreen}
-                    getRowId={(data) => data.data.uniqueId}
-                    onCellContextMenu={onCellContextMenu}
-                    onCellDoubleClicked={handleRowDoubleClick}
-                    ref={tableRef}
-                    rowBuffer={50}
-                    rowData={songQuery.data ?? []}
-                    rowHeight={tableConfig.rowHeight || 40}
-                    shouldUpdateSong
-                />
-            </VirtualGridAutoSizerContainer>
+            <ItemTableList
+                autoFitColumns={table?.autoFitColumns}
+                CellComponent={ItemTableListColumn}
+                columns={table?.columns || []}
+                data={tableData}
+                enableAlternateRowColors={fullScreenTable?.enableAlternateRowColors}
+                enableExpansion={false}
+                enableHeader
+                enableHorizontalBorders={fullScreenTable?.enableHorizontalBorders}
+                enableRowHoverHighlight={fullScreenTable?.enableRowHoverHighlight}
+                enableSelection
+                enableVerticalBorders={fullScreenTable?.enableVerticalBorders}
+                itemType={LibraryItem.SONG}
+                onColumnReordered={handleColumnReordered}
+                onColumnResized={handleColumnResized}
+                size={table?.size}
+            />
         </ErrorBoundary>
     );
 };

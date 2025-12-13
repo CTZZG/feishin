@@ -86,5 +86,10 @@ export const TranscodeSettings = () => {
         },
     ];
 
-    return <SettingsSection divider options={transcodeOptions} />;
+    return (
+        <SettingsSection
+            options={transcodeOptions}
+            title={t('page.setting.transcoding', { postProcess: 'sentenceCase' })}
+        />
+    );
 };

@@ -1,16 +1,15 @@
-import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
+import { useQuery } from '@tanstack/react-query';
 import { Fragment, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath, useNavigate } from 'react-router';
 
-import { usePlayQueueAdd } from '/@/renderer/features/player';
+import { searchQueries } from '/@/renderer/features/search/api/search-api';
 import { Command, CommandPalettePages } from '/@/renderer/features/search/components/command';
 import { CommandItemSelectable } from '/@/renderer/features/search/components/command-item-selectable';
 import { GoToCommands } from '/@/renderer/features/search/components/go-to-commands';
 import { HomeCommands } from '/@/renderer/features/search/components/home-commands';
 import { LibraryCommandItem } from '/@/renderer/features/search/components/library-command-item';
 import { ServerCommands } from '/@/renderer/features/search/components/server-commands';
-import { useSearch } from '/@/renderer/features/search/queries/search-query';
 import { AppRoute } from '/@/renderer/router/routes';
 import { useCurrentServer } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
@@ -22,6 +21,8 @@ import { Kbd } from '/@/shared/components/kbd/kbd';
 import { Modal } from '/@/shared/components/modal/modal';
 import { Spinner } from '/@/shared/components/spinner/spinner';
 import { TextInput } from '/@/shared/components/text-input/text-input';
+import { useDebouncedValue } from '/@/shared/hooks/use-debounced-value';
+import { useDisclosure } from '/@/shared/hooks/use-disclosure';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
 interface CommandPaletteProps {
@@ -48,25 +49,25 @@ export const CommandPalette = ({ modalProps }: CommandPaletteProps) => {
         });
     }, []);
 
-    const { data, isLoading } = useSearch({
-        options: { enabled: isHome && debouncedQuery !== '' && query !== '' },
-        query: {
-            albumArtistLimit: 4,
-            albumArtistStartIndex: 0,
-            albumLimit: 4,
-            albumStartIndex: 0,
-            query: debouncedQuery,
-            songLimit: 4,
-            songStartIndex: 0,
-        },
-        serverId: server?.id,
-    });
+    const { data, isLoading } = useQuery(
+        searchQueries.search({
+            options: { enabled: isHome && debouncedQuery !== '' && query !== '' },
+            query: {
+                albumArtistLimit: 4,
+                albumArtistStartIndex: 0,
+                albumLimit: 4,
+                albumStartIndex: 0,
+                query: debouncedQuery,
+                songLimit: 4,
+                songStartIndex: 0,
+            },
+            serverId: server?.id,
+        }),
+    );
 
     const showAlbumGroup = isHome && Boolean(query && data && data?.albums?.length > 0);
     const showArtistGroup = isHome && Boolean(query && data && data?.albumArtists?.length > 0);
     const showTrackGroup = isHome && Boolean(query && data && data?.songs?.length > 0);
-
-    const handlePlayQueueAdd = usePlayQueueAdd();
 
     return (
         <Modal
@@ -165,7 +166,6 @@ export const CommandPalette = ({ modalProps }: CommandPaletteProps) => {
                                 >
                                     {({ isHighlighted }) => (
                                         <LibraryCommandItem
-                                            handlePlayQueueAdd={handlePlayQueueAdd}
                                             id={album.id}
                                             imageUrl={album.imageUrl}
                                             isHighlighted={isHighlighted}
@@ -199,7 +199,6 @@ export const CommandPalette = ({ modalProps }: CommandPaletteProps) => {
                                     {({ isHighlighted }) => (
                                         <LibraryCommandItem
                                             disabled={artist?.albumCount === 0}
-                                            handlePlayQueueAdd={handlePlayQueueAdd}
                                             id={artist.id}
                                             imageUrl={artist.imageUrl}
                                             isHighlighted={isHighlighted}
@@ -237,11 +236,11 @@ export const CommandPalette = ({ modalProps }: CommandPaletteProps) => {
                                 >
                                     {({ isHighlighted }) => (
                                         <LibraryCommandItem
-                                            handlePlayQueueAdd={handlePlayQueueAdd}
                                             id={song.id}
                                             imageUrl={song.imageUrl}
                                             isHighlighted={isHighlighted}
                                             itemType={LibraryItem.SONG}
+                                            song={song}
                                             subtitle={song.artists
                                                 .map((artist) => artist.name)
                                                 .join(', ')}

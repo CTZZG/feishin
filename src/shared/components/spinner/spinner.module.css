@@ -4,7 +4,7 @@
 }
 
 .icon {
-    animation: rotating 1s ease-in-out infinite;
+    animation: rotating 1s linear infinite;
 }
 
 @keyframes rotating {

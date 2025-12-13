@@ -1,56 +1,437 @@
-import { ColDef, RowDoubleClickedEvent } from '@ag-grid-community/core';
-import { useMemo } from 'react';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath, useParams } from 'react-router';
-import { createSearchParams, Link } from 'react-router-dom';
+import { createSearchParams, generatePath, Link, useParams } from 'react-router';
 
 import styles from './album-artist-detail-content.module.css';
 
-import { MemoizedSwiperGridCarousel } from '/@/renderer/components/grid-carousel/grid-carousel';
-import { getColumnDefs, VirtualTable } from '/@/renderer/components/virtual-table';
-import { useAlbumList } from '/@/renderer/features/albums/queries/album-list-query';
-import { useAlbumArtistDetail } from '/@/renderer/features/artists/queries/album-artist-detail-query';
-import { useTopSongsList } from '/@/renderer/features/artists/queries/top-songs-list-query';
-import {
-    useHandleGeneralContextMenu,
-    useHandleTableContextMenu,
-} from '/@/renderer/features/context-menu';
-import {
-    ARTIST_CONTEXT_MENU_ITEMS,
-    SONG_CONTEXT_MENU_ITEMS,
-} from '/@/renderer/features/context-menu/context-menu-items';
-import { usePlayQueueAdd } from '/@/renderer/features/player';
-import { PlayButton, useCreateFavorite, useDeleteFavorite } from '/@/renderer/features/shared';
-import { LibraryBackgroundOverlay } from '/@/renderer/features/shared/components/library-background-overlay';
+import { useItemListColumnReorder } from '/@/renderer/components/item-list/helpers/use-item-list-column-reorder';
+import { useItemListColumnResize } from '/@/renderer/components/item-list/helpers/use-item-list-column-resize';
+import { SONG_TABLE_COLUMNS } from '/@/renderer/components/item-list/item-table-list/default-columns';
+import { ItemTableList } from '/@/renderer/components/item-list/item-table-list/item-table-list';
+import { ItemTableListColumn } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
+import { ItemControls } from '/@/renderer/components/item-list/types';
+import { AlbumInfiniteCarousel } from '/@/renderer/features/albums/components/album-infinite-carousel';
+import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
+import { AlbumArtistGridCarousel } from '/@/renderer/features/artists/components/album-artist-grid-carousel';
+import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
+import { ListConfigMenu } from '/@/renderer/features/shared/components/list-config-menu';
+import { DefaultPlayButton } from '/@/renderer/features/shared/components/play-button';
+import { searchLibraryItems } from '/@/renderer/features/shared/utils';
 import { useContainerQuery } from '/@/renderer/hooks';
 import { useGenreRoute } from '/@/renderer/hooks/use-genre-route';
 import { AppRoute } from '/@/renderer/router/routes';
-import { ArtistItem, useCurrentServer } from '/@/renderer/store';
-import { useGeneralSettings, usePlayButtonBehavior } from '/@/renderer/store/settings.store';
+import { ArtistItem, useCurrentServer, usePlayerSong } from '/@/renderer/store';
+import {
+    useGeneralSettings,
+    usePlayButtonBehavior,
+    useSettingsStore,
+} from '/@/renderer/store/settings.store';
 import { sanitize } from '/@/renderer/utils/sanitize';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Button } from '/@/shared/components/button/button';
 import { Grid } from '/@/shared/components/grid/grid';
 import { Group } from '/@/shared/components/group/group';
+import { Icon } from '/@/shared/components/icon/icon';
+import { Spinner } from '/@/shared/components/spinner/spinner';
 import { Spoiler } from '/@/shared/components/spoiler/spoiler';
 import { Stack } from '/@/shared/components/stack/stack';
+import { TextInput } from '/@/shared/components/text-input/text-input';
 import { TextTitle } from '/@/shared/components/text-title/text-title';
+import { Text } from '/@/shared/components/text/text';
 import {
-    Album,
     AlbumArtist,
     AlbumListSort,
     LibraryItem,
-    QueueSong,
     ServerType,
+    Song,
     SortOrder,
+    TopSongListResponse,
 } from '/@/shared/types/domain-types';
-import { CardRow, Play, TableColumn } from '/@/shared/types/types';
+import { ItemListKey, ListDisplayType, Play } from '/@/shared/types/types';
 
-interface AlbumArtistDetailContentProps {
-    background?: string;
+interface AlbumArtistActionButtonsProps {
+    albumCount: null | number | undefined;
+    artistDiscographyLink: string;
+    artistSongsLink: string;
+    onFavorite: () => void;
+    onMoreOptions: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    onPlay: () => void;
+    userFavorite?: boolean;
 }
 
-export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailContentProps) => {
+const AlbumArtistActionButtons = ({
+    albumCount,
+    artistDiscographyLink,
+    artistSongsLink,
+    onFavorite,
+    onMoreOptions,
+    onPlay,
+    userFavorite,
+}: AlbumArtistActionButtonsProps) => {
+    const { t } = useTranslation();
+
+    return (
+        <>
+            <Group gap="md">
+                <DefaultPlayButton disabled={albumCount === 0} onClick={onPlay} />
+                <Group gap="xs">
+                    <ActionIcon
+                        icon="favorite"
+                        iconProps={{
+                            fill: userFavorite ? 'primary' : undefined,
+                        }}
+                        onClick={onFavorite}
+                        size="lg"
+                        variant="transparent"
+                    />
+                    <ActionIcon
+                        icon="ellipsisHorizontal"
+                        onClick={onMoreOptions}
+                        size="lg"
+                        variant="transparent"
+                    />
+                </Group>
+            </Group>
+            <Group gap="md">
+                <Button
+                    component={Link}
+                    size="compact-md"
+                    to={artistDiscographyLink}
+                    variant="subtle"
+                >
+                    {String(t('page.albumArtistDetail.viewDiscography', {})).toUpperCase()}
+                </Button>
+                <Button component={Link} size="compact-md" to={artistSongsLink} variant="subtle">
+                    {String(t('page.albumArtistDetail.viewAllTracks', {})).toUpperCase()}
+                </Button>
+            </Group>
+        </>
+    );
+};
+
+interface AlbumArtistMetadataGenresProps {
+    genres?: Array<{ id: string; name: string }>;
+}
+
+const AlbumArtistMetadataGenres = ({ genres }: AlbumArtistMetadataGenresProps) => {
+    const { t } = useTranslation();
+    const genrePath = useGenreRoute();
+
+    if (!genres || genres.length === 0) return null;
+
+    return (
+        <Stack gap="xs">
+            <Text fw={600} isNoSelect size="sm" tt="uppercase">
+                {t('entity.genre', {
+                    count: genres.length,
+                })}
+            </Text>
+            <Group gap="sm">
+                {genres.map((genre) => (
+                    <Button
+                        component={Link}
+                        key={`genre-${genre.id}`}
+                        radius="md"
+                        size="compact-md"
+                        to={generatePath(genrePath, {
+                            albumArtistId: null,
+                            albumId: null,
+                            artistId: null,
+                            genreId: genre.id,
+                            itemType: null,
+                            playlistId: null,
+                        })}
+                        variant="outline"
+                    >
+                        {genre.name}
+                    </Button>
+                ))}
+            </Group>
+        </Stack>
+    );
+};
+
+interface AlbumArtistMetadataBiographyProps {
+    artistName?: string;
+    biography: null | string | undefined;
+}
+
+const AlbumArtistMetadataBiography = ({
+    artistName,
+    biography,
+}: AlbumArtistMetadataBiographyProps) => {
+    const { t } = useTranslation();
+
+    if (!biography) return null;
+
+    const sanitizedBiography = sanitize(biography);
+
+    return (
+        <section style={{ maxWidth: '1280px' }}>
+            <TextTitle fw={700} order={2}>
+                {t('page.albumArtistDetail.about', {
+                    artist: artistName,
+                })}
+            </TextTitle>
+            <Spoiler hideLabel="Show less" maxHeight={250} showLabel="Show more">
+                <div dangerouslySetInnerHTML={{ __html: sanitizedBiography }}></div>
+            </Spoiler>
+        </section>
+    );
+};
+
+interface AlbumArtistMetadataTopSongsProps {
+    routeId: string;
+    topSongsQuery: ReturnType<typeof useQuery<TopSongListResponse>>;
+}
+
+const AlbumArtistMetadataTopSongs = ({
+    routeId,
+    topSongsQuery,
+}: AlbumArtistMetadataTopSongsProps) => {
+    const { t } = useTranslation();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showAll, setShowAll] = useState(false);
+    const tableConfig = useSettingsStore((state) => state.lists[ItemListKey.SONG]?.table);
+    const currentSong = usePlayerSong();
+    const player = usePlayer();
+
+    const songs = useMemo(() => topSongsQuery?.data?.items || [], [topSongsQuery?.data?.items]);
+
+    const columns = useMemo(() => {
+        return tableConfig?.columns || [];
+    }, [tableConfig?.columns]);
+
+    const filteredSongs = useMemo(() => {
+        const filtered = searchLibraryItems(songs, searchTerm, LibraryItem.SONG);
+        // When searching, show all results. Otherwise, limit to 5 if not showing all
+        if (searchTerm.trim() || showAll) {
+            return filtered;
+        }
+        return filtered.slice(0, 5);
+    }, [songs, searchTerm, showAll]);
+
+    const { handleColumnReordered } = useItemListColumnReorder({
+        itemListKey: ItemListKey.SONG,
+    });
+
+    const { handleColumnResized } = useItemListColumnResize({
+        itemListKey: ItemListKey.SONG,
+    });
+
+    const overrideControls: Partial<ItemControls> = useMemo(() => {
+        return {
+            onDoubleClick: ({ index, internalState, item, meta }) => {
+                if (!item) {
+                    return;
+                }
+
+                const playType = (meta?.playType as Play) || Play.NOW;
+                const items = internalState?.getData() as Song[];
+
+                if (index !== undefined) {
+                    player.addToQueueByData(items, playType, item.id);
+                }
+            },
+        };
+    }, [player]);
+
+    if (!topSongsQuery?.data?.items?.length) return null;
+
+    if (!tableConfig || columns.length === 0) {
+        return (
+            <section>
+                <Group justify="space-between" wrap="nowrap">
+                    <Group align="flex-end" wrap="nowrap">
+                        <TextTitle fw={700} order={2}>
+                            {t('page.albumArtistDetail.topSongs', {
+                                postProcess: 'sentenceCase',
+                            })}
+                        </TextTitle>
+                        <Button
+                            component={Link}
+                            size="compact-md"
+                            to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL_TOP_SONGS, {
+                                albumArtistId: routeId,
+                            })}
+                            uppercase
+                            variant="subtle"
+                        >
+                            {t('page.albumArtistDetail.viewAll', {
+                                postProcess: 'sentenceCase',
+                            })}
+                        </Button>
+                    </Group>
+                </Group>
+            </section>
+        );
+    }
+
+    const currentSongId = currentSong?.id;
+
+    return (
+        <section>
+            <Stack gap="md">
+                <Group justify="space-between" wrap="nowrap">
+                    <Group align="flex-end" wrap="nowrap">
+                        <TextTitle fw={700} order={2}>
+                            {t('page.albumArtistDetail.topSongs', {
+                                postProcess: 'sentenceCase',
+                            })}
+                        </TextTitle>
+                        <Button
+                            component={Link}
+                            size="compact-md"
+                            to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL_TOP_SONGS, {
+                                albumArtistId: routeId,
+                            })}
+                            uppercase
+                            variant="subtle"
+                        >
+                            {t('page.albumArtistDetail.viewAll', {
+                                postProcess: 'sentenceCase',
+                            })}
+                        </Button>
+                    </Group>
+                </Group>
+                <Group gap="sm" w="100%">
+                    <TextInput
+                        flex={1}
+                        leftSection={<Icon icon="search" />}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder={t('common.search', { postProcess: 'sentenceCase' })}
+                        radius="xl"
+                        rightSection={
+                            searchTerm ? (
+                                <ActionIcon
+                                    icon="x"
+                                    onClick={() => setSearchTerm('')}
+                                    size="sm"
+                                    variant="transparent"
+                                />
+                            ) : null
+                        }
+                        styles={{
+                            input: {
+                                background: 'transparent',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                            },
+                        }}
+                        value={searchTerm}
+                    />
+                    <ListConfigMenu
+                        displayTypes={[{ hidden: true, value: ListDisplayType.GRID }]}
+                        listKey={ItemListKey.SONG}
+                        optionsConfig={{
+                            table: {
+                                itemsPerPage: { hidden: true },
+                                pagination: { hidden: true },
+                            },
+                        }}
+                        tableColumnsData={SONG_TABLE_COLUMNS}
+                    />
+                </Group>
+                <ItemTableList
+                    activeRowId={currentSongId}
+                    autoFitColumns={tableConfig.autoFitColumns}
+                    CellComponent={ItemTableListColumn}
+                    columns={columns}
+                    data={filteredSongs}
+                    enableAlternateRowColors={tableConfig.enableAlternateRowColors}
+                    enableDrag
+                    enableExpansion={false}
+                    enableHeader
+                    enableHorizontalBorders={tableConfig.enableHorizontalBorders}
+                    enableRowHoverHighlight={tableConfig.enableRowHoverHighlight}
+                    enableSelection
+                    enableVerticalBorders={tableConfig.enableVerticalBorders}
+                    itemType={LibraryItem.SONG}
+                    onColumnReordered={handleColumnReordered}
+                    onColumnResized={handleColumnResized}
+                    overrideControls={overrideControls}
+                    size={tableConfig.size}
+                />
+                {!searchTerm.trim() && songs.length > 5 && !showAll && (
+                    <Group justify="center" w="100%">
+                        <Button onClick={() => setShowAll(true)} variant="subtle">
+                            {t('action.viewMore', { postProcess: 'sentenceCase' })}
+                        </Button>
+                    </Group>
+                )}
+            </Stack>
+        </section>
+    );
+};
+
+interface AlbumArtistMetadataExternalLinksProps {
+    artistName?: string;
+    externalLinks: boolean;
+    lastFM: boolean;
+    mbzId?: null | string;
+    musicBrainz: boolean;
+}
+
+const AlbumArtistMetadataExternalLinks = ({
+    artistName,
+    externalLinks,
+    lastFM,
+    mbzId,
+    musicBrainz,
+}: AlbumArtistMetadataExternalLinksProps) => {
+    const { t } = useTranslation();
+
+    if (!externalLinks || (!lastFM && !musicBrainz)) return null;
+
+    return (
+        <Stack gap="xs">
+            <Text fw={600} isNoSelect size="sm" tt="uppercase">
+                {t('common.externalLinks', {
+                    postProcess: 'sentenceCase',
+                })}
+            </Text>
+            <Group gap="sm">
+                {lastFM && (
+                    <ActionIcon
+                        component="a"
+                        href={`https://www.last.fm/music/${encodeURIComponent(artistName || '')}`}
+                        icon="brandLastfm"
+                        iconProps={{
+                            fill: 'default',
+                            size: 'xl',
+                        }}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        tooltip={{
+                            label: t('action.openIn.lastfm', {}),
+                        }}
+                        variant="subtle"
+                    />
+                )}
+                {mbzId && musicBrainz ? (
+                    <ActionIcon
+                        component="a"
+                        href={`https://musicbrainz.org/artist/${mbzId}`}
+                        icon="brandMusicBrainz"
+                        iconProps={{
+                            fill: 'default',
+                            size: 'xl',
+                        }}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        tooltip={{
+                            label: t('action.openIn.musicbrainz', {}),
+                        }}
+                        variant="subtle"
+                    />
+                ) : null}
+            </Group>
+        </Stack>
+    );
+};
+
+export const AlbumArtistDetailContent = () => {
     const { t } = useTranslation();
     const { artistItems, externalLinks, lastFM, musicBrainz } = useGeneralSettings();
     const { albumArtistId, artistId } = useParams() as {
@@ -58,10 +439,9 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
         artistId?: string;
     };
     const routeId = (artistId || albumArtistId) as string;
-    const cq = useContainerQuery();
-    const handlePlayQueueAdd = usePlayQueueAdd();
+    const { ref, ...cq } = useContainerQuery();
+    const { addToQueueByFetch, setFavorite } = usePlayer();
     const server = useCurrentServer();
-    const genrePath = useGenreRoute();
 
     const [enabledItem, itemOrder] = useMemo(() => {
         const enabled: { [key in ArtistItem]?: boolean } = {};
@@ -75,10 +455,12 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
         return [enabled, order];
     }, [artistItems]);
 
-    const detailQuery = useAlbumArtistDetail({
-        query: { id: routeId },
-        serverId: server?.id,
-    });
+    const detailQuery = useSuspenseQuery(
+        artistsQueries.albumArtistDetail({
+            query: { id: routeId },
+            serverId: server?.id,
+        }),
+    );
 
     const artistDiscographyLink = `${generatePath(
         AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL_DISCOGRAPHY,
@@ -87,119 +469,42 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
         },
     )}?${createSearchParams({
         artistId: routeId,
-        artistName: detailQuery?.data?.name || '',
+        artistName: detailQuery.data?.name || '',
     })}`;
 
     const artistSongsLink = `${generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL_SONGS, {
         albumArtistId: routeId,
     })}?${createSearchParams({
         artistId: routeId,
-        artistName: detailQuery?.data?.name || '',
+        artistName: detailQuery.data?.name || '',
     })}`;
 
-    const recentAlbumsQuery = useAlbumList({
-        options: {
-            enabled: enabledItem.recentAlbums,
-        },
-        query: {
-            artistIds: [routeId],
-            compilation: false,
-            limit: 15,
-            sortBy: AlbumListSort.RELEASE_DATE,
-            sortOrder: SortOrder.DESC,
-            startIndex: 0,
-        },
-        serverId: server?.id,
-    });
-
-    const compilationAlbumsQuery = useAlbumList({
-        options: {
-            enabled: enabledItem.compilations && server?.type !== ServerType.SUBSONIC,
-        },
-        query: {
-            artistIds: [routeId],
-            compilation: true,
-            limit: 15,
-            sortBy: AlbumListSort.RELEASE_DATE,
-            sortOrder: SortOrder.DESC,
-            startIndex: 0,
-        },
-        serverId: server?.id,
-    });
-
-    const topSongsQuery = useTopSongsList({
-        options: {
-            enabled: !!detailQuery?.data?.name && enabledItem.topSongs,
-        },
-        query: {
-            artist: detailQuery?.data?.name || '',
-            artistId: routeId,
-        },
-        serverId: server?.id,
-    });
-
-    const topSongsColumnDefs: ColDef[] = useMemo(
-        () =>
-            getColumnDefs([
-                { column: TableColumn.ROW_INDEX, width: 0 },
-                { column: TableColumn.TITLE_COMBINED, width: 0 },
-                { column: TableColumn.DURATION, width: 0 },
-                { column: TableColumn.ALBUM, width: 0 },
-                { column: TableColumn.YEAR, width: 0 },
-                { column: TableColumn.PLAY_COUNT, width: 0 },
-                { column: TableColumn.USER_FAVORITE, width: 0 },
-            ]),
-        [],
+    const topSongsQuery = useQuery(
+        artistsQueries.topSongs({
+            options: {
+                enabled: !!detailQuery.data?.name && enabledItem.topSongs,
+            },
+            query: {
+                artist: detailQuery.data?.name || '',
+                artistId: routeId,
+            },
+            serverId: server?.id,
+        }),
     );
-
-    const cardRows: Record<string, CardRow<Album>[] | CardRow<AlbumArtist>[]> = {
-        album: [
-            {
-                property: 'name',
-                route: {
-                    route: AppRoute.LIBRARY_ALBUMS_DETAIL,
-                    slugs: [{ idProperty: 'id', slugProperty: 'albumId' }],
-                },
-            },
-            {
-                arrayProperty: 'name',
-                property: 'albumArtists',
-                route: {
-                    route: AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL,
-                    slugs: [{ idProperty: 'id', slugProperty: 'albumArtistId' }],
-                },
-            },
-        ],
-        albumArtist: [
-            {
-                property: 'name',
-                route: {
-                    route: AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL,
-                    slugs: [{ idProperty: 'id', slugProperty: 'albumArtistId' }],
-                },
-            },
-        ],
-    };
-
-    const cardRoutes = {
-        album: {
-            route: AppRoute.LIBRARY_ALBUMS_DETAIL,
-            slugs: [{ idProperty: 'id', slugProperty: 'albumId' }],
-        },
-        albumArtist: {
-            route: AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL,
-            slugs: [{ idProperty: 'id', slugProperty: 'albumArtistId' }],
-        },
-    };
 
     const carousels = useMemo(() => {
         return [
             {
-                data: recentAlbumsQuery?.data?.items,
-                isHidden: !recentAlbumsQuery?.data?.items?.length || !enabledItem.recentAlbums,
+                isHidden: !enabledItem.recentAlbums || !routeId,
                 itemType: LibraryItem.ALBUM,
-                loading: recentAlbumsQuery?.isLoading || recentAlbumsQuery.isFetching,
                 order: itemOrder.recentAlbums,
+                query: {
+                    artistIds: routeId ? [routeId] : undefined,
+                    compilation: false,
+                },
+                rowCount: 2,
+                sortBy: AlbumListSort.RELEASE_DATE,
+                sortOrder: SortOrder.DESC,
                 title: (
                     <Group align="flex-end">
                         <TextTitle fw={700} order={2}>
@@ -213,21 +518,24 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                             to={artistDiscographyLink}
                             variant="subtle"
                         >
-                            {String(t('page.albumArtistDetail.viewDiscography')).toUpperCase()}
+                            {String(t('page.albumArtistDetail.viewDiscography', {})).toUpperCase()}
                         </Button>
                     </Group>
                 ),
                 uniqueId: 'recentReleases',
             },
             {
-                data: compilationAlbumsQuery?.data?.items,
                 isHidden:
-                    !compilationAlbumsQuery?.data?.items?.length ||
-                    !enabledItem.compilations ||
-                    server?.type === ServerType.SUBSONIC,
+                    !enabledItem.compilations || server?.type === ServerType.SUBSONIC || !routeId,
                 itemType: LibraryItem.ALBUM,
-                loading: compilationAlbumsQuery?.isLoading || compilationAlbumsQuery.isFetching,
                 order: itemOrder.compilations,
+                query: {
+                    artistIds: routeId ? [routeId] : undefined,
+                    compilation: true,
+                },
+                rowCount: 1,
+                sortBy: AlbumListSort.RELEASE_DATE,
+                sortOrder: SortOrder.DESC,
                 title: (
                     <TextTitle fw={700} order={2}>
                         {t('page.albumArtistDetail.appearsOn', { postProcess: 'sentenceCase' })}
@@ -236,10 +544,11 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
                 uniqueId: 'compilationAlbums',
             },
             {
-                data: detailQuery?.data?.similarArtists || [],
-                isHidden: !detailQuery?.data?.similarArtists || !enabledItem.similarArtists,
+                data: (detailQuery.data?.similarArtists || []) as AlbumArtist[],
+                isHidden: !detailQuery.data?.similarArtists || !enabledItem.similarArtists,
                 itemType: LibraryItem.ALBUM_ARTIST,
                 order: itemOrder.similarArtists,
+                rowCount: 1,
                 title: (
                     <TextTitle fw={700} order={2}>
                         {t('page.albumArtistDetail.relatedArtists', {
@@ -252,19 +561,14 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
         ];
     }, [
         artistDiscographyLink,
-        compilationAlbumsQuery?.data?.items,
-        compilationAlbumsQuery.isFetching,
-        compilationAlbumsQuery?.isLoading,
-        detailQuery?.data?.similarArtists,
+        detailQuery.data?.similarArtists,
         enabledItem.compilations,
         enabledItem.recentAlbums,
         enabledItem.similarArtists,
         itemOrder.compilations,
         itemOrder.recentAlbums,
         itemOrder.similarArtists,
-        recentAlbumsQuery?.data?.items,
-        recentAlbumsQuery.isFetching,
-        recentAlbumsQuery?.isLoading,
+        routeId,
         server?.type,
         t,
     ]);
@@ -272,298 +576,125 @@ export const AlbumArtistDetailContent = ({ background }: AlbumArtistDetailConten
     const playButtonBehavior = usePlayButtonBehavior();
 
     const handlePlay = async (playType?: Play) => {
-        handlePlayQueueAdd?.({
-            byItemType: {
-                id: [routeId],
-                type: albumArtistId ? LibraryItem.ALBUM_ARTIST : LibraryItem.ARTIST,
-            },
-            playType: playType || playButtonBehavior,
-        });
+        if (!server?.id) return;
+        addToQueueByFetch(
+            server.id,
+            [routeId],
+            albumArtistId ? LibraryItem.ALBUM_ARTIST : LibraryItem.ARTIST,
+            playType || playButtonBehavior,
+        );
     };
-
-    const handleContextMenu = useHandleTableContextMenu(LibraryItem.SONG, SONG_CONTEXT_MENU_ITEMS);
-
-    const handleRowDoubleClick = (e: RowDoubleClickedEvent<QueueSong>) => {
-        if (!e.data || !topSongsQuery?.data) return;
-
-        handlePlayQueueAdd?.({
-            byData: topSongsQuery?.data?.items || [],
-            initialSongId: e.data.id,
-            playType: playButtonBehavior,
-        });
-    };
-
-    const createFavoriteMutation = useCreateFavorite({});
-    const deleteFavoriteMutation = useDeleteFavorite({});
 
     const handleFavorite = () => {
-        if (!detailQuery?.data) return;
-
-        if (detailQuery.data.userFavorite) {
-            deleteFavoriteMutation.mutate({
-                query: {
-                    id: [detailQuery.data.id],
-                    type: LibraryItem.ALBUM_ARTIST,
-                },
-                serverId: detailQuery.data.serverId,
-            });
-        } else {
-            createFavoriteMutation.mutate({
-                query: {
-                    id: [detailQuery.data.id],
-                    type: LibraryItem.ALBUM_ARTIST,
-                },
-                serverId: detailQuery.data.serverId,
-            });
-        }
+        if (!detailQuery.data) return;
+        setFavorite(
+            detailQuery.data._serverId,
+            [detailQuery.data.id],
+            LibraryItem.ALBUM_ARTIST,
+            !detailQuery.data.userFavorite,
+        );
     };
 
-    const albumCount = detailQuery?.data?.albumCount;
-    const artistContextItems =
-        (albumCount ?? 1) > 0
-            ? ARTIST_CONTEXT_MENU_ITEMS
-            : ARTIST_CONTEXT_MENU_ITEMS.filter((item) => !item.id.toLowerCase().includes('play'));
+    const handleMoreOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!detailQuery.data) return;
+        ContextMenuController.call({
+            cmd: { items: [detailQuery.data], type: LibraryItem.ALBUM_ARTIST },
+            event: e,
+        });
+    };
 
-    const handleGeneralContextMenu = useHandleGeneralContextMenu(
-        LibraryItem.ALBUM_ARTIST,
-        artistContextItems,
-    );
+    const albumCount = detailQuery.data?.albumCount;
+    const biography =
+        detailQuery.data?.biography && enabledItem.biography ? detailQuery.data.biography : null;
+    const showGenres = detailQuery.data?.genres ? detailQuery.data.genres.length !== 0 : false;
+    const mbzId = detailQuery.data?.mbz;
 
-    const topSongs = topSongsQuery?.data?.items?.slice(0, 10);
-
-    const biography = useMemo(() => {
-        const bio = detailQuery?.data?.biography;
-
-        if (!bio || !enabledItem.biography) return null;
-        return sanitize(bio);
-    }, [detailQuery?.data?.biography, enabledItem.biography]);
-
-    const showTopSongs = topSongsQuery?.data?.items?.length && enabledItem.topSongs;
-    const showGenres = detailQuery?.data?.genres ? detailQuery?.data?.genres.length !== 0 : false;
-    const mbzId = detailQuery?.data?.mbz;
-
-    const isLoading =
-        detailQuery?.isLoading ||
-        (server?.type === ServerType.NAVIDROME && enabledItem.topSongs && topSongsQuery?.isLoading);
-
-    if (isLoading) return <div className={styles.contentContainer} ref={cq.ref} />;
+    // Calculate order for genres and external links (show before other sections)
+    // Use a very low order number to ensure they appear first
+    const genresOrder = 0;
+    const externalLinksOrder = 0.5;
 
     return (
-        <div className={styles.contentContainer} ref={cq.ref}>
-            <LibraryBackgroundOverlay backgroundColor={background} />
+        <div className={styles.contentContainer} ref={ref}>
             <div className={styles.detailContainer}>
-                <Group gap="md">
-                    <PlayButton
-                        disabled={albumCount === 0}
-                        onClick={() => handlePlay(playButtonBehavior)}
-                    />
-                    <Group gap="xs">
-                        <ActionIcon
-                            icon="favorite"
-                            iconProps={{
-                                fill: detailQuery?.data?.userFavorite ? 'primary' : undefined,
-                            }}
-                            loading={
-                                createFavoriteMutation.isLoading || deleteFavoriteMutation.isLoading
-                            }
-                            onClick={handleFavorite}
-                            size="lg"
-                            variant="transparent"
-                        />
-                        <ActionIcon
-                            icon="ellipsisHorizontal"
-                            onClick={(e) => {
-                                if (!detailQuery?.data) return;
-                                handleGeneralContextMenu(e, [detailQuery.data!]);
-                            }}
-                            size="lg"
-                            variant="transparent"
-                        />
-                    </Group>
-                </Group>
-                <Group gap="md">
-                    <Button
-                        component={Link}
-                        size="compact-md"
-                        to={artistDiscographyLink}
-                        variant="subtle"
-                    >
-                        {String(t('page.albumArtistDetail.viewDiscography')).toUpperCase()}
-                    </Button>
-                    <Button
-                        component={Link}
-                        size="compact-md"
-                        to={artistSongsLink}
-                        variant="subtle"
-                    >
-                        {String(t('page.albumArtistDetail.viewAllTracks')).toUpperCase()}
-                    </Button>
-                </Group>
-                {showGenres ? (
-                    <section>
-                        <Group gap="sm">
-                            {detailQuery?.data?.genres?.map((genre) => (
-                                <Button
-                                    component={Link}
-                                    key={`genre-${genre.id}`}
-                                    radius="md"
-                                    size="compact-md"
-                                    to={generatePath(genrePath, {
-                                        genreId: genre.id,
-                                    })}
-                                    variant="outline"
-                                >
-                                    {genre.name}
-                                </Button>
-                            ))}
-                        </Group>
-                    </section>
-                ) : null}
-                {externalLinks && (lastFM || musicBrainz) ? (
-                    <section>
-                        <Group gap="sm">
-                            {lastFM && (
-                                <ActionIcon
-                                    component="a"
-                                    href={`https://www.last.fm/music/${encodeURIComponent(
-                                        detailQuery?.data?.name || '',
-                                    )}`}
-                                    icon="brandLastfm"
-                                    iconProps={{
-                                        fill: 'default',
-                                        size: 'xl',
-                                    }}
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                    tooltip={{
-                                        label: t('action.openIn.lastfm'),
-                                    }}
-                                    variant="subtle"
-                                />
-                            )}
-                            {mbzId && musicBrainz ? (
-                                <ActionIcon
-                                    component="a"
-                                    href={`https://musicbrainz.org/artist/${mbzId}`}
-                                    icon="brandMusicBrainz"
-                                    iconProps={{
-                                        fill: 'default',
-                                        size: 'xl',
-                                    }}
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                    tooltip={{
-                                        label: t('action.openIn.musicbrainz'),
-                                    }}
-                                    variant="subtle"
-                                />
-                            ) : null}
-                        </Group>
-                    </section>
-                ) : null}
+                <AlbumArtistActionButtons
+                    albumCount={albumCount}
+                    artistDiscographyLink={artistDiscographyLink}
+                    artistSongsLink={artistSongsLink}
+                    onFavorite={handleFavorite}
+                    onMoreOptions={handleMoreOptions}
+                    onPlay={() => handlePlay(playButtonBehavior)}
+                    userFavorite={detailQuery.data?.userFavorite}
+                />
                 <Grid gutter="xl">
-                    {biography ? (
+                    {showGenres && (
+                        <Grid.Col order={genresOrder} span={12}>
+                            <AlbumArtistMetadataGenres genres={detailQuery.data?.genres} />
+                        </Grid.Col>
+                    )}
+                    {externalLinks && (lastFM || musicBrainz) && (
+                        <Grid.Col order={externalLinksOrder} span={12}>
+                            <AlbumArtistMetadataExternalLinks
+                                artistName={detailQuery.data?.name}
+                                externalLinks={externalLinks}
+                                lastFM={lastFM}
+                                mbzId={mbzId}
+                                musicBrainz={musicBrainz}
+                            />
+                        </Grid.Col>
+                    )}
+                    {biography && (
                         <Grid.Col order={itemOrder.biography} span={12}>
-                            <section style={{ maxWidth: '1280px' }}>
-                                <TextTitle fw={700} order={2}>
-                                    {t('page.albumArtistDetail.about', {
-                                        artist: detailQuery?.data?.name,
-                                    })}
-                                </TextTitle>
-                                <Spoiler dangerouslySetInnerHTML={{ __html: biography }} />
-                            </section>
+                            <AlbumArtistMetadataBiography
+                                artistName={detailQuery.data?.name}
+                                biography={biography}
+                            />
                         </Grid.Col>
-                    ) : null}
-                    {showTopSongs ? (
+                    )}
+                    {Boolean(topSongsQuery?.data?.items?.length) && enabledItem.topSongs && (
                         <Grid.Col order={itemOrder.topSongs} span={12}>
-                            <section>
-                                <Group justify="space-between" wrap="nowrap">
-                                    <Group align="flex-end" wrap="nowrap">
-                                        <TextTitle fw={700} order={2}>
-                                            {t('page.albumArtistDetail.topSongs', {
-                                                postProcess: 'sentenceCase',
-                                            })}
-                                        </TextTitle>
-                                        <Button
-                                            component={Link}
-                                            size="compact-md"
-                                            to={generatePath(
-                                                AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL_TOP_SONGS,
-                                                {
-                                                    albumArtistId: routeId,
-                                                },
-                                            )}
-                                            uppercase
-                                            variant="subtle"
-                                        >
-                                            {t('page.albumArtistDetail.viewAll', {
-                                                postProcess: 'sentenceCase',
-                                            })}
-                                        </Button>
-                                    </Group>
-                                </Group>
-                                <VirtualTable
-                                    autoFitColumns
-                                    autoHeight
-                                    columnDefs={topSongsColumnDefs}
-                                    context={{
-                                        itemType: LibraryItem.SONG,
-                                    }}
-                                    deselectOnClickOutside
-                                    enableCellChangeFlash={false}
-                                    getRowId={(data) => data.data.uniqueId}
-                                    onCellContextMenu={handleContextMenu}
-                                    onRowDoubleClicked={handleRowDoubleClick}
-                                    rowData={topSongs}
-                                    rowHeight={60}
-                                    rowSelection="multiple"
-                                    shouldUpdateSong
-                                    stickyHeader
-                                    suppressCellFocus
-                                    suppressHorizontalScroll
-                                    suppressLoadingOverlay
-                                    suppressRowDrag
-                                />
-                            </section>
+                            <AlbumArtistMetadataTopSongs
+                                routeId={routeId}
+                                topSongsQuery={topSongsQuery}
+                            />
                         </Grid.Col>
-                    ) : null}
-
-                    {carousels
-                        .filter((c) => !c.isHidden)
-                        .map((carousel) => (
-                            <Grid.Col
-                                key={`carousel-${carousel.uniqueId}`}
-                                order={carousel.order}
-                                span={12}
-                            >
-                                <section>
-                                    <Stack gap="xl">
-                                        <MemoizedSwiperGridCarousel
-                                            cardRows={
-                                                cardRows[carousel.itemType as keyof typeof cardRows]
-                                            }
-                                            data={carousel.data}
-                                            isLoading={carousel.loading}
-                                            itemType={carousel.itemType}
-                                            route={
-                                                cardRoutes[
-                                                    carousel.itemType as keyof typeof cardRoutes
-                                                ]
-                                            }
-                                            swiperProps={{
-                                                grid: {
-                                                    rows: 2,
-                                                },
-                                            }}
-                                            title={{
-                                                label: carousel.title,
-                                            }}
-                                            uniqueId={carousel.uniqueId}
-                                        />
-                                    </Stack>
-                                </section>
-                            </Grid.Col>
-                        ))}
+                    )}
+                    {cq.height || cq.width
+                        ? carousels
+                              .filter((c) => !c.isHidden)
+                              .map((carousel) => (
+                                  <Grid.Col
+                                      key={`carousel-${carousel.uniqueId}`}
+                                      order={carousel.order}
+                                      span={12}
+                                  >
+                                      <Suspense fallback={<Spinner container />}>
+                                          {carousel.itemType === LibraryItem.ALBUM ? (
+                                              'query' in carousel &&
+                                              carousel.query &&
+                                              carousel.sortBy &&
+                                              carousel.sortOrder ? (
+                                                  <AlbumInfiniteCarousel
+                                                      query={carousel.query}
+                                                      rowCount={carousel.rowCount}
+                                                      sortBy={carousel.sortBy}
+                                                      sortOrder={carousel.sortOrder}
+                                                      title={carousel.title}
+                                                  />
+                                              ) : null
+                                          ) : carousel.itemType === LibraryItem.ALBUM_ARTIST ? (
+                                              'data' in carousel && carousel.data ? (
+                                                  <AlbumArtistGridCarousel
+                                                      data={carousel.data}
+                                                      rowCount={carousel.rowCount}
+                                                      title={carousel.title}
+                                                  />
+                                              ) : null
+                                          ) : null}
+                                      </Suspense>
+                                  </Grid.Col>
+                              ))
+                        : null}
                 </Grid>
             </div>
         </div>

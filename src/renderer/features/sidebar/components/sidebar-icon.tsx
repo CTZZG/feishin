@@ -5,6 +5,8 @@ import {
     RiFlag2Line,
     RiFolder3Fill,
     RiFolder3Line,
+    RiHeartFill,
+    RiHeartLine,
     RiHome6Fill,
     RiHome6Line,
     RiMusic2Fill,
@@ -20,7 +22,7 @@ import {
     RiUserVoiceFill,
     RiUserVoiceLine,
 } from 'react-icons/ri';
-import { generatePath } from 'react-router';
+import { generatePath, useLocation } from 'react-router';
 
 import { AppRoute } from '/@/renderer/router/routes';
 import { LibraryItem } from '/@/shared/types/domain-types';
@@ -32,41 +34,47 @@ interface SidebarIconProps {
 }
 
 export const SidebarIcon = ({ active, route, size }: SidebarIconProps) => {
+    const location = useLocation();
+    const isActive = active !== undefined ? active : location.pathname === route;
     switch (route) {
         case AppRoute.HOME:
-            if (active) return <RiHome6Fill size={size} />;
+            if (isActive) return <RiHome6Fill size={size} />;
             return <RiHome6Line size={size} />;
         case AppRoute.LIBRARY_ALBUM_ARTISTS:
-            if (active) return <RiUserVoiceFill size={size} />;
+            if (isActive) return <RiUserVoiceFill size={size} />;
             return <RiUserVoiceLine size={size} />;
         case AppRoute.LIBRARY_ALBUMS:
-            if (active) return <RiAlbumFill size={size} />;
+            if (isActive) return <RiAlbumFill size={size} />;
             return <RiAlbumLine size={size} />;
         case AppRoute.LIBRARY_ARTISTS:
-            if (active) return <RiUserVoiceFill size={size} />;
+            if (isActive) return <RiUserVoiceFill size={size} />;
             return <RiUserVoiceLine size={size} />;
         case AppRoute.LIBRARY_FOLDERS:
-            if (active) return <RiFolder3Fill size={size} />;
+            if (isActive) return <RiFolder3Fill size={size} />;
             return <RiFolder3Line size={size} />;
         case AppRoute.LIBRARY_GENRES:
-            if (active) return <RiFlag2Fill size={size} />;
+            if (isActive) return <RiFlag2Fill size={size} />;
             return <RiFlag2Line size={size} />;
         case AppRoute.LIBRARY_SONGS:
-            if (active) return <RiMusic2Fill size={size} />;
+            if (isActive) return <RiMusic2Fill size={size} />;
             return <RiMusic2Line size={size} />;
         case AppRoute.NOW_PLAYING:
-            if (active) return <RiPlayFill size={size} />;
+            if (isActive) return <RiPlayFill size={size} />;
             return <RiPlayLine size={size} />;
         case AppRoute.PLAYLISTS:
-            if (active) return <RiPlayListFill size={size} />;
+            if (isActive) return <RiPlayListFill size={size} />;
             return <RiPlayListLine size={size} />;
         case AppRoute.SETTINGS:
-            if (active) return <RiSettings2Fill size={size} />;
+            if (isActive) return <RiSettings2Fill size={size} />;
             return <RiSettings2Line size={size} />;
         case generatePath(AppRoute.SEARCH, { itemType: LibraryItem.SONG }):
-            if (active) return <RiSearchFill size={size} />;
+            if (isActive) return <RiSearchFill size={size} />;
             return <RiSearchLine size={size} />;
         default:
+            if (route.startsWith(AppRoute.FAVORITES)) {
+                if (isActive) return <RiHeartFill size={size} />;
+                return <RiHeartLine size={size} />;
+            }
             return <RiHome6Line size={size} />;
     }
 };

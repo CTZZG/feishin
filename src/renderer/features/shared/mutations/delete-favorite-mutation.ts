@@ -1,89 +1,78 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import isElectron from 'is-electron';
+import { useTranslation } from 'react-i18next';
 
 import { api } from '/@/renderer/api';
-import { queryKeys } from '/@/renderer/api/query-keys';
-import { MutationHookArgs } from '/@/renderer/lib/react-query';
-import { getServerById, useSetAlbumListItemDataById, useSetQueueFavorite } from '/@/renderer/store';
-import { useFavoriteEvent } from '/@/renderer/store/event.store';
+import { eventEmitter } from '/@/renderer/events/event-emitter';
 import {
-    AlbumArtistDetailResponse,
-    AlbumDetailResponse,
-    FavoriteArgs,
-    FavoriteResponse,
-    LibraryItem,
-} from '/@/shared/types/domain-types';
+    applyFavoriteOptimisticUpdates,
+    PreviousQueryData,
+    restoreFavoriteQueryData,
+} from '/@/renderer/features/shared/mutations/favorite-optimistic-updates';
+import { MutationHookArgs } from '/@/renderer/lib/react-query';
+import { toast } from '/@/shared/components/toast/toast';
+import { FavoriteArgs, FavoriteResponse, LibraryItem } from '/@/shared/types/domain-types';
 
 const remote = isElectron() ? window.api.remote : null;
+
+const deleteFavoriteMutationKey = ['set-favorite', false];
 
 export const useDeleteFavorite = (args: MutationHookArgs) => {
     const { options } = args || {};
     const queryClient = useQueryClient();
-    const setAlbumListData = useSetAlbumListItemDataById();
-    const setQueueFavorite = useSetQueueFavorite();
-    const setFavoriteEvent = useFavoriteEvent();
+    const { t } = useTranslation();
 
-    return useMutation<
-        FavoriteResponse,
-        AxiosError,
-        Omit<FavoriteArgs, 'apiClientProps' | 'server'>,
-        null
-    >({
+    return useMutation<FavoriteResponse, AxiosError, FavoriteArgs, PreviousQueryData[]>({
         mutationFn: (args) => {
-            const server = getServerById(args.serverId);
-            if (!server) throw new Error('Server not found');
-            return api.controller.deleteFavorite({ ...args, apiClientProps: { server } });
+            return api.controller.deleteFavorite({
+                ...args,
+                apiClientProps: { serverId: args.apiClientProps.serverId },
+            });
+        },
+        mutationKey: deleteFavoriteMutationKey,
+        onError: (_error, _variables, context) => {
+            if (context) {
+                restoreFavoriteQueryData(queryClient, context);
+            }
+
+            toast.show({
+                message: _error.message,
+                title: t('error.genericError', { postProcess: 'sentenceCase' }) as string,
+                type: 'error',
+            });
+
+            eventEmitter.emit('USER_FAVORITE', {
+                favorite: true,
+                id: _variables.query.id,
+                itemType: _variables.query.type,
+                serverId: _variables.apiClientProps.serverId,
+            });
+        },
+        onMutate: (variables) => {
+            eventEmitter.emit('USER_FAVORITE', {
+                favorite: false,
+                id: variables.query.id,
+                itemType: variables.query.type,
+                serverId: variables.apiClientProps.serverId,
+            });
+
+            return applyFavoriteOptimisticUpdates(queryClient, variables, false);
         },
         onSuccess: (_data, variables) => {
-            const { serverId } = variables;
-
-            if (!serverId) return;
-
-            for (const id of variables.query.id) {
-                // Set the userFavorite property to false for the album in the album list data store
-                if (variables.query.type === LibraryItem.ALBUM) {
-                    setAlbumListData(id, { userFavorite: false });
-                }
-            }
-
             if (variables.query.type === LibraryItem.SONG) {
-                remote?.updateFavorite(false, serverId, variables.query.id);
-                setQueueFavorite(variables.query.id, false);
-                setFavoriteEvent(variables.query.id, false);
-            }
-
-            // We only need to set if we're already on the album detail page
-            if (variables.query.type === LibraryItem.ALBUM && variables.query.id.length === 1) {
-                const queryKey = queryKeys.albums.detail(serverId, { id: variables.query.id[0] });
-                const previous = queryClient.getQueryData<AlbumDetailResponse>(queryKey);
-
-                if (previous) {
-                    queryClient.setQueryData<AlbumDetailResponse>(queryKey, {
-                        ...previous,
-                        userFavorite: false,
-                    });
-                }
-            }
-
-            // We only need to set if we're already on the album artist detail page
-            if (
-                variables.query.type === LibraryItem.ALBUM_ARTIST &&
-                variables.query.id.length === 1
-            ) {
-                const queryKey = queryKeys.albumArtists.detail(serverId, {
-                    id: variables.query.id[0],
-                });
-                const previous = queryClient.getQueryData<AlbumArtistDetailResponse>(queryKey);
-
-                if (previous) {
-                    queryClient.setQueryData<AlbumArtistDetailResponse>(queryKey, {
-                        ...previous,
-                        userFavorite: false,
-                    });
-                }
+                remote?.updateFavorite(
+                    false,
+                    variables.apiClientProps.serverId,
+                    variables.query.id,
+                );
             }
         },
         ...options,
     });
+};
+
+export const useIsMutatingDeleteFavorite = () => {
+    const mutatingCount = useIsMutating({ mutationKey: deleteFavoriteMutationKey });
+    return mutatingCount > 0;
 };

@@ -49,3 +49,28 @@
         right: calc(0.1rem * -1);
     }
 }
+
+.slider-container {
+    display: flex;
+    width: 95%;
+    height: 20px;
+}
+
+.slider-value-wrapper {
+    display: flex;
+    flex: 1;
+    align-self: center;
+    justify-content: center;
+    max-width: 50px;
+
+    @media (width < 768px) {
+        display: none;
+    }
+}
+
+.slider-wrapper {
+    display: flex;
+    flex: 6;
+    align-items: center;
+    height: 100%;
+}

@@ -96,7 +96,7 @@ export const RemoteContainer = () => {
                     }}
                     variant="transparent"
                 />
-                {(song?.serverType === 'navidrome' || song?.serverType === 'subsonic') && (
+                {(song?._serverType === 'navidrome' || song?._serverType === 'subsonic') && (
                     <div style={{ margin: 'auto' }}>
                         <Tooltip label="Double click to clear" openDelay={1000}>
                             <Rating

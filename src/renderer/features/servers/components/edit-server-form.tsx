@@ -1,5 +1,3 @@
-import { useForm } from '@mantine/form';
-import { useFocusTrap } from '@mantine/hooks';
 import { closeAllModals } from '@mantine/modals';
 import isElectron from 'is-electron';
 import { useState } from 'react';
@@ -7,19 +5,25 @@ import { useTranslation } from 'react-i18next';
 
 import i18n from '/@/i18n/i18n';
 import { api } from '/@/renderer/api';
-import { queryKeys } from '/@/renderer/api/query-keys';
 import { queryClient } from '/@/renderer/lib/react-query';
 import { useAuthStoreActions } from '/@/renderer/store';
-import { Button } from '/@/shared/components/button/button';
 import { Checkbox } from '/@/shared/components/checkbox/checkbox';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
+import { ModalButton } from '/@/shared/components/modal/model-shared';
 import { PasswordInput } from '/@/shared/components/password-input/password-input';
 import { Stack } from '/@/shared/components/stack/stack';
 import { TextInput } from '/@/shared/components/text-input/text-input';
 import { toast } from '/@/shared/components/toast/toast';
 import { Tooltip } from '/@/shared/components/tooltip/tooltip';
-import { AuthenticationResponse, ServerListItem, ServerType } from '/@/shared/types/domain-types';
+import { useFocusTrap } from '/@/shared/hooks/use-focus-trap';
+import { useForm } from '/@/shared/hooks/use-form';
+import {
+    AuthenticationResponse,
+    ServerListItem,
+    ServerListItemWithCredential,
+    ServerType,
+} from '/@/shared/types/domain-types';
 
 const localSettings = isElectron() ? window.api.localSettings : null;
 
@@ -46,10 +50,12 @@ export const EditServerForm = ({ isUpdate, onCancel, password, server }: EditSer
 
     const form = useForm({
         initialValues: {
+            isAdmin: server?.isAdmin,
             legacyAuth: false,
             name: server?.name,
             password: password || '',
-            savePassword: server.savePassword || false,
+            preferInstantMix: server.preferInstantMix,
+            savePassword: server.savePassword,
             type: server?.type,
             url: server?.url,
             username: server?.username,
@@ -86,16 +92,28 @@ export const EditServerForm = ({ isUpdate, onCancel, password, server }: EditSer
                 });
             }
 
-            const serverItem = {
+            const serverItem: ServerListItemWithCredential = {
                 credential: data.credential,
+                id: server.id,
+                isAdmin: data.isAdmin,
                 name: values.name,
-                ndCredential: data.ndCredential,
-                savePassword: values.savePassword,
                 type: values.type,
                 url: values.url,
                 userId: data.userId,
                 username: data.username,
             };
+
+            if (values.preferInstantMix !== undefined) {
+                serverItem.preferInstantMix = values.preferInstantMix;
+            }
+
+            if (values.savePassword !== undefined) {
+                serverItem.savePassword = values.savePassword;
+            }
+
+            if (data.ndCredential !== undefined) {
+                serverItem.ndCredential = data.ndCredential;
+            }
 
             updateServer(server.id, serverItem);
             toast.success({
@@ -118,7 +136,7 @@ export const EditServerForm = ({ isUpdate, onCancel, password, server }: EditSer
                 }
             }
 
-            queryClient.invalidateQueries({ queryKey: queryKeys.server.root(server.id) });
+            queryClient.removeQueries();
         } catch (err: any) {
             setIsLoading(false);
             return toast.error({ message: err?.message });
@@ -189,13 +207,26 @@ export const EditServerForm = ({ isUpdate, onCancel, password, server }: EditSer
                         })}
                     />
                 )}
+                {form.values.type === ServerType.JELLYFIN && (
+                    <Checkbox
+                        description={t('form.addServer.input', {
+                            context: 'preferInstantMixDescription',
+                            postProcess: 'sentenceCase',
+                        })}
+                        label={t('form.addServer.input', {
+                            context: 'preferInstantMix',
+                            postProcess: 'titleCase',
+                        })}
+                        {...form.getInputProps('preferInstantMix', {
+                            type: 'checkbox',
+                        })}
+                    />
+                )}
                 <Group justify="flex-end">
-                    <Button onClick={onCancel} variant="subtle">
-                        {t('common.cancel', { postProcess: 'titleCase' })}
-                    </Button>
-                    <Button loading={isLoading} type="submit" variant="filled">
-                        {t('common.save', { postProcess: 'titleCase' })}
-                    </Button>
+                    <ModalButton onClick={onCancel}>{t('common.cancel')}</ModalButton>
+                    <ModalButton loading={isLoading} type="submit" variant="filled">
+                        {t('common.save')}
+                    </ModalButton>
                 </Group>
             </Stack>
         </form>

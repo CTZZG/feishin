@@ -13,21 +13,24 @@ export const Visualizer = () => {
     const [motion, setMotion] = useState<AudioMotionAnalyzer>();
 
     useEffect(() => {
-        const { context, gain } = webAudio || {};
-        if (gain && context && canvasRef.current && !motion) {
+        const { context, gains } = webAudio || {};
+        if (gains && context && canvasRef.current && !motion) {
             const audioMotion = new AudioMotionAnalyzer(canvasRef.current, {
                 ansiBands: true,
                 audioCtx: context,
                 connectSpeakers: false,
                 gradient: 'prism',
-                mode: 4,
+                ledBars: true,
+                mode: 8,
                 overlay: true,
                 showBgColor: false,
                 showPeaks: false,
+                showScaleX: false,
+                showScaleY: false,
                 smoothing: 0.8,
             });
             setMotion(audioMotion);
-            audioMotion.connectInput(gain);
+            for (const gain of gains) audioMotion.connectInput(gain);
         }
 
         return () => {};

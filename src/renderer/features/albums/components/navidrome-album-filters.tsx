@@ -1,13 +1,18 @@
-import debounce from 'lodash/debounce';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { ChangeEvent, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
-import { useAlbumArtistList } from '/@/renderer/features/artists/queries/album-artist-list-query';
-import { useGenreList } from '/@/renderer/features/genres';
-import { useTagList } from '/@/renderer/features/tag/queries/use-tag-list';
-import { AlbumListFilter, useListStoreActions, useListStoreByKey } from '/@/renderer/store';
-import { NDSongQueryFields } from '/@/shared/api/navidrome.types';
+import {
+    MultiSelectWithInvalidData,
+    SelectWithInvalidData,
+} from '/@/renderer/components/select-with-invalid-data';
+import { useListContext } from '/@/renderer/context/list-context';
+import { useAlbumListFilters } from '/@/renderer/features/albums/hooks/use-album-list-filters';
+import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
+import { useGenreList } from '/@/renderer/features/genres/api/genres-api';
+import { sharedQueries } from '/@/renderer/features/shared/api/shared-api';
+import { useCurrentServer, useCurrentServerId } from '/@/renderer/store';
+import { titleCase } from '/@/renderer/utils';
 import { Divider } from '/@/shared/components/divider/divider';
 import { Group } from '/@/shared/components/group/group';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
@@ -16,45 +21,35 @@ import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { Text } from '/@/shared/components/text/text';
 import { YesNoSelect } from '/@/shared/components/yes-no-select/yes-no-select';
-import {
-    AlbumArtistListSort,
-    AlbumListQuery,
-    GenreListSort,
-    LibraryItem,
-    SortOrder,
-} from '/@/shared/types/domain-types';
+import { useDebouncedCallback } from '/@/shared/hooks/use-debounced-callback';
+import { AlbumArtistListSort, LibraryItem, SortOrder } from '/@/shared/types/domain-types';
 
 interface NavidromeAlbumFiltersProps {
-    customFilters?: Partial<AlbumListFilter>;
     disableArtistFilter?: boolean;
-    onFilterChange: (filters: AlbumListFilter) => void;
-    pageKey: string;
-    serverId?: string;
 }
 
-export const NavidromeAlbumFilters = ({
-    customFilters,
-    disableArtistFilter,
-    onFilterChange,
-    pageKey,
-    serverId,
-}: NavidromeAlbumFiltersProps) => {
+export const NavidromeAlbumFilters = ({ disableArtistFilter }: NavidromeAlbumFiltersProps) => {
     const { t } = useTranslation();
-    const { filter } = useListStoreByKey<AlbumListQuery>({ key: pageKey });
-    const { setFilter } = useListStoreActions();
+    const server = useCurrentServer();
+    const serverId = server.id;
 
-    const genreListQuery = useGenreList({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
-        },
-        query: {
-            sortBy: GenreListSort.NAME,
-            sortOrder: SortOrder.ASC,
-            startIndex: 0,
-        },
-        serverId,
-    });
+    const { customFilters } = useListContext();
+
+    const isGenrePage = customFilters?.genreIds !== undefined;
+
+    const {
+        query,
+        setAlbumArtist,
+        setCompilation,
+        setFavorite,
+        setGenreId,
+        setHasRating,
+        setMaxYear,
+        setMinYear,
+        setRecentlyPlayed,
+    } = useAlbumListFilters();
+
+    const genreListQuery = useGenreList();
 
     const genreList = useMemo(() => {
         if (!genreListQuery?.data) return [];
@@ -64,141 +59,85 @@ export const NavidromeAlbumFilters = ({
         }));
     }, [genreListQuery.data]);
 
-    const handleGenresFilter = debounce((e: null | string) => {
-        const updatedFilters = setFilter({
-            customFilters,
-            data: {
-                _custom: filter._custom,
-                genres: e ? [e] : undefined,
-            },
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
-        onFilterChange(updatedFilters);
-    }, 250);
-
-    const tagsQuery = useTagList({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
-        },
-        query: {
-            type: LibraryItem.ALBUM,
-        },
-        serverId,
-    });
-
-    const yesNoUndefinedFilters = [
-        {
-            label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
-            onChange: (favorite?: boolean) => {
-                const updatedFilters = setFilter({
-                    customFilters,
-                    data: {
-                        _custom: filter._custom,
-                        favorite,
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
-            },
-            value: filter.favorite,
-        },
-        {
-            label: t('filter.isCompilation', { postProcess: 'sentenceCase' }),
-            onChange: (compilation?: boolean) => {
-                const updatedFilters = setFilter({
-                    customFilters,
-                    data: {
-                        _custom: filter._custom,
-                        compilation,
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
-            },
-            value: filter.compilation,
-        },
-    ];
-
-    const toggleFilters = [
-        {
-            label: t('filter.isRated', { postProcess: 'sentenceCase' }),
-            onChange: (e: ChangeEvent<HTMLInputElement>) => {
-                const updatedFilters = setFilter({
-                    customFilters,
-                    data: {
-                        _custom: {
-                            ...filter._custom,
-                            navidrome: {
-                                ...filter._custom?.navidrome,
-                                has_rating: e.currentTarget.checked ? true : undefined,
-                            },
-                        },
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
-            },
-            value: filter._custom?.navidrome?.has_rating,
-        },
-        {
-            label: t('filter.isRecentlyPlayed', { postProcess: 'sentenceCase' }),
-            onChange: (e: ChangeEvent<HTMLInputElement>) => {
-                const updatedFilters = setFilter({
-                    customFilters,
-                    data: {
-                        _custom: {
-                            ...filter._custom,
-                            navidrome: {
-                                ...filter._custom?.navidrome,
-                                recently_played: e.currentTarget.checked ? true : undefined,
-                            },
-                        },
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
-            },
-            value: filter._custom?.navidrome?.recently_played,
-        },
-    ];
-
-    const handleYearFilter = debounce((e: number | string) => {
-        const updatedFilters = setFilter({
-            customFilters,
-            data: {
-                _custom: {
-                    ...filter._custom,
-                    navidrome: {
-                        ...filter._custom?.navidrome,
-                        year: e === '' ? undefined : (e as number),
-                    },
+    const yesNoUndefinedFilters = useMemo(
+        () => [
+            {
+                label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
+                onChange: (favorite?: boolean) => {
+                    setFavorite(favorite ?? null);
                 },
+                value: query.favorite,
             },
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
-        onFilterChange(updatedFilters);
-    }, 500);
+            {
+                label: t('filter.isCompilation', { postProcess: 'sentenceCase' }),
+                onChange: (compilation?: boolean) => {
+                    setCompilation(compilation ?? null);
+                },
+                value: query.compilation,
+            },
+        ],
+        [t, query.favorite, query.compilation, setFavorite, setCompilation],
+    );
 
-    const albumArtistListQuery = useAlbumArtistList({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
+    const toggleFilters = useMemo(
+        () => [
+            {
+                label: t('filter.isRated', { postProcess: 'sentenceCase' }),
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
+                    const hasRating = e.currentTarget.checked ? true : undefined;
+                    setHasRating(hasRating ?? null);
+                },
+                value: query.hasRating,
+            },
+            {
+                label: t('filter.isRecentlyPlayed', { postProcess: 'sentenceCase' }),
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
+                    const recentlyPlayed = e.currentTarget.checked ? true : undefined;
+                    setRecentlyPlayed(recentlyPlayed ?? null);
+                },
+                value: query.isRecentlyPlayed,
+            },
+        ],
+        [t, query.hasRating, query.isRecentlyPlayed, setHasRating, setRecentlyPlayed],
+    );
+
+    const handleYearFilter = useMemo(
+        () => (e: number | string) => {
+            // Handle empty string, null, undefined, or invalid numbers as clearing
+
+            if (e === '' || e === null || e === undefined) {
+                setMinYear(null);
+                setMaxYear(null);
+                return;
+            }
+
+            const year = typeof e === 'number' ? e : Number(e);
+            // If it's a valid number, set it; otherwise clear
+            if (!isNaN(year) && isFinite(year) && year > 0) {
+                setMinYear(year);
+                setMaxYear(year);
+            } else {
+                setMinYear(null);
+                setMaxYear(null);
+            }
         },
-        query: {
-            // searchTerm: debouncedSearchTerm,
-            sortBy: AlbumArtistListSort.NAME,
-            sortOrder: SortOrder.ASC,
-            startIndex: 0,
-        },
-        serverId,
-    });
+        [setMinYear, setMaxYear],
+    );
+
+    const albumArtistListQuery = useQuery(
+        artistsQueries.albumArtistList({
+            options: {
+                gcTime: 1000 * 60 * 2,
+                staleTime: 1000 * 60 * 1,
+            },
+            query: {
+                sortBy: AlbumArtistListSort.NAME,
+                sortOrder: SortOrder.ASC,
+                startIndex: 0,
+            },
+            serverId,
+        }),
+    );
 
     const selectableAlbumArtists = useMemo(() => {
         if (!albumArtistListQuery?.data?.items) return [];
@@ -207,110 +146,151 @@ export const NavidromeAlbumFilters = ({
             label: artist.name,
             value: artist.id,
         }));
-    }, [albumArtistListQuery?.data?.items]);
+    }, [albumArtistListQuery.data?.items]);
 
-    const handleAlbumArtistFilter = (e: null | string) => {
-        const updatedFilters = setFilter({
-            data: {
-                _custom: {
-                    ...filter._custom,
-                    navidrome: {
-                        ...filter._custom?.navidrome,
-                        artist_id: e || undefined,
-                    },
-                },
-            },
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
-        onFilterChange(updatedFilters);
-    };
-
-    const handleTagFilter = debounce((tag: string, e: null | string) => {
-        const updatedFilters = setFilter({
-            customFilters,
-            data: {
-                _custom: {
-                    ...filter._custom,
-                    navidrome: {
-                        ...filter._custom?.navidrome,
-                        [tag]: e || undefined,
-                    },
-                },
-            },
-            itemType: LibraryItem.SONG,
-            key: pageKey,
-        }) as AlbumListFilter;
-
-        onFilterChange(updatedFilters);
-    }, 250);
+    const debouncedHandleYearFilter = useDebouncedCallback(handleYearFilter, 300);
 
     return (
-        <Stack p="0.8rem">
+        <Stack p="md">
             {yesNoUndefinedFilters.map((filter) => (
-                <Group justify="space-between" key={`nd-filter-${filter.label}`}>
-                    <Text>{filter.label}</Text>
-                    <YesNoSelect onChange={filter.onChange} size="xs" value={filter.value} />
-                </Group>
+                <YesNoSelect
+                    clearable
+                    defaultValue={filter.value ? filter.value.toString() : undefined}
+                    key={`nd-filter-${filter.label}`}
+                    label={filter.label}
+                    onChange={(e) => filter.onChange(e ? e === 'true' : undefined)}
+                />
             ))}
             {toggleFilters.map((filter) => (
                 <Group justify="space-between" key={`nd-filter-${filter.label}`}>
                     <Text>{filter.label}</Text>
-                    <Switch checked={filter?.value || false} onChange={filter.onChange} />
+                    <Switch defaultChecked={filter?.value ?? false} onChange={filter.onChange} />
                 </Group>
             ))}
-            <Divider my="0.5rem" />
-            <Group grow>
-                <NumberInput
-                    defaultValue={filter._custom?.navidrome?.year}
-                    hideControls={false}
-                    label={t('common.year', { postProcess: 'titleCase' })}
-                    max={5000}
-                    min={0}
-                    onChange={(e) => handleYearFilter(e)}
-                />
-                <SelectWithInvalidData
+            <Divider my="md" />
+            <NumberInput
+                defaultValue={query.minYear ?? undefined}
+                hideControls={false}
+                label={t('common.year', { postProcess: 'titleCase' })}
+                max={5000}
+                min={0}
+                onChange={(e) => debouncedHandleYearFilter(e)}
+            />
+            {!isGenrePage && (
+                <MultiSelectWithInvalidData
                     clearable
                     data={genreList}
-                    defaultValue={filter.genres && filter.genres[0]}
-                    label={t('entity.genre', { count: 1, postProcess: 'titleCase' })}
-                    onChange={handleGenresFilter}
+                    defaultValue={query.genreIds || []}
+                    label={t('entity.genre', { count: 2, postProcess: 'sentenceCase' })}
+                    onChange={(e) => (e && e.length > 0 ? setGenreId(e) : setGenreId(null))}
                     searchable
                 />
-            </Group>
-            <Group grow>
-                <SelectWithInvalidData
-                    clearable
-                    data={selectableAlbumArtists}
-                    defaultValue={filter._custom?.navidrome?.artist_id}
-                    disabled={disableArtistFilter}
-                    label={t('entity.artist', { count: 1, postProcess: 'titleCase' })}
-                    limit={300}
-                    onChange={handleAlbumArtistFilter}
-                    rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
-                    searchable
-                />
-            </Group>
-            {tagsQuery.data?.enumTags?.length &&
-                tagsQuery.data.enumTags.length > 0 &&
-                tagsQuery.data.enumTags.map((tag) => (
-                    <Group grow key={tag.name}>
-                        <SelectWithInvalidData
-                            clearable
-                            data={tag.options}
-                            defaultValue={
-                                filter._custom?.navidrome?.[tag.name] as string | undefined
-                            }
-                            label={
-                                NDSongQueryFields.find((i) => i.value === tag.name)?.label ||
-                                tag.name
-                            }
-                            onChange={(value) => handleTagFilter(tag.name, value)}
-                            searchable
-                            width={150}
-                        />
-                    </Group>
-                ))}
+            )}
+            <SelectWithInvalidData
+                clearable
+                data={selectableAlbumArtists}
+                defaultValue={query.artistIds?.[0] || undefined}
+                disabled={disableArtistFilter}
+                label={t('entity.artist', { count: 1, postProcess: 'titleCase' })}
+                limit={300}
+                onChange={(e) => setAlbumArtist(e ? [e] : null)}
+                rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
+                searchable
+            />
+            <Divider my="md" />
+            <TagFilters />
         </Stack>
+    );
+};
+
+interface TagFilterItemProps {
+    label: string;
+    onChange: (value: null | string) => void;
+    options: Array<{ id: string; name: string }>;
+    tagValue: string;
+    value: string | undefined;
+}
+
+const TagFilterItem = ({ label, onChange, options, tagValue, value }: TagFilterItemProps) => {
+    const selectData = useMemo(
+        () =>
+            options.map((option) => ({
+                label: option.name,
+                value: option.id,
+            })),
+        [options],
+    );
+
+    return (
+        <SelectWithInvalidData
+            clearable
+            data={selectData}
+            defaultValue={value}
+            key={tagValue}
+            label={label}
+            limit={100}
+            onChange={onChange}
+            searchable
+        />
+    );
+};
+
+TagFilterItem.displayName = 'TagFilterItem';
+
+const TagFilters = () => {
+    const { query, setCustom } = useAlbumListFilters();
+
+    const serverId = useCurrentServerId();
+
+    const tagsQuery = useSuspenseQuery(
+        sharedQueries.tagList({
+            options: {
+                gcTime: 1000 * 60 * 60,
+                staleTime: 1000 * 60 * 60,
+            },
+            query: {
+                type: LibraryItem.ALBUM,
+            },
+            serverId,
+        }),
+    );
+
+    const handleTagFilter = useMemo(
+        () => (tag: string, e: null | string) => {
+            setCustom({ [tag]: e });
+        },
+        [setCustom],
+    );
+
+    const tags = useMemo(() => {
+        const results: { label: string; options: { id: string; name: string }[]; value: string }[] =
+            [];
+
+        for (const tag of tagsQuery.data?.enumTags || []) {
+            if (!tagsQuery.data?.excluded.album.includes(tag.name)) {
+                results.push({
+                    label: titleCase(tag.name),
+                    options: tag.options,
+                    value: tag.name,
+                });
+            }
+        }
+
+        return results;
+    }, [tagsQuery.data]);
+
+    return (
+        <>
+            {tags.map((tag) => (
+                <TagFilterItem
+                    key={tag.value}
+                    label={tag.label}
+                    onChange={(e) => handleTagFilter(tag.value, e)}
+                    options={tag.options}
+                    tagValue={tag.value}
+                    value={query._custom?.[tag.value] as string | undefined}
+                />
+            ))}
+        </>
     );
 };

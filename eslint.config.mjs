@@ -43,6 +43,8 @@ export default tseslint.config(
             'no-unused-vars': 'off',
             'no-use-before-define': 'off',
             quotes: ['error', 'single'],
+            'react-hooks/refs': 'off',
+            'react-hooks/set-state-in-effect': 'off',
             'react-refresh/only-export-components': 'off',
             'react/display-name': 'off',
             semi: ['error', 'always'],

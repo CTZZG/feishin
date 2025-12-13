@@ -1,15 +1,15 @@
-import { useForm } from '@mantine/form';
 import { useTranslation } from 'react-i18next';
 
 import { useCreatePlaylist } from '/@/renderer/features/playlists/mutations/create-playlist-mutation';
 import { useCurrentServer } from '/@/renderer/store';
 import { hasFeature } from '/@/shared/api/utils';
-import { Button } from '/@/shared/components/button/button';
 import { Group } from '/@/shared/components/group/group';
+import { ModalButton } from '/@/shared/components/modal/model-shared';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { TextInput } from '/@/shared/components/text-input/text-input';
 import { toast } from '/@/shared/components/toast/toast';
+import { useForm } from '/@/shared/hooks/use-form';
 import {
     CreatePlaylistBody,
     CreatePlaylistResponse,
@@ -21,7 +21,7 @@ interface SaveAsPlaylistFormProps {
     body: Partial<CreatePlaylistBody>;
     onCancel: () => void;
     onSuccess: (data: CreatePlaylistResponse) => void;
-    serverId: string | undefined;
+    serverId?: string;
 }
 
 export const SaveAsPlaylistForm = ({
@@ -36,21 +36,16 @@ export const SaveAsPlaylistForm = ({
 
     const form = useForm<CreatePlaylistBody>({
         initialValues: {
-            _custom: {
-                navidrome: {
-                    rules: undefined,
-                    ...body?._custom?.navidrome,
-                },
-            },
             comment: body.comment || '',
             name: body.name || '',
             public: body.public,
+            queryBuilderRules: body.queryBuilderRules,
         },
     });
 
     const handleSubmit = form.onSubmit((values) => {
         mutation.mutate(
-            { body: values, serverId },
+            { apiClientProps: { serverId: serverId || '' }, body: values },
             {
                 onError: (err) => {
                     toast.error({
@@ -70,7 +65,7 @@ export const SaveAsPlaylistForm = ({
     });
 
     const isPublicDisplayed = hasFeature(server, ServerFeature.PUBLIC_PLAYLIST);
-    const isSubmitDisabled = !form.values.name || mutation.isLoading;
+    const isSubmitDisabled = !form.values.name || mutation.isPending;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -103,17 +98,15 @@ export const SaveAsPlaylistForm = ({
                     />
                 )}
                 <Group justify="flex-end">
-                    <Button onClick={onCancel} variant="subtle">
-                        {t('common.cancel', { postProcess: 'titleCase' })}
-                    </Button>
-                    <Button
+                    <ModalButton onClick={onCancel}>{t('common.cancel')}</ModalButton>
+                    <ModalButton
                         disabled={isSubmitDisabled}
-                        loading={mutation.isLoading}
+                        loading={mutation.isPending}
                         type="submit"
                         variant="filled"
                     >
-                        {t('common.save', { postProcess: 'titleCase' })}
-                    </Button>
+                        {t('common.save')}
+                    </ModalButton>
                 </Group>
             </Stack>
         </form>

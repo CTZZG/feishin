@@ -11,7 +11,7 @@ import { authenticationFailure } from '/@/renderer/api/utils';
 import { useAuthStore } from '/@/renderer/store';
 import { jfType } from '/@/shared/api/jellyfin/jellyfin-types';
 import { getClientType } from '/@/shared/api/utils';
-import { ServerListItem } from '/@/shared/types/domain-types';
+import { ServerListItemWithCredential } from '/@/shared/types/domain-types';
 
 const c = initContract();
 
@@ -113,6 +113,15 @@ export const contract = c.router({
         query: jfType._parameters.filterList,
         responses: {
             200: jfType._response.filters,
+            400: jfType._response.error,
+        },
+    },
+    getFolder: {
+        method: 'GET',
+        path: 'users/:userId/items',
+        query: jfType._parameters.folder,
+        responses: {
+            200: jfType._response.folderList,
             400: jfType._response.error,
         },
     },
@@ -238,6 +247,14 @@ export const contract = c.router({
             400: jfType._response.error,
         },
     },
+    getUser: {
+        method: 'GET',
+        path: 'users/:id',
+        responses: {
+            200: jfType._response.user,
+            400: jfType._response.error,
+        },
+    },
     movePlaylistItem: {
         body: null,
         method: 'POST',
@@ -359,7 +376,7 @@ export const createAuthHeader = (): string => {
 };
 
 export const jfApiClient = (args: {
-    server: null | ServerListItem;
+    server: null | ServerListItemWithCredential;
     signal?: AbortSignal;
     url?: string;
 }) => {
@@ -413,7 +430,7 @@ export const jfApiClient = (args: {
                     return {
                         body: response?.data,
                         headers: response?.headers as any,
-                        status: response.status,
+                        status: response?.status,
                     };
                 }
                 throw e;

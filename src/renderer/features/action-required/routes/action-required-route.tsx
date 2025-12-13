@@ -1,15 +1,17 @@
 import { openModal } from '@mantine/modals';
 import { useTranslation } from 'react-i18next';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 
 import { PageHeader } from '/@/renderer/components/page-header/page-header';
 import { ActionRequiredContainer } from '/@/renderer/features/action-required/components/action-required-container';
 import { ServerCredentialRequired } from '/@/renderer/features/action-required/components/server-credential-required';
 import { ServerRequired } from '/@/renderer/features/action-required/components/server-required';
-import { ServerList } from '/@/renderer/features/servers';
-import { AnimatedPage } from '/@/renderer/features/shared';
+import LoginRoute from '/@/renderer/features/login/routes/login-route';
+import { ServerList } from '/@/renderer/features/servers/components/server-list';
+import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
+import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useCurrentServer } from '/@/renderer/store';
+import { useCurrentServerWithCredential } from '/@/renderer/store';
 import { Button } from '/@/shared/components/button/button';
 import { Center } from '/@/shared/components/center/center';
 import { Group } from '/@/shared/components/group/group';
@@ -18,9 +20,12 @@ import { Stack } from '/@/shared/components/stack/stack';
 
 const ActionRequiredRoute = () => {
     const { t } = useTranslation();
-    const currentServer = useCurrentServer();
+    const currentServer = useCurrentServerWithCredential();
     const isServerRequired = !currentServer;
     const isCredentialRequired = currentServer && !currentServer.credential;
+
+    const isServerLock = Boolean(window.SERVER_LOCK) || false;
+    const isLoginRequired = isServerLock && !currentServer;
 
     const checks = [
         {
@@ -45,6 +50,10 @@ const ActionRequiredRoute = () => {
         });
     };
 
+    if (isLoginRequired) {
+        return <LoginRoute />;
+    }
+
     return (
         <AnimatedPage>
             <PageHeader />
@@ -60,7 +69,7 @@ const ActionRequiredRoute = () => {
                     <Stack mt="2rem">
                         {canReturnHome && <Navigate to={AppRoute.HOME} />}
                         {/* This should be displayed if a credential is required */}
-                        {isCredentialRequired && (
+                        {isCredentialRequired && !isServerLock && (
                             <Group justify="center" wrap="nowrap">
                                 <Button
                                     fullWidth
@@ -81,4 +90,12 @@ const ActionRequiredRoute = () => {
     );
 };
 
-export default ActionRequiredRoute;
+const ActionRequiredRouteWithBoundary = () => {
+    return (
+        <PageErrorBoundary>
+            <ActionRequiredRoute />
+        </PageErrorBoundary>
+    );
+};
+
+export default ActionRequiredRouteWithBoundary;

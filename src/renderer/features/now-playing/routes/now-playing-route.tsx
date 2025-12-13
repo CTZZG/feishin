@@ -1,26 +1,49 @@
-import type { Song } from '/@/shared/types/domain-types';
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
+import { useEffect, useRef, useState } from 'react';
 
-import { useRef } from 'react';
-
-import { VirtualGridContainer } from '/@/renderer/components/virtual-grid';
+import { ItemListHandle } from '/@/renderer/components/item-list/types';
 import { NowPlayingHeader } from '/@/renderer/features/now-playing/components/now-playing-header';
 import { PlayQueue } from '/@/renderer/features/now-playing/components/play-queue';
 import { PlayQueueListControls } from '/@/renderer/features/now-playing/components/play-queue-list-controls';
-import { AnimatedPage } from '/@/renderer/features/shared';
+import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
+import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
+import { useAppStoreActions } from '/@/renderer/store';
+import { ItemListKey } from '/@/shared/types/types';
 
 const NowPlayingRoute = () => {
-    const queueRef = useRef<null | { grid: AgGridReactType<Song> }>(null);
+    const queueRef = useRef<ItemListHandle | null>(null);
+    const [search, setSearch] = useState<string | undefined>(undefined);
+    const { setSideBar } = useAppStoreActions();
+
+    useEffect(() => {
+        // On page enter, set rightExpanded to false
+        setSideBar({ rightExpanded: false });
+
+        return () => {
+            // On page exit, set rightExpanded to true
+            setSideBar({ rightExpanded: true });
+        };
+    }, [setSideBar]);
 
     return (
         <AnimatedPage>
-            <VirtualGridContainer>
-                <NowPlayingHeader />
-                <PlayQueueListControls tableRef={queueRef} type="nowPlaying" />
-                <PlayQueue ref={queueRef} type="nowPlaying" />
-            </VirtualGridContainer>
+            <NowPlayingHeader />
+            <PlayQueueListControls
+                handleSearch={setSearch}
+                searchTerm={search}
+                tableRef={queueRef}
+                type={ItemListKey.QUEUE_SONG}
+            />
+            <PlayQueue listKey={ItemListKey.QUEUE_SONG} searchTerm={search} />
         </AnimatedPage>
     );
 };
 
-export default NowPlayingRoute;
+const NowPlayingRouteWithBoundary = () => {
+    return (
+        <PageErrorBoundary>
+            <NowPlayingRoute />
+        </PageErrorBoundary>
+    );
+};
+
+export default NowPlayingRouteWithBoundary;

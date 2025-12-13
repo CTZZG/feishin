@@ -1,22 +1,21 @@
-import { useHotkeys } from '@mantine/hooks';
 import clsx from 'clsx';
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import React, { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath, Link } from 'react-router-dom';
+import { generatePath, Link } from 'react-router';
+import { shallow } from 'zustand/shallow';
 
 import styles from './left-controls.module.css';
 
-import { SONG_CONTEXT_MENU_ITEMS } from '/@/renderer/features/context-menu/context-menu-items';
-import { useHandleGeneralContextMenu } from '/@/renderer/features/context-menu/hooks/use-handle-context-menu';
+import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
 import { AppRoute } from '/@/renderer/router/routes';
 import {
+    useAppStore,
     useAppStoreActions,
-    useCurrentSong,
     useFullScreenPlayerStore,
     useHotkeySettings,
+    usePlayerSong,
     useSetFullScreenPlayerStore,
-    useSidebarStore,
 } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Group } from '/@/shared/components/group/group';
@@ -24,6 +23,8 @@ import { Image } from '/@/shared/components/image/image';
 import { Separator } from '/@/shared/components/separator/separator';
 import { Text } from '/@/shared/components/text/text';
 import { Tooltip } from '/@/shared/components/tooltip/tooltip';
+import { PlaybackSelectors } from '/@/shared/constants/playback-selectors';
+import { useHotkeys } from '/@/shared/hooks/use-hotkeys';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
 export const LeftControls = () => {
@@ -31,19 +32,22 @@ export const LeftControls = () => {
     const { setSideBar } = useAppStoreActions();
     const { expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
     const setFullScreenPlayerStore = useSetFullScreenPlayerStore();
-    const { collapsed, image } = useSidebarStore();
+
+    const { collapsed, image } = useAppStore(
+        (state) => ({
+            collapsed: state.sidebar.collapsed,
+            image: state.sidebar.image,
+        }),
+        shallow,
+    );
+
     const hideImage = image && !collapsed;
-    const currentSong = useCurrentSong();
+    const currentSong = usePlayerSong();
     const title = currentSong?.name;
     const artists = currentSong?.artists;
     const { bindings } = useHotkeySettings();
 
     const isSongDefined = Boolean(currentSong?.id);
-
-    const handleGeneralContextMenu = useHandleGeneralContextMenu(
-        LibraryItem.SONG,
-        SONG_CONTEXT_MENU_ITEMS,
-    );
 
     const handleToggleFullScreenPlayer = (e?: KeyboardEvent | MouseEvent<HTMLDivElement>) => {
         // don't toggle if right click
@@ -64,9 +68,14 @@ export const LeftControls = () => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (isSongDefined && !isFullScreenPlayerExpanded) {
-            handleGeneralContextMenu(e, [currentSong!]);
+        if (!currentSong) {
+            return;
         }
+
+        ContextMenuController.call({
+            cmd: { items: [currentSong], type: LibraryItem.SONG },
+            event: e,
+        });
     };
 
     const stopPropagation = (e?: MouseEvent) => e?.stopPropagation();
@@ -101,10 +110,13 @@ export const LeftControls = () => {
                                     label={t('player.toggleFullscreenPlayer', {
                                         postProcess: 'sentenceCase',
                                     })}
-                                    openDelay={500}
+                                    openDelay={0}
                                 >
                                     <Image
-                                        className={styles.playerbarImage}
+                                        className={clsx(
+                                            styles.playerbarImage,
+                                            PlaybackSelectors.playerCoverArt,
+                                        )}
                                         loading="eager"
                                         src={currentSong?.imageUrl ?? ''}
                                     />
@@ -127,7 +139,7 @@ export const LeftControls = () => {
                                             label: t('common.expand', {
                                                 postProcess: 'titleCase',
                                             }),
-                                            openDelay: 500,
+                                            openDelay: 0,
                                         }}
                                     />
                                 )}
@@ -139,6 +151,7 @@ export const LeftControls = () => {
                     <div className={styles.lineItem} onClick={stopPropagation}>
                         <Group align="center" gap="xs" wrap="nowrap">
                             <Text
+                                className={PlaybackSelectors.songTitle}
                                 component={Link}
                                 fw={500}
                                 isLink
@@ -151,7 +164,19 @@ export const LeftControls = () => {
                             {isSongDefined && (
                                 <ActionIcon
                                     icon="ellipsisVertical"
-                                    onClick={(e) => handleGeneralContextMenu(e, [currentSong!])}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (currentSong) {
+                                            ContextMenuController.call({
+                                                cmd: {
+                                                    items: [currentSong],
+                                                    type: LibraryItem.SONG,
+                                                },
+                                                event: e,
+                                            });
+                                        }
+                                    }}
                                     size="xs"
                                     styles={{
                                         root: {
@@ -164,7 +189,11 @@ export const LeftControls = () => {
                         </Group>
                     </div>
                     <div
-                        className={clsx(styles.lineItem, styles.secondary)}
+                        className={clsx(
+                            styles.lineItem,
+                            styles.secondary,
+                            PlaybackSelectors.songArtist,
+                        )}
                         onClick={stopPropagation}
                     >
                         {artists?.map((artist, index) => (
@@ -190,7 +219,11 @@ export const LeftControls = () => {
                         ))}
                     </div>
                     <div
-                        className={clsx(styles.lineItem, styles.secondary)}
+                        className={clsx(
+                            styles.lineItem,
+                            styles.secondary,
+                            PlaybackSelectors.songAlbum,
+                        )}
                         onClick={stopPropagation}
                     >
                         <Text

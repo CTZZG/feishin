@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router';
 
 import styles from './collapsed-sidebar.module.css';
 
@@ -32,6 +32,7 @@ export const CollapsedSidebar = () => {
                 '\n',
             ),
             'Artists-all': t('page.sidebar.artists', { postProcess: 'titleCase' }),
+            Favorites: t('page.sidebar.favorites', { postProcess: 'titleCase' }),
             Folders: t('page.sidebar.folders', { postProcess: 'titleCase' }),
             Genres: t('page.sidebar.genres', { postProcess: 'titleCase' }),
             Home: t('page.sidebar.home', { postProcess: 'titleCase' }),

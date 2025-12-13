@@ -1,0 +1,85 @@
+
+> feishin@0.22.0 lint-code
+> eslint --max-warnings=0 --cache .
+
+
+D:\feishin\src\renderer\features\albums\components\emby-album-filters.tsx
+   71:34  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `filter._custom?.emby?.Tags`, but the source dependencies were [filter?._custom?.emby?.Tags]. Inferred different dependency than source.
+
+D:\feishin\src\renderer\features\albums\components\emby-album-filters.tsx:71:34
+  69 |     });
+  70 |
+> 71 |     const selectedTags = useMemo(() => {
+     |                                  ^^^^^^^
+> 72 |         return filter?._custom?.emby?.Tags?.split('|');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 73 |     }, [filter?._custom?.emby?.Tags]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  74 |
+  75 |     const yesNoFilter = [
+  76 |         {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/preserve-manual-memoization
+  150:44  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `albumArtistListQuery.data?.items`, but the source dependencies were [albumArtistListQuery?.data?.items]. Inferred different dependency than source.
+
+D:\feishin\src\renderer\features\albums\components\emby-album-filters.tsx:150:44
+  148 |     });
+  149 |
+> 150 |     const selectableAlbumArtists = useMemo(() => {
+      |                                            ^^^^^^^
+> 151 |         if (!albumArtistListQuery?.data?.items) return [];
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 152 |
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 153 |         return albumArtistListQuery?.data?.items?.map((artist: any) => ({
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 154 |             label: artist.name,
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 155 |             value: artist.id,
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 156 |         }));
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 157 |     }, [albumArtistListQuery?.data?.items]);
+      | ^^^^^^ Could not preserve existing manual memoization
+  158 |
+  159 |     const handleAlbumArtistFilter = (e: null | string[]) => {
+  160 |         const updatedFilters = setFilter({  react-hooks/preserve-manual-memoization
+
+D:\feishin\src\renderer\features\songs\components\emby-song-filters.tsx
+  64:36  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `filter._custom?.emby?.GenreIds`, but the source dependencies were [filter?._custom?.emby?.GenreIds]. Inferred different dependency than source.
+
+D:\feishin\src\renderer\features\songs\components\emby-song-filters.tsx:64:36
+  62 |     });
+  63 |
+> 64 |     const selectedGenres = useMemo(() => {
+     |                                    ^^^^^^^
+> 65 |         return filter?._custom?.emby?.GenreIds?.split(',');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     }, [filter?._custom?.emby?.GenreIds]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  67 |
+  68 |     const selectedTags = useMemo(() => {
+  69 |         return filter?._custom?.emby?.Tags?.split('|');  react-hooks/preserve-manual-memoization
+  68:34  error  Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `filter._custom?.emby?.Tags`, but the source dependencies were [filter?._custom?.emby?.Tags]. Inferred different dependency than source.
+
+D:\feishin\src\renderer\features\songs\components\emby-song-filters.tsx:68:34
+  66 |     }, [filter?._custom?.emby?.GenreIds]);
+  67 |
+> 68 |     const selectedTags = useMemo(() => {
+     |                                  ^^^^^^^
+> 69 |         return filter?._custom?.emby?.Tags?.split('|');
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |     }, [filter?._custom?.emby?.Tags]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  71 |
+  72 |     const yesNoFilters = [
+  73 |         {                                                   react-hooks/preserve-manual-memoization
+
+✖ 4 problems (4 errors, 0 warnings)
+

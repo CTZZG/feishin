@@ -2,12 +2,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Select, SelectProps } from '/@/shared/components/select/select';
 
-export interface YesNoSelectProps extends Omit<SelectProps, 'data' | 'onChange' | 'value'> {
-    onChange: (e?: boolean) => void;
-    value?: boolean;
-}
+export interface YesNoSelectProps extends SelectProps {}
 
-export const YesNoSelect = ({ onChange, value, ...props }: YesNoSelectProps) => {
+export const YesNoSelect = ({ ...props }: YesNoSelectProps) => {
     const { t } = useTranslation();
 
     return (
@@ -23,10 +20,6 @@ export const YesNoSelect = ({ onChange, value, ...props }: YesNoSelectProps) => 
                     value: 'true',
                 },
             ]}
-            onChange={(e) => {
-                onChange(e ? e === 'true' : undefined);
-            }}
-            value={value !== undefined ? value.toString() : null}
             {...props}
         />
     );

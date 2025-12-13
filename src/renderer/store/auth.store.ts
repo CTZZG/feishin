@@ -2,27 +2,26 @@ import merge from 'lodash/merge';
 import { nanoid } from 'nanoid/non-secure';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { shallow } from 'zustand/shallow';
 import { createWithEqualityFn } from 'zustand/traditional';
 
-import { useAlbumArtistListDataStore } from '/@/renderer/store/album-artist-list-data.store';
-import { useAlbumListDataStore } from '/@/renderer/store/album-list-data.store';
-import { useListStore } from '/@/renderer/store/list.store';
-import { ServerListItem } from '/@/shared/types/domain-types';
+import { ServerListItem, ServerListItemWithCredential } from '/@/shared/types/domain-types';
 
 export interface AuthSlice extends AuthState {
     actions: {
-        addServer: (args: ServerListItem) => void;
+        addServer: (args: ServerListItemWithCredential) => void;
         deleteServer: (id: string) => void;
-        getServer: (id: string) => null | ServerListItem;
-        setCurrentServer: (server: null | ServerListItem) => void;
-        updateServer: (id: string, args: Partial<ServerListItem>) => void;
+        getServer: (id: string) => null | ServerListItemWithCredential;
+        setCurrentServer: (server: null | ServerListItemWithCredential) => void;
+        setMusicFolderId: (musicFolderId: string[] | undefined) => void;
+        updateServer: (id: string, args: Partial<ServerListItemWithCredential>) => void;
     };
 }
 
 export interface AuthState {
-    currentServer: null | ServerListItem;
+    currentServer: null | ServerListItemWithCredential;
     deviceId: string;
-    serverList: Record<string, ServerListItem>;
+    serverList: Record<string, ServerListItemWithCredential>;
 }
 
 export const useAuthStore = createWithEqualityFn<AuthSlice>()(
@@ -52,26 +51,38 @@ export const useAuthStore = createWithEqualityFn<AuthSlice>()(
                     setCurrentServer: (server) => {
                         set((state) => {
                             state.currentServer = server;
-
-                            if (server) {
-                                // Reset list filters
-                                useListStore.getState()._actions.resetFilter();
-
-                                // Reset persisted grid list stores
-                                useAlbumListDataStore.getState().actions.setItemData([]);
-                                useAlbumArtistListDataStore.getState().actions.setItemData([]);
+                        });
+                    },
+                    setMusicFolderId: (musicFolderId: string[] | undefined) => {
+                        set((state) => {
+                            if (state.currentServer) {
+                                state.currentServer.musicFolderId = musicFolderId;
+                                const serverId = state.currentServer.id;
+                                if (state.serverList[serverId]) {
+                                    state.serverList[serverId].musicFolderId = musicFolderId;
+                                }
                             }
                         });
                     },
-                    updateServer: (id: string, args: Partial<ServerListItem>) => {
+                    updateServer: (id: string, args: Partial<ServerListItemWithCredential>) => {
                         set((state) => {
                             const updatedServer = {
                                 ...state.serverList[id],
                                 ...args,
                             };
 
+                            if (
+                                state.currentServer?.id === id &&
+                                !('musicFolderId' in args) &&
+                                state.currentServer.musicFolderId !== undefined
+                            ) {
+                                updatedServer.musicFolderId = state.currentServer.musicFolderId;
+                            }
+
                             state.serverList[id] = updatedServer;
-                            state.currentServer = updatedServer;
+                            if (state.currentServer?.id === id) {
+                                state.currentServer = updatedServer;
+                            }
                         });
                     },
                 },
@@ -89,9 +100,49 @@ export const useAuthStore = createWithEqualityFn<AuthSlice>()(
     ),
 );
 
-export const useCurrentServerId = () => useAuthStore((state) => state.currentServer)?.id || '';
+export const useCurrentServerId = (): string =>
+    useAuthStore((state) => {
+        const currentServer = state.currentServer;
 
-export const useCurrentServer = () => useAuthStore((state) => state.currentServer);
+        if (!currentServer) {
+            return '';
+        }
+
+        return currentServer.id;
+    }, shallow);
+
+export const useCurrentServer = () =>
+    useAuthStore((state) => {
+        if (!state.currentServer) {
+            return null;
+        }
+
+        return {
+            features: state.currentServer?.features,
+            id: state.currentServer?.id,
+            isAdmin: state.currentServer?.isAdmin,
+            musicFolderId: state.currentServer?.musicFolderId,
+            name: state.currentServer?.name,
+            preferInstantMix: state.currentServer?.preferInstantMix,
+            savePassword: state.currentServer?.savePassword,
+            type: state.currentServer?.type,
+            url: state.currentServer?.url,
+            userId: state.currentServer?.userId,
+            username: state.currentServer?.username,
+            version: state.currentServer?.version,
+        };
+    }, shallow) as ServerListItem;
+
+export const useIsAdmin = () =>
+    useAuthStore((state) => {
+        return {
+            isAdmin: state.currentServer?.isAdmin ?? false,
+            userId: state.currentServer?.userId,
+        };
+    }, shallow);
+
+export const useCurrentServerWithCredential = () =>
+    useAuthStore((state) => state.currentServer) as ServerListItemWithCredential;
 
 export const useServerList = () => useAuthStore((state) => state.serverList);
 
@@ -103,4 +154,15 @@ export const getServerById = (id?: string) => {
     }
 
     return useAuthStore.getState().actions.getServer(id);
+};
+
+export const usePermissions = () => {
+    const { isAdmin, userId } = useIsAdmin();
+
+    return {
+        playlists: {
+            editPublic: isAdmin,
+        },
+        userId: userId,
+    };
 };

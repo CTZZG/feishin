@@ -1,5 +1,6 @@
 import type {
     DefaultOptions,
+    QueryOptions,
     UseInfiniteQueryOptions,
     UseMutationOptions,
     UseQueryOptions,
@@ -19,17 +20,14 @@ const queryCache = new QueryCache({
 
 const queryConfig: DefaultOptions = {
     mutations: {
-        retry: process.env.NODE_ENV === 'production',
+        retry: process.env.NODE_ENV === 'production' ? 3 : false,
     },
     queries: {
-        cacheTime: 1000 * 60 * 3,
-        onError: (err) => {
-            console.error('react query error:', err);
-        },
+        gcTime: 1000 * 5, // 5 seconds
         refetchOnWindowFocus: false,
         retry: process.env.NODE_ENV === 'production',
-        staleTime: 1000 * 5,
-        useErrorBoundary: (error: any) => {
+        staleTime: 0, // 5 seconds
+        throwOnError: (error: any) => {
             return error?.response?.status >= 500;
         },
     },
@@ -40,23 +38,10 @@ export const queryClient = new QueryClient({
     queryCache,
 });
 
-export type InfiniteQueryOptions = {
-    cacheTime?: UseInfiniteQueryOptions['cacheTime'];
-    enabled?: UseInfiniteQueryOptions['enabled'];
-    keepPreviousData?: UseInfiniteQueryOptions['keepPreviousData'];
-    meta?: UseInfiniteQueryOptions['meta'];
-    onError?: (err: any) => void;
-    onSettled?: any;
-    onSuccess?: any;
-    queryKey?: UseInfiniteQueryOptions['queryKey'];
-    refetchInterval?: number;
-    refetchIntervalInBackground?: UseInfiniteQueryOptions['refetchIntervalInBackground'];
-    refetchOnWindowFocus?: boolean;
-    retry?: UseInfiniteQueryOptions['retry'];
-    retryDelay?: UseInfiniteQueryOptions['retryDelay'];
-    staleTime?: UseInfiniteQueryOptions['staleTime'];
-    suspense?: UseInfiniteQueryOptions['suspense'];
-    useErrorBoundary?: boolean;
+export type InfiniteQueryHookArgs<T> = {
+    options?: UseInfiniteQueryOptions;
+    query: T;
+    serverId: string | undefined;
 };
 
 export type MutationHookArgs = {
@@ -74,26 +59,34 @@ export type MutationOptions = {
 };
 
 export type QueryHookArgs<T> = {
-    options?: QueryOptions;
+    options?: UseQueryHookOptions;
     query: T;
-    serverId: string | undefined;
+    serverId: string;
 };
 
-export type QueryOptions = {
-    cacheTime?: UseQueryOptions['cacheTime'];
-    enabled?: UseQueryOptions['enabled'];
-    keepPreviousData?: UseQueryOptions['keepPreviousData'];
+type UseQueryHookOptions = {
+    enabled?: boolean;
+    gcTime?: QueryOptions['gcTime'];
+    // initialData?: UseQueryOptions['initialData'];
+    // initialDataUpdatedAt?: UseQueryOptions['initialDataUpdatedAt'];
     meta?: UseQueryOptions['meta'];
-    onError?: (err: any) => void;
-    onSettled?: any;
-    onSuccess?: any;
+    networkMode?: UseQueryOptions['networkMode'];
+    notifyOnChangeProps?: UseQueryOptions['notifyOnChangeProps'];
+    placeholderData?: (prev: any) => any;
+    // queryFn?: UseQueryOptions['queryFn'];
     queryKey?: UseQueryOptions['queryKey'];
+    queryKeyHashFn?: UseQueryOptions['queryKeyHashFn'];
     refetchInterval?: number;
     refetchIntervalInBackground?: UseQueryOptions['refetchIntervalInBackground'];
+    refetchOnMount?: boolean;
+    refetchOnReconnect?: boolean;
     refetchOnWindowFocus?: boolean;
     retry?: UseQueryOptions['retry'];
     retryDelay?: UseQueryOptions['retryDelay'];
-    staleTime?: UseQueryOptions['staleTime'];
-    suspense?: UseQueryOptions['suspense'];
-    useErrorBoundary?: boolean;
+    retryOnMount?: UseQueryOptions['retryOnMount'];
+    // select?: UseQueryOptions['select'];
+    staleTime?: number;
+    structuralSharing?: UseQueryOptions['structuralSharing'];
+    subscribed?: UseQueryOptions['subscribed'];
+    throwOnError?: boolean;
 };

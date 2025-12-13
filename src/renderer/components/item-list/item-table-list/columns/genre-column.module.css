@@ -1,0 +1,16 @@
+.genres-container {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    color: var(--theme-colors-foreground-muted);
+    -webkit-box-orient: vertical;
+    user-select: none;
+}
+
+.genres-container.compact {
+    -webkit-line-clamp: 1;
+}
+
+.genres-container.large {
+    -webkit-line-clamp: 3;
+}

@@ -1,22 +1,37 @@
-import { FastAverageColor } from 'fast-average-color';
+import { FastAverageColor, FastAverageColorIgnoredColor } from 'fast-average-color';
 import { useEffect, useRef, useState } from 'react';
+
+const ignoredColors: FastAverageColorIgnoredColor = [
+    [255, 255, 255, 255, 90], // White
+    [255, 255, 255, 255, 50], // Light gray
+    [255, 255, 255, 255, 30], // Very light gray
+    [255, 255, 255, 255, 10], // Very very light gray
+    [0, 0, 0, 255, 30], // Black
+    [0, 0, 0, 0, 40], // Transparent
+];
 
 export const getFastAverageColor = async (args: {
     algorithm?: 'dominant' | 'simple' | 'sqrt';
     src: string;
 }) => {
-    const fac = new FastAverageColor();
-    const background = await fac.getColorAsync(args.src, {
-        algorithm: args.algorithm || 'dominant',
-        ignoredColor: [
-            [255, 255, 255, 255, 90], // White
-            [0, 0, 0, 255, 30], // Black
-            [0, 0, 0, 0, 40], // Transparent
-        ],
-        mode: 'speed',
+    return new Promise<string>((resolve, reject) => {
+        setTimeout(() => {
+            const fac = new FastAverageColor();
+            fac.getColorAsync(args.src, {
+                algorithm: args.algorithm || 'dominant',
+                ignoredColor: ignoredColors,
+                mode: 'speed',
+            })
+                .then((background) => {
+                    resolve(background.rgb);
+                    fac.destroy();
+                })
+                .catch((error) => {
+                    fac.destroy();
+                    reject(error);
+                });
+        });
     });
-
-    return background.rgb;
 };
 
 export const useFastAverageColor = (args: {
@@ -28,40 +43,115 @@ export const useFastAverageColor = (args: {
 }) => {
     const { algorithm, default: defaultColor, id, src, srcLoaded } = args;
     const idRef = useRef<string | undefined>(id);
+    const processingSrcRef = useRef<null | string | undefined>(null);
 
-    const [background, setBackground] = useState<string | undefined>(defaultColor);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [background, setBackground] = useState<{
+        background: string | undefined;
+        isDark: boolean;
+        isLight: boolean;
+    }>({
+        background: defaultColor,
+        isDark: true,
+        isLight: false,
+    });
 
     useEffect(() => {
-        const fac = new FastAverageColor();
+        let isMounted = true;
+        let fac: FastAverageColor | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+
+        // Reset loading state when src changes or srcLoaded becomes false
+        if (!src || !srcLoaded) {
+            setIsLoading(false);
+            processingSrcRef.current = null;
+        }
 
         if (src && srcLoaded) {
-            fac.getColorAsync(src, {
-                algorithm: algorithm || 'dominant',
-                ignoredColor: [
-                    [255, 255, 255, 255, 90], // White
-                    [0, 0, 0, 255, 30], // Black
-                    [0, 0, 0, 0, 40], // Transparent
-                ],
-                mode: 'speed',
-            })
-                .then((color) => {
-                    idRef.current = id;
-                    return setBackground(color.rgb);
+            processingSrcRef.current = src;
+            setIsLoading(true);
+
+            timeoutId = setTimeout(() => {
+                // Check if src has changed since we started processing
+                if (!isMounted || processingSrcRef.current !== src) {
+                    return;
+                }
+
+                fac = new FastAverageColor();
+                fac.getColorAsync(src, {
+                    algorithm: algorithm || 'dominant',
+                    ignoredColor: ignoredColors,
+                    mode: 'speed',
                 })
-                .catch((e) => {
-                    console.error('Error fetching average color', e);
-                    idRef.current = id;
-                    return setBackground('rgba(0, 0, 0, 0)');
-                });
+                    .then((color) => {
+                        // Only update if this is still the current src being processed
+                        if (isMounted && processingSrcRef.current === src) {
+                            idRef.current = id;
+                            setBackground({
+                                background: color.rgb,
+                                isDark: color.isDark,
+                                isLight: color.isLight,
+                            });
+                            setIsLoading(false);
+                            processingSrcRef.current = null;
+                        }
+                        if (fac) {
+                            fac.destroy();
+                            fac = null;
+                        }
+                    })
+                    .catch((e) => {
+                        // Only update if this is still the current src being processed
+                        if (isMounted && processingSrcRef.current === src) {
+                            console.error('Error fetching average color', e);
+                            idRef.current = id;
+                            setBackground({
+                                background: 'rgba(0, 0, 0, 0)',
+                                isDark: true,
+                                isLight: false,
+                            });
+                            setIsLoading(false);
+                            processingSrcRef.current = null;
+                        }
+                        if (fac) {
+                            fac.destroy();
+                            fac = null;
+                        }
+                    });
+            });
         } else if (srcLoaded) {
-            idRef.current = id;
-            return setBackground('var(--theme-colors-foreground-muted)');
+            if (isMounted) {
+                idRef.current = id;
+                setBackground({
+                    background: 'var(--theme-colors-foreground-muted)',
+                    isDark: true,
+                    isLight: false,
+                });
+                setIsLoading(false);
+                processingSrcRef.current = null;
+            }
         }
 
         return () => {
-            fac.destroy();
+            isMounted = false;
+            processingSrcRef.current = null;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+            if (fac) {
+                fac.destroy();
+                fac = null;
+            }
         };
     }, [algorithm, srcLoaded, src, id]);
 
-    return { background, colorId: idRef.current };
+    return {
+        background: background.background,
+        colorId: idRef.current,
+        isDark: background.isDark,
+        isLight: background.isLight,
+        isLoading,
+    };
 };

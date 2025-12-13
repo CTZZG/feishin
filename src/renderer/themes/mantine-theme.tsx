@@ -1,9 +1,10 @@
 import type { MantineColorsTuple, MantineThemeOverride } from '@mantine/core';
 
 import { generateColors } from '@mantine/colors-generator';
-import { createTheme, rem } from '@mantine/core';
+import { createTheme, Loader, rem, Tooltip } from '@mantine/core';
 import merge from 'lodash/merge';
 
+import { Spinner } from '/@/shared/components/spinner/spinner';
 import { AppThemeConfiguration } from '/@/shared/themes/app-theme-types';
 
 // const lightColors: MantineColorsTuple = [
@@ -43,6 +44,19 @@ const mantineTheme: MantineThemeOverride = createTheme({
         xl: '88em',
         xs: '36em',
     },
+    components: {
+        Loader: Loader.extend({
+            defaultProps: {
+                loaders: { ...Loader.defaultLoaders, spinner: Spinner as any },
+                type: 'spinner',
+            },
+        }),
+        TooltipGroup: Tooltip.Group.extend({
+            defaultProps: {
+                openDelay: 500,
+            },
+        }),
+    },
     cursorType: 'pointer',
     defaultRadius: 'sm',
     focusRing: 'never',
@@ -53,10 +67,10 @@ const mantineTheme: MantineThemeOverride = createTheme({
         '4xl': rem('28px'),
         '5xl': rem('32px'),
         lg: rem('16px'),
-        md: rem('13px'),
-        sm: rem('12px'),
+        md: rem('14px'),
+        sm: rem('13px'),
         xl: rem('18px'),
-        xs: rem('10px'),
+        xs: rem('11px'),
     },
     fontSmoothing: true,
     headings: {
@@ -64,22 +78,22 @@ const mantineTheme: MantineThemeOverride = createTheme({
         sizes: {
             h1: {
                 fontSize: rem('36px'),
-                fontWeight: '600',
+                fontWeight: '900',
                 lineHeight: rem('44px'),
             },
             h2: {
                 fontSize: rem('30px'),
-                fontWeight: '600',
+                fontWeight: '900',
                 lineHeight: rem('38px'),
             },
             h3: {
                 fontSize: rem('24px'),
-                fontWeight: '600',
+                fontWeight: '900',
                 lineHeight: rem('32px'),
             },
             h4: {
                 fontSize: rem('20px'),
-                fontWeight: '600',
+                fontWeight: '900',
                 lineHeight: rem('30px'),
             },
         },

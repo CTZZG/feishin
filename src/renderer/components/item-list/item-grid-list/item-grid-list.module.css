@@ -1,0 +1,60 @@
+.item-grid-container {
+    display: flex;
+    flex-direction: column !important;
+    width: 100%;
+    height: 100%;
+    padding-right: var(--theme-spacing-md);
+    outline: none;
+    border: none;
+}
+
+.auto-sizer-container {
+    flex: 1;
+}
+
+.grid-list-container {
+    width: 100%;
+    padding: 0 var(--theme-spacing-md);
+}
+
+.item-list {
+    display: flex;
+}
+
+.item-row {
+    flex: 1 1 calc(100% / var(--columns));
+    width: 100%;
+    max-width: calc(100% / var(--columns));
+    height: 100%;
+    overflow: hidden;
+}
+
+.item-row.gap-xs {
+    padding: var(--theme-spacing-xs);
+
+    --card-gap: 2px;
+}
+
+.item-row.gap-sm {
+    padding: var(--theme-spacing-sm);
+
+    --card-gap: var(--theme-spacing-xs);
+}
+
+.item-row.gap-md {
+    padding: var(--theme-spacing-md);
+
+    --card-gap: var(--theme-spacing-sm);
+}
+
+.item-row.gap-lg {
+    padding: var(--theme-spacing-lg);
+
+    --card-gap: var(--theme-spacing-sm);
+}
+
+.item-row.gap-xl {
+    padding: var(--theme-spacing-xl);
+
+    --card-gap: var(--theme-spacing-sm);
+}

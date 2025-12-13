@@ -1,14 +1,13 @@
 import type { ButtonVariant, ButtonProps as MantineButtonProps } from '@mantine/core';
 
 import { ElementProps, Button as MantineButton } from '@mantine/core';
-import { useTimeout } from '@mantine/hooks';
 import clsx from 'clsx';
-import { forwardRef, useCallback, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import styles from './button.module.css';
 
-import { Spinner } from '/@/shared/components/spinner/spinner';
 import { Tooltip, TooltipProps } from '/@/shared/components/tooltip/tooltip';
+import { useTimeout } from '/@/shared/hooks/use-timeout';
 import { createPolymorphicComponent } from '/@/shared/utils/create-polymorphic-component';
 
 export interface ButtonProps
@@ -48,6 +47,7 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     <MantineButton
                         autoContrast
                         classNames={{
+                            inner: styles.inner,
                             label: clsx(styles.label, {
                                 [styles.uppercase]: uppercase,
                             }),
@@ -56,6 +56,7 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
                             section: styles.section,
                             ...classNames,
                         }}
+                        loading={loading}
                         ref={ref}
                         size={size}
                         style={style}
@@ -63,11 +64,6 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
                         {...props}
                     >
                         {children}
-                        {loading && (
-                            <div className={styles.spinner}>
-                                <Spinner />
-                            </div>
-                        )}
                     </MantineButton>
                 </Tooltip>
             );
@@ -76,6 +72,7 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
         return (
             <MantineButton
                 classNames={{
+                    inner: styles.inner,
                     label: clsx(styles.label, {
                         [styles.uppercase]: uppercase,
                     }),
@@ -84,6 +81,7 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     section: styles.section,
                     ...classNames,
                 }}
+                loading={loading}
                 ref={ref}
                 size={size}
                 style={style}
@@ -91,17 +89,16 @@ export const _Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 {...props}
             >
                 {children}
-                {loading && (
-                    <div className={styles.spinner}>
-                        <Spinner />
-                    </div>
-                )}
             </MantineButton>
         );
     },
 );
 
 export const Button = createPolymorphicComponent<'button', ButtonProps>(_Button);
+
+export const ButtonGroup = MantineButton.Group;
+
+export const ButtonGroupSection = MantineButton.GroupSection;
 
 interface TimeoutButtonProps extends ButtonProps {
     timeoutProps: {
@@ -113,20 +110,35 @@ interface TimeoutButtonProps extends ButtonProps {
 export const TimeoutButton = ({ timeoutProps, ...props }: TimeoutButtonProps) => {
     const [, setTimeoutRemaining] = useState(timeoutProps.duration);
     const [isRunning, setIsRunning] = useState(false);
-    const intervalRef = useRef(0);
+    const intervalRef = useRef<null | number>(null);
 
     const callback = () => {
         timeoutProps.callback();
         setTimeoutRemaining(timeoutProps.duration);
-        clearInterval(intervalRef.current);
+        if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
         setIsRunning(false);
     };
 
     const { clear, start } = useTimeout(callback, timeoutProps.duration);
 
+    useEffect(() => {
+        return () => {
+            if (intervalRef.current !== null) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
+    }, []);
+
     const startTimeout = useCallback(() => {
         if (isRunning) {
-            clearInterval(intervalRef.current);
+            if (intervalRef.current !== null) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
             setIsRunning(false);
             clear();
         } else {

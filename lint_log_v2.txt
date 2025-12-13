@@ -1,0 +1,4 @@
+
+> feishin@0.22.0 lint-code
+> eslint --max-warnings=0 --cache .
+

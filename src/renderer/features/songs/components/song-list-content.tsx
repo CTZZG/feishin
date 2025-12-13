@@ -1,44 +1,165 @@
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
+import { lazy, Suspense, useMemo } from 'react';
 
-import { lazy, MutableRefObject, Suspense } from 'react';
-
-import { VirtualInfiniteGridRef } from '/@/renderer/components/virtual-grid';
 import { useListContext } from '/@/renderer/context/list-context';
-import { useListStoreByKey } from '/@/renderer/store';
+import { ListFilters } from '/@/renderer/features/shared/components/list-filters';
+import { ListWithSidebarContainer } from '/@/renderer/features/shared/components/list-with-sidebar-container';
+import { useSongListFilters } from '/@/renderer/features/songs/hooks/use-song-list-filters';
+import { ItemListSettings, useCurrentServer, useListSettings } from '/@/renderer/store';
+import { ScrollArea } from '/@/shared/components/scroll-area/scroll-area';
 import { Spinner } from '/@/shared/components/spinner/spinner';
-import { ListDisplayType } from '/@/shared/types/types';
+import { LibraryItem, SongListQuery } from '/@/shared/types/domain-types';
+import { ItemListKey, ListDisplayType, ListPaginationType } from '/@/shared/types/types';
 
-const SongListTableView = lazy(() =>
-    import('/@/renderer/features/songs/components/song-list-table-view').then((module) => ({
-        default: module.SongListTableView,
+const SongListInfiniteGrid = lazy(() =>
+    import('/@/renderer/features/songs/components/song-list-infinite-grid').then((module) => ({
+        default: module.SongListInfiniteGrid,
+    })),
+);
+const SongListPaginatedGrid = lazy(() =>
+    import('/@/renderer/features/songs/components/song-list-paginated-grid').then((module) => ({
+        default: module.SongListPaginatedGrid,
+    })),
+);
+const SongListInfiniteTable = lazy(() =>
+    import('/@/renderer/features/songs/components/song-list-infinite-table').then((module) => ({
+        default: module.SongListInfiniteTable,
+    })),
+);
+const SongListPaginatedTable = lazy(() =>
+    import('/@/renderer/features/songs/components/song-list-paginated-table').then((module) => ({
+        default: module.SongListPaginatedTable,
     })),
 );
 
-const SongListGridView = lazy(() =>
-    import('/@/renderer/features/songs/components/song-list-grid-view').then((module) => ({
-        default: module.SongListGridView,
-    })),
-);
+export const SongListContent = () => {
+    return (
+        <>
+            <SongListFilters />
+            <SongListSuspenseContainer />
+        </>
+    );
+};
 
-interface SongListContentProps {
-    gridRef: MutableRefObject<null | VirtualInfiniteGridRef>;
-    itemCount?: number;
-    tableRef: MutableRefObject<AgGridReactType | null>;
-}
+const SongListFilters = () => {
+    return (
+        <ListWithSidebarContainer.SidebarPortal>
+            <ScrollArea>
+                <ListFilters itemType={LibraryItem.SONG} />
+            </ScrollArea>
+        </ListWithSidebarContainer.SidebarPortal>
+    );
+};
 
-export const SongListContent = ({ gridRef, itemCount, tableRef }: SongListContentProps) => {
-    const { pageKey } = useListContext();
-    const { display } = useListStoreByKey({ key: pageKey });
+const SongListSuspenseContainer = () => {
+    const { display, grid, itemsPerPage, pagination, table } = useListSettings(ItemListKey.SONG);
 
-    const isGrid = display === ListDisplayType.CARD || display === ListDisplayType.GRID;
+    const { customFilters } = useListContext();
 
     return (
         <Suspense fallback={<Spinner container />}>
-            {isGrid ? (
-                <SongListGridView gridRef={gridRef} itemCount={itemCount} />
-            ) : (
-                <SongListTableView itemCount={itemCount} tableRef={tableRef} />
-            )}
+            <SongListView
+                display={display}
+                grid={grid}
+                itemsPerPage={itemsPerPage}
+                overrideQuery={customFilters}
+                pagination={pagination}
+                table={table}
+            />
         </Suspense>
     );
+};
+
+export type OverrideSongListQuery = Omit<Partial<SongListQuery>, 'limit' | 'startIndex'>;
+
+export const SongListView = ({
+    display,
+    grid,
+    itemsPerPage,
+    overrideQuery,
+    pagination,
+    table,
+}: ItemListSettings & { overrideQuery?: OverrideSongListQuery }) => {
+    const server = useCurrentServer();
+
+    const { query } = useSongListFilters();
+
+    const mergedQuery = useMemo(() => {
+        if (!overrideQuery) {
+            return query;
+        }
+
+        return {
+            ...query,
+            ...overrideQuery,
+            sortBy: overrideQuery.sortBy || query.sortBy,
+            sortOrder: overrideQuery.sortOrder || query.sortOrder,
+        };
+    }, [query, overrideQuery]);
+
+    switch (display) {
+        case ListDisplayType.GRID: {
+            switch (pagination) {
+                case ListPaginationType.INFINITE:
+                    return (
+                        <SongListInfiniteGrid
+                            gap={grid.itemGap}
+                            itemsPerPage={itemsPerPage}
+                            itemsPerRow={grid.itemsPerRowEnabled ? grid.itemsPerRow : undefined}
+                            query={mergedQuery}
+                            serverId={server.id}
+                        />
+                    );
+                case ListPaginationType.PAGINATED:
+                    return (
+                        <SongListPaginatedGrid
+                            gap={grid.itemGap}
+                            itemsPerPage={itemsPerPage}
+                            itemsPerRow={grid.itemsPerRowEnabled ? grid.itemsPerRow : undefined}
+                            query={mergedQuery}
+                            serverId={server.id}
+                        />
+                    );
+                default:
+                    return null;
+            }
+        }
+        case ListDisplayType.TABLE: {
+            switch (pagination) {
+                case ListPaginationType.INFINITE:
+                    return (
+                        <SongListInfiniteTable
+                            autoFitColumns={table.autoFitColumns}
+                            columns={table.columns}
+                            enableAlternateRowColors={table.enableAlternateRowColors}
+                            enableHorizontalBorders={table.enableHorizontalBorders}
+                            enableRowHoverHighlight={table.enableRowHoverHighlight}
+                            enableVerticalBorders={table.enableVerticalBorders}
+                            itemsPerPage={itemsPerPage}
+                            query={mergedQuery}
+                            serverId={server.id}
+                            size={table.size}
+                        />
+                    );
+                case ListPaginationType.PAGINATED:
+                    return (
+                        <SongListPaginatedTable
+                            autoFitColumns={table.autoFitColumns}
+                            columns={table.columns}
+                            enableAlternateRowColors={table.enableAlternateRowColors}
+                            enableHorizontalBorders={table.enableHorizontalBorders}
+                            enableRowHoverHighlight={table.enableRowHoverHighlight}
+                            enableVerticalBorders={table.enableVerticalBorders}
+                            itemsPerPage={itemsPerPage}
+                            query={mergedQuery}
+                            serverId={server.id}
+                            size={table.size}
+                        />
+                    );
+                default:
+                    return null;
+            }
+        }
+    }
+
+    return null;
 };

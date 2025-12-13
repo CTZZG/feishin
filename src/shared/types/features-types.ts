@@ -4,10 +4,13 @@ export enum ServerFeature {
     BFR = 'bfr',
     LYRICS_MULTIPLE_STRUCTURED = 'lyricsMultipleStructured',
     LYRICS_SINGLE_STRUCTURED = 'lyricsSingleStructured',
+    MUSIC_FOLDER_MULTISELECT = 'musicFolderMultiselect',
+    OS_FORM_POST = 'osFormPost',
     PLAYLISTS_SMART = 'playlistsSmart',
     PUBLIC_PLAYLIST = 'publicPlaylist',
     SHARING_ALBUM_SONG = 'sharingAlbumSong',
     TAGS = 'tags',
+    TRACK_ALBUM_ARTIST_SEARCH = 'trackAlbumArtistSearch',
 }
 
 export type ServerFeatures = Partial<Record<ServerFeature, number[]>>;

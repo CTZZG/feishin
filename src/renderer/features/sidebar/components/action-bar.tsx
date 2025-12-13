@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router';
 import styles from './action-bar.module.css';
 
 import { AppMenu } from '/@/renderer/features/titlebar/components/app-menu';
-import { useContainerQuery } from '/@/renderer/hooks';
 import { useCommandPalette } from '/@/renderer/store';
 import { Button } from '/@/shared/components/button/button';
 import { DropdownMenu } from '/@/shared/components/dropdown-menu/dropdown-menu';
@@ -15,14 +14,17 @@ import { TextInput } from '/@/shared/components/text-input/text-input';
 
 export const ActionBar = () => {
     const { t } = useTranslation();
-    const cq = useContainerQuery({ md: 300 });
-    const navigate = useNavigate();
     const { open } = useCommandPalette();
 
     return (
-        <div className={styles.container} ref={cq.ref}>
-            <Grid display="flex" gutter="sm" px="1rem" w="100%">
-                <Grid.Col span={6}>
+        <div className={styles.container}>
+            <Grid
+                display="flex"
+                gutter="sm"
+                style={{ padding: '0 var(--theme-spacing-md)' }}
+                w="100%"
+            >
+                <Grid.Col span={7}>
                     <TextInput
                         leftSection={<Icon icon="search" />}
                         onClick={open}
@@ -35,27 +37,37 @@ export const ActionBar = () => {
                         readOnly
                     />
                 </Grid.Col>
-                <Grid.Col span={6}>
+                <Grid.Col span={5}>
                     <Group gap="sm" grow wrap="nowrap">
                         <DropdownMenu position="bottom-start">
                             <DropdownMenu.Target>
                                 <Button p="0.5rem">
-                                    <Icon icon="menu" />
+                                    <Icon icon="menu" size="lg" />
                                 </Button>
                             </DropdownMenu.Target>
                             <DropdownMenu.Dropdown>
                                 <AppMenu />
                             </DropdownMenu.Dropdown>
                         </DropdownMenu>
-                        <Button onClick={() => navigate(-1)} p="0.5rem">
-                            <Icon icon="arrowLeftS" />
-                        </Button>
-                        <Button onClick={() => navigate(1)} p="0.5rem">
-                            <Icon icon="arrowRightS" />
-                        </Button>
+                        <NavigateButtons />
                     </Group>
                 </Grid.Col>
             </Grid>
         </div>
+    );
+};
+
+const NavigateButtons = () => {
+    const navigate = useNavigate();
+
+    return (
+        <>
+            <Button onClick={() => navigate(-1)} p="0.5rem">
+                <Icon icon="arrowLeftS" size="lg" />
+            </Button>
+            <Button onClick={() => navigate(1)} p="0.5rem">
+                <Icon icon="arrowRightS" size="lg" />
+            </Button>
+        </>
     );
 };

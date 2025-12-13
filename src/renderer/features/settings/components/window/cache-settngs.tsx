@@ -94,5 +94,10 @@ export const CacheSettings = () => {
         },
     ];
 
-    return <SettingsSection divider={false} options={options} />;
+    return (
+        <SettingsSection
+            options={options}
+            title={t('page.setting.cache', { postProcess: 'sentenceCase' })}
+        />
+    );
 };

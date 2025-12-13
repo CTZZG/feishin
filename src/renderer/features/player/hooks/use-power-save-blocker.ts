@@ -1,14 +1,14 @@
 import isElectron from 'is-electron';
 import { useCallback, useEffect } from 'react';
 
-import { useCurrentStatus } from '/@/renderer/store';
+import { usePlayerStatus } from '/@/renderer/store';
 import { useWindowSettings } from '/@/renderer/store';
 import { PlayerStatus } from '/@/shared/types/types';
 
 const ipc = isElectron() ? window.api.ipc : null;
 
 export const usePowerSaveBlocker = () => {
-    const status = useCurrentStatus();
+    const status = usePlayerStatus();
     const { preventSleepOnPlayback } = useWindowSettings();
 
     const startPowerSaveBlocker = useCallback(async () => {

@@ -382,7 +382,7 @@ const enableServer = (config: RemoteConfig): Promise<void> => {
                                     getMainWindow()?.webContents.send('request-favorite', {
                                         favorite,
                                         id,
-                                        serverId: currentState.song.serverId,
+                                        serverId: currentState.song._serverId,
                                     });
                                 }
                                 break;
@@ -443,7 +443,7 @@ const enableServer = (config: RemoteConfig): Promise<void> => {
                                     getMainWindow()?.webContents.send('request-rating', {
                                         id,
                                         rating,
-                                        serverId: currentState.song.serverId,
+                                        serverId: currentState.song._serverId,
                                     });
                                 }
                                 break;
@@ -578,7 +578,7 @@ ipcMain.on('remote-username', (_event, username: string) => {
 });
 
 ipcMain.on('update-favorite', (_event, favorite: boolean, serverId: string, ids: string[]) => {
-    if (currentState.song?.serverId !== serverId) return;
+    if (currentState.song?._serverId !== serverId) return;
 
     const id = currentState.song.id;
 
@@ -592,7 +592,7 @@ ipcMain.on('update-favorite', (_event, favorite: boolean, serverId: string, ids:
 });
 
 ipcMain.on('update-rating', (_event, rating: number, serverId: string, ids: string[]) => {
-    if (currentState.song?.serverId !== serverId) return;
+    if (currentState.song?._serverId !== serverId) return;
 
     const id = currentState.song.id;
 

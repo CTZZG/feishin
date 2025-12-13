@@ -6,6 +6,7 @@ import styles from './player-button.module.css';
 
 import { ActionIcon, ActionIconProps } from '/@/shared/components/action-icon/action-icon';
 import { Tooltip, TooltipProps } from '/@/shared/components/tooltip/tooltip';
+import { PlaybackSelectors } from '/@/shared/constants/playback-selectors';
 
 interface PlayerButtonProps extends Omit<ActionIconProps, 'icon' | 'variant'> {
     icon: ReactNode;
@@ -60,11 +61,15 @@ interface PlayButtonProps extends Omit<ActionIconProps, 'icon' | 'variant'> {
     isPaused?: boolean;
 }
 
-export const PlayButton = forwardRef<HTMLButtonElement, PlayButtonProps>(
+export const MainPlayButton = forwardRef<HTMLButtonElement, PlayButtonProps>(
     ({ isPaused, onClick, ...props }: PlayButtonProps, ref) => {
+        const playerStateClass = isPaused
+            ? PlaybackSelectors.playerStatePaused
+            : PlaybackSelectors.playerStatePlaying;
+
         return (
             <ActionIcon
-                className={styles.main}
+                className={clsx(styles.main, playerStateClass)}
                 icon={isPaused ? 'mediaPlay' : 'mediaPause'}
                 iconProps={{
                     size: 'lg',
@@ -78,6 +83,7 @@ export const PlayButton = forwardRef<HTMLButtonElement, PlayButtonProps>(
                     label: isPaused
                         ? (t('player.play', { postProcess: 'sentenceCase' }) as string)
                         : (t('player.pause', { postProcess: 'sentenceCase' }) as string),
+                    openDelay: 0,
                 }}
                 {...props}
             />

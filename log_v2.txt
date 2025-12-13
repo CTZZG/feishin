@@ -1,0 +1,4 @@
+
+> feishin@0.22.0 typecheck:web
+> tsc --noEmit -p tsconfig.web.json --composite false
+

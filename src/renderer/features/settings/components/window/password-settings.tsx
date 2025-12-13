@@ -52,5 +52,10 @@ export const PasswordSettings = () => {
         },
     ];
 
-    return <SettingsSection divider={false} options={updateOptions} />;
+    return (
+        <SettingsSection
+            options={updateOptions}
+            title={t('settings.password.title', { postProcess: 'sentenceCase' })}
+        />
+    );
 };

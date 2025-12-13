@@ -7,7 +7,30 @@ const baseResponse = z.object({
     }),
 });
 
-const authenticate = z.null();
+const userParameters = z.object({
+    username: z.string(),
+});
+
+const user = z.object({
+    user: z.object({
+        adminRole: z.boolean(),
+        commentRole: z.boolean(),
+        coverArtRole: z.boolean(),
+        downloadRole: z.boolean(),
+        folder: z.string().array(),
+        jukeboxRole: z.boolean(),
+        playlistRole: z.boolean(),
+        podcastRole: z.boolean(),
+        scrobblingEnabled: z.boolean(),
+        settingsRole: z.boolean(),
+        shareRole: z.boolean(),
+        streamRole: z.boolean(),
+        uploadRole: z.boolean(),
+        username: z.string(),
+    }),
+});
+
+const authenticate = user;
 
 const authenticateParameters = z.object({
     c: z.string(),
@@ -16,6 +39,7 @@ const authenticateParameters = z.object({
     s: z.string().optional(),
     t: z.string().optional(),
     u: z.string(),
+    username: z.string(),
     v: z.string(),
 });
 
@@ -95,6 +119,7 @@ const song = z.object({
     created: z.string(),
     discNumber: z.number(),
     duration: z.number().optional(),
+    explicitStatus: z.string().optional(),
     genre: z.string().optional(),
     genres: z.array(genreItem).optional(),
     id,
@@ -116,6 +141,10 @@ const song = z.object({
     year: z.number().optional(),
 });
 
+const recordLabel = z.object({
+    name: z.string(),
+});
+
 const album = z.object({
     album: z.string(),
     artist: z.string(),
@@ -125,6 +154,7 @@ const album = z.object({
     coverArt: z.string(),
     created: z.string(),
     duration: z.number(),
+    explicitStatus: z.string().optional(),
     genre: z.string().optional(),
     genres: z.array(genreItem).optional(),
     id,
@@ -133,11 +163,15 @@ const album = z.object({
     isVideo: z.boolean(),
     name: z.string(),
     parent: z.string(),
+    recordLabels: z.array(recordLabel).optional(),
+    releaseDate: z.object({ day: z.number(), month: z.number(), year: z.number() }).optional(),
+    releaseTypes: z.array(z.string()).optional(),
     song: z.array(song),
     songCount: z.number(),
     starred: z.boolean().optional(),
     title: z.string(),
     userRating: z.number().optional(),
+    version: z.string().optional(),
     year: z.number().optional(),
 });
 
@@ -539,6 +573,50 @@ const albumInfo = z.object({
     }),
 });
 
+const getMusicDirectoryParameters = z.object({
+    id: z.string(),
+});
+
+const directory = z.object({
+    artist: z.string().optional(),
+    child: z.array(song).optional(),
+    coverArt: z.string().optional(),
+    id,
+    isDir: z.boolean(),
+    parent: z.string().optional(),
+    title: z.string(),
+});
+
+const getMusicDirectory = z.object({
+    directory,
+});
+
+const getIndexes = z.object({
+    indexes: z.object({
+        child: z.array(song),
+        index: z
+            .object({
+                artist: z
+                    .object({
+                        id: z.string(),
+                        name: z.string(),
+                    })
+                    .array(),
+            })
+            .array(),
+        shortcut: z
+            .object({
+                id: z.string(),
+                name: z.string(),
+            })
+            .array(),
+    }),
+});
+
+const getIndexesParameters = z.object({
+    musicFolderId: z.string().optional(),
+});
+
 export const ssType = {
     _parameters: {
         albumInfo: albumInfoParameters,
@@ -554,6 +632,8 @@ export const ssType = {
         getArtists: getArtistsParameters,
         getGenre: getGenresParameters,
         getGenres: getGenresParameters,
+        getIndexes: getIndexesParameters,
+        getMusicDirectory: getMusicDirectoryParameters,
         getPlaylist: getPlaylistParameters,
         getPlaylists: getPlaylistsParameters,
         getSong: getSongParameters,
@@ -568,6 +648,7 @@ export const ssType = {
         structuredLyrics: structuredLyricsParameters,
         topSongsList: topSongsListParameters,
         updatePlaylist: updatePlaylistParameters,
+        user: userParameters,
     },
     _response: {
         album,
@@ -582,12 +663,15 @@ export const ssType = {
         baseResponse,
         createFavorite,
         createPlaylist,
+        directory,
         genre,
         getAlbum,
         getAlbumList2,
         getArtist,
         getArtists,
         getGenres,
+        getIndexes,
+        getMusicDirectory,
         getPlaylist,
         getPlaylists,
         getSong,
@@ -607,5 +691,6 @@ export const ssType = {
         song,
         structuredLyrics,
         topSongsList,
+        user,
     },
 };

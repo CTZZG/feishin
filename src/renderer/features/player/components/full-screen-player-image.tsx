@@ -1,15 +1,13 @@
-import { useSetState } from '@mantine/hooks';
 import clsx from 'clsx';
 import { AnimatePresence, HTMLMotionProps, motion, Variants } from 'motion/react';
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { generatePath } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import styles from './full-screen-player-image.module.css';
 
-import { useFastAverageColor } from '/@/renderer/hooks';
 import { AppRoute } from '/@/renderer/router/routes';
-import { usePlayerData, usePlayerStore } from '/@/renderer/store';
+import { usePlayerData, usePlayerSong } from '/@/renderer/store';
 import { useSettingsStore } from '/@/renderer/store/settings.store';
 import { Badge } from '/@/shared/components/badge/badge';
 import { Center } from '/@/shared/components/center/center';
@@ -18,7 +16,7 @@ import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Text } from '/@/shared/components/text/text';
-import { PlayerData, QueueSong } from '/@/shared/types/domain-types';
+import { useSetState } from '/@/shared/hooks/use-set-state';
 
 const imageVariants: Variants = {
     closed: {
@@ -91,18 +89,13 @@ export const FullScreenPlayerImage = () => {
 
     const albumArtRes = useSettingsStore((store) => store.general.albumArtRes);
 
-    const { queue } = usePlayerData();
-    const currentSong = queue.current;
-    const { background } = useFastAverageColor({
-        algorithm: 'dominant',
-        src: queue.current?.imageUrl,
-        srcLoaded: true,
-    });
-    const imageKey = `image-${background}`;
+    const currentSong = usePlayerSong();
+    const { nextSong } = usePlayerData();
+
     const [imageState, setImageState] = useSetState({
-        bottomImage: scaleImageUrl(mainImageDimensions.idealSize, queue.next?.imageUrl),
+        bottomImage: scaleImageUrl(mainImageDimensions.idealSize, nextSong?.imageUrl),
         current: 0,
-        topImage: scaleImageUrl(mainImageDimensions.idealSize, queue.current?.imageUrl),
+        topImage: scaleImageUrl(mainImageDimensions.idealSize, currentSong?.imageUrl),
     });
 
     const updateImageSize = useCallback(() => {
@@ -114,46 +107,56 @@ export const FullScreenPlayerImage = () => {
             });
 
             setImageState({
-                bottomImage: scaleImageUrl(mainImageDimensions.idealSize, queue.next?.imageUrl),
+                bottomImage: scaleImageUrl(mainImageDimensions.idealSize, nextSong?.imageUrl),
                 current: 0,
-                topImage: scaleImageUrl(mainImageDimensions.idealSize, queue.current?.imageUrl),
+                topImage: scaleImageUrl(mainImageDimensions.idealSize, currentSong?.imageUrl),
             });
         }
-    }, [mainImageDimensions.idealSize, queue, setImageState, albumArtRes]);
+    }, [
+        mainImageDimensions.idealSize,
+        setImageState,
+        albumArtRes,
+        currentSong?.imageUrl,
+        nextSong?.imageUrl,
+    ]);
 
     useLayoutEffect(() => {
         updateImageSize();
     }, [updateImageSize]);
 
+    // Track previous song to detect changes
+    const previousSongRef = useRef<string | undefined>(currentSong?._uniqueId);
+    const imageStateRef = useRef(imageState);
+
+    // Keep ref in sync
     useEffect(() => {
-        const unsubSongChange = usePlayerStore.subscribe(
-            (state) => [state.current.song, state.actions.getPlayerData().queue],
-            (state) => {
-                const isTop = imageState.current === 0;
-                const queue = state[1] as PlayerData['queue'];
+        imageStateRef.current = imageState;
+    }, [imageState]);
 
-                const currentImageUrl = scaleImageUrl(
-                    mainImageDimensions.idealSize,
-                    queue.current?.imageUrl,
-                );
-                const nextImageUrl = scaleImageUrl(
-                    mainImageDimensions.idealSize,
-                    queue.next?.imageUrl,
-                );
+    // Update images when song changes
+    useEffect(() => {
+        if (currentSong?._uniqueId === previousSongRef.current) {
+            return;
+        }
 
-                setImageState({
-                    bottomImage: isTop ? currentImageUrl : nextImageUrl,
-                    current: isTop ? 1 : 0,
-                    topImage: isTop ? nextImageUrl : currentImageUrl,
-                });
-            },
-            { equalityFn: (a, b) => (a[0] as QueueSong)?.id === (b[0] as QueueSong)?.id },
-        );
+        const isTop = imageStateRef.current.current === 0;
+        const currentImageUrl = scaleImageUrl(mainImageDimensions.idealSize, currentSong?.imageUrl);
+        const nextImageUrl = scaleImageUrl(mainImageDimensions.idealSize, nextSong?.imageUrl);
 
-        return () => {
-            unsubSongChange();
-        };
-    }, [imageState, mainImageDimensions.idealSize, queue, setImageState]);
+        setImageState({
+            bottomImage: isTop ? currentImageUrl : nextImageUrl,
+            current: isTop ? 1 : 0,
+            topImage: isTop ? nextImageUrl : currentImageUrl,
+        });
+
+        previousSongRef.current = currentSong?._uniqueId;
+    }, [
+        currentSong?._uniqueId,
+        currentSong?.imageUrl,
+        nextSong?.imageUrl,
+        mainImageDimensions.idealSize,
+        setImageState,
+    ]);
 
     return (
         <Flex
@@ -173,7 +176,7 @@ export const FullScreenPlayerImage = () => {
                             draggable={false}
                             exit="closed"
                             initial="closed"
-                            key={imageKey}
+                            key={`top-${currentSong?._uniqueId || 'none'}`}
                             placeholder="var(--theme-colors-foreground-muted)"
                             src={imageState.topImage || ''}
                             variants={imageVariants}
@@ -188,7 +191,7 @@ export const FullScreenPlayerImage = () => {
                             draggable={false}
                             exit="closed"
                             initial="closed"
-                            key={imageKey}
+                            key={`bottom-${currentSong?._uniqueId || 'none'}`}
                             placeholder="var(--theme-colors-foreground-muted)"
                             src={imageState.bottomImage || ''}
                             variants={imageVariants}

@@ -57,7 +57,6 @@
         "replayGainPreamp": "{{ReplayGain}} pojačalo (dB)",
         "hotkey_favoriteCurrentSong": "omiljena $t(common.currentSong)",
         "sampleRate": "sample rate",
-        "crossfadeStyle": "stil prelaza",
         "sidePlayQueueStyle_optionAttached": "priložena",
         "sidebarConfiguration": "konfiguracija bočne trake",
         "sampleRate_description": "izaberite izlazni sample rate koji će se koristiti ako je sample rate drugačiji od onog u trenutnom mediju",
@@ -105,7 +104,6 @@
         "playbackStyle_optionCrossFade": "prelazak sa preklapanjem",
         "hotkey_rate3": "oceni sa 3 zvezdice",
         "font": "font",
-        "mpvExtraParameters": "mpv parametri",
         "replayGainMode_optionTrack": "$t(entity.track_one)",
         "themeLight_description": "postavlja svetlu temu za aplikaciju",
         "hotkey_toggleFullScreenPlayer": "prebaci na prikaz na celom ekranu",
@@ -117,7 +115,6 @@
         "hotkey_playbackPrevious": "prethodna pesma",
         "showSkipButtons_description": "prikaži ili sakrij dugmad za preskakanje na traci za reprodukciju",
         "crossfadeDuration_description": "postavi trajanje efekta prelaza",
-        "language": "jezik",
         "playbackStyle": "stil reprodukcije",
         "hotkey_toggleShuffle": "promeni slučajan redosled",
         "theme": "tema",
@@ -135,7 +132,7 @@
         "savePlayQueue": "sačuvaj listu za reprodukciju",
         "minimumScrobbleSeconds_description": "minimalno trajanje pesme u sekundama koje mora biti reprodukovano pre nego što se zabeleži",
         "skipPlaylistPage_description": "kada idete na plejlistu, idi na stranicu sa pesmama plejliste umesto na podrazumevanu stranicu",
-        "fontType_description": "ugrađeni font bira jedan od fontova koje pruža Feishin. sistemski font vam omogućava da izaberete bilo koji font koji nudi vaš operativni sistem. prilagođeni vam omogućava da koristite svoj font",
+        "fontType_description": "ugrađeni font bira jedan od fontova koje pruža feishin. sistemski font vam omogućava da izaberete bilo koji font koji nudi vaš operativni sistem. prilagođeni vam omogućava da koristite svoj font",
         "playButtonBehavior": "ponašanje dugmeta za reprodukciju",
         "volumeWheelStep": "korak točkića za glasnoću",
         "sidebarPlaylistList_description": "prikaži ili sakrij listu plejlista na bočnoj traci",
@@ -145,7 +142,6 @@
         "replayGainMode": "{{ReplayGain}} režim",
         "playbackStyle_optionNormal": "normalno",
         "windowBarStyle": "stil trake prozora",
-        "floatingQueueArea": "prikaži područje plutajuće liste za reprodukciju",
         "replayGainFallback_description": "jačina u dB koja će se primeniti ako datoteka nema {{ReplayGain}} oznake",
         "replayGainPreamp_description": "prilagođava pojačalo za {{ReplayGain}} vrednosti",
         "hotkey_toggleRepeat": "promeni ponavljanje",
@@ -171,7 +167,6 @@
         "hotkey_rate0": "obrisati ocenu",
         "discordApplicationId": "{{discord}} ID aplikacije",
         "applicationHotkeys_description": "konfiguriši prečice za aplikaciju. uključite opciju za postavljanje kao globalne prečice (samo na radnoj površini)",
-        "floatingQueueArea_description": "prikaz ikone na desnoj strani ekrana za pregled liste za reprodukciju",
         "hotkey_volumeMute": "isključi zvuk",
         "hotkey_toggleCurrentSongFavorite": "promeni omiljenu pesmu $t(common.currentSong)",
         "remoteUsername": "korisničko ime za daljinsku kontrolu servera",
@@ -187,7 +182,6 @@
         "minimumScrobbleSeconds": "minimalno trajanje za bilježenje (u sekundama)",
         "hotkey_playbackStop": "zaustavi",
         "windowBarStyle_description": "izaberite stil trake prozora",
-        "discordRichPresence": "{{discord}} bogat prikaz",
         "font_description": "postavlja font koji se koristi za aplikaciju",
         "savePlayQueue_description": "sačuva listu za reprodukciju kada se aplikacija zatvori i obnovi je pri ponovnom otvaranju aplikacije",
         "useSystemTheme": "koristi sistemsku temu"
@@ -301,9 +295,7 @@
     "table": {
         "config": {
             "view": {
-                "card": "kartica",
-                "table": "tabela",
-                "poster": "poster"
+                "table": "tabela"
             },
             "general": {
                 "displayType": "tip prikaza",
@@ -502,7 +494,7 @@
             "recentlyPlayed": "nedavno puštane pesme"
         },
         "albumDetail": {
-            "moreFromArtist": "još od ovog $t(entity.genre_one)",
+            "moreFromArtist": "još od ovog $t(entity.artist_one)",
             "moreFromGeneric": "još od {{item}}"
         },
         "setting": {

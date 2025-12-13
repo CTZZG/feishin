@@ -12,7 +12,9 @@ import {
     albumListSortMap,
     ControllerEndpoint,
     genreListSortMap,
+    LibraryItem,
     playlistListSortMap,
+    ServerType,
     Song,
     songListSortMap,
     sortOrderMap,
@@ -41,12 +43,16 @@ export const EmbyController: ControllerEndpoint = {
     addTags: async (args) => {
         const { apiClientProps, body, query } = args;
 
-        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
+        if (!apiClientProps.server) {
+            throw new Error('No server found');
+        }
+
+        if (!hasFeature(apiClientProps.server as any, ServerFeature.TAGS)) {
             throw new Error('Tags feature not supported');
         }
 
         for (const id of query.id) {
-            const res = await embyApiClient(apiClientProps).addTags({
+            const res = await embyApiClient(apiClientProps as any).addTags({
                 body: {
                     Tags: body.tags,
                 },
@@ -72,7 +78,7 @@ export const EmbyController: ControllerEndpoint = {
         const chunks = chunk(body.songId, MAX_ITEMS_PER_PLAYLIST_ADD);
 
         for (const chunk of chunks) {
-            const res = await embyApiClient(apiClientProps).addToPlaylist({
+            const res = await embyApiClient(apiClientProps as any).addToPlaylist({
                 body: null,
                 params: {
                     id: query.id,
@@ -93,7 +99,7 @@ export const EmbyController: ControllerEndpoint = {
     authenticate: async (url, body) => {
         const cleanServerUrl = url.replace(/\/$/, '');
 
-        const res = await embyApiClient({ server: null, url: cleanServerUrl }).authenticate({
+        const res = await embyApiClient({ server: null, url: cleanServerUrl } as any).authenticate({
             body: {
                 Pw: body.password,
                 Username: body.username,
@@ -106,6 +112,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             credential: res.body.AccessToken,
+            id: res.body.ServerId,
             userId: res.body.User.Id,
             username: res.body.User.Name,
         };
@@ -118,7 +125,7 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         for (const id of query.id) {
-            await embyApiClient(apiClientProps).createFavorite({
+            await embyApiClient(apiClientProps as any).createFavorite({
                 body: {},
                 params: {
                     id,
@@ -136,7 +143,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).createPlaylist({
+        const res = await embyApiClient(apiClientProps as any).createPlaylist({
             body: {
                 MediaType: 'Audio',
                 Name: body.name,
@@ -160,7 +167,7 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         for (const id of query.id) {
-            await embyApiClient(apiClientProps).removeFavorite({
+            await embyApiClient(apiClientProps as any).removeFavorite({
                 body: {},
                 params: {
                     id,
@@ -174,7 +181,7 @@ export const EmbyController: ControllerEndpoint = {
     deletePlaylist: async (args) => {
         const { apiClientProps, query } = args;
 
-        const res = await embyApiClient(apiClientProps).deletePlaylist({
+        const res = await embyApiClient(apiClientProps as any).deletePlaylist({
             params: {
                 id: query.id,
             },
@@ -194,7 +201,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getAlbumArtistDetail({
+        const res = await embyApiClient(apiClientProps as any).getAlbumArtistDetail({
             params: {
                 id: query.id,
                 userId: apiClientProps.server?.userId,
@@ -205,7 +212,7 @@ export const EmbyController: ControllerEndpoint = {
             },
         });
 
-        const similarArtistsRes = await embyApiClient(apiClientProps).getSimilarArtistList({
+        const similarArtistsRes = await embyApiClient(apiClientProps as any).getSimilarArtistList({
             params: {
                 id: query.id,
             },
@@ -222,14 +229,14 @@ export const EmbyController: ControllerEndpoint = {
 
         return embyNormalize.albumArtist(
             { ...res.body, similarArtists: similarArtistsRes.body },
-            apiClientProps.server,
+            apiClientProps.server as any,
         );
     },
     getAlbumArtistList: async (args) => {
         const { apiClientProps, query } = args;
         await EmbyController.getMusicFolderList({ apiClientProps });
 
-        const res = await embyApiClient(apiClientProps).getAlbumArtistList({
+        const res = await embyApiClient(apiClientProps as any).getAlbumArtistList({
             query: {
                 Fields: 'DateCreated,Genres,Overview',
                 ImageTypeLimit: 1,
@@ -250,7 +257,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             items: res.body.Items.map((item) =>
-                embyNormalize.albumArtist(item, apiClientProps.server),
+                embyNormalize.albumArtist(item, apiClientProps.server!),
             ),
             startIndex: query.startIndex,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
@@ -268,7 +275,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getAlbumDetail({
+        const res = await embyApiClient(apiClientProps as any).getAlbumDetail({
             params: {
                 id: query.id,
                 userId: apiClientProps.server.userId,
@@ -278,7 +285,7 @@ export const EmbyController: ControllerEndpoint = {
             },
         });
 
-        const songsRes = await embyApiClient(apiClientProps).getSongList({
+        const songsRes = await embyApiClient(apiClientProps as any).getSongList({
             query: {
                 Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags',
                 IncludeItemTypes: 'Audio',
@@ -294,9 +301,9 @@ export const EmbyController: ControllerEndpoint = {
 
         const album = await embyNormalize.album(
             { ...res.body, Songs: songsRes.body.Items },
-            apiClientProps.server,
-            embyApiClient(apiClientProps),
-            apiClientProps,
+            apiClientProps.server as any,
+            embyApiClient(apiClientProps as any),
+            apiClientProps as any,
         );
         return album;
     },
@@ -308,13 +315,13 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getAlbumList({
+        const res = await embyApiClient(apiClientProps as any).getAlbumList({
             query: {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
                     : undefined,
-                Fields: 'ChildCount,DateCreated,MediaSources,ProductionYear,Genres,DatePlayed,Tags',
-                GenreIds: query.genres ? query.genres.join(',') : undefined,
+                Fields: 'ChildCount,DateCreated,MediaSources,ProductionYear,Genres,DatePlayed,Tags,Overview',
+                GenreIds: query.genreIds ? query.genreIds.join(',') : undefined,
                 IncludeItemTypes: 'MusicAlbum',
                 IsFavorite: query.favorite,
                 Limit: query.limit,
@@ -336,9 +343,9 @@ export const EmbyController: ControllerEndpoint = {
             res.body.Items.map((item) =>
                 embyNormalize.album(
                     item,
-                    apiClientProps.server,
-                    embyApiClient(apiClientProps),
-                    apiClientProps,
+                    apiClientProps.server!,
+                    embyApiClient(apiClientProps as any),
+                    apiClientProps as any,
                 ),
             ),
         );
@@ -358,7 +365,7 @@ export const EmbyController: ControllerEndpoint = {
         const { apiClientProps, query } = args;
         await EmbyController.getMusicFolderList({ apiClientProps });
 
-        const res = await embyApiClient(apiClientProps).getArtistList({
+        const res = await embyApiClient(apiClientProps as any).getArtistList({
             query: {
                 Fields: 'DateCreated,Genres',
                 ImageTypeLimit: 1,
@@ -379,7 +386,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             items: res.body.Items.map((item) =>
-                embyNormalize.albumArtist(item, apiClientProps.server),
+                embyNormalize.albumArtist(item, apiClientProps.server!),
             ),
             startIndex: query.startIndex,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
@@ -395,6 +402,92 @@ export const EmbyController: ControllerEndpoint = {
 
         return `${apiClientProps.server?.url}/items/${query.id}/download?api_key=${apiClientProps.server?.credential}`;
     },
+    getFolder: async ({ apiClientProps, query }) => {
+        const userId = apiClientProps.server?.userId;
+        if (!userId) throw new Error('No userId found');
+
+        // Root folder
+        if (query.id === '0') {
+            const res = await EmbyController.getMusicFolderList({ apiClientProps });
+
+            if (!res.items) {
+                throw new Error('Failed to get music folder list');
+            }
+
+            const folders = res.items.map((item) => ({
+                _itemType: LibraryItem.FOLDER,
+                _serverId: apiClientProps.server?.id || '',
+                _serverType: ServerType.EMBY,
+                children: {
+                    folders: [],
+                    songs: [],
+                },
+                id: item.id,
+                name: item.name,
+            }));
+
+            return {
+                _itemType: LibraryItem.FOLDER,
+                _serverId: apiClientProps.server?.id || '',
+                _serverType: ServerType.EMBY,
+                children: {
+                    folders: folders as any[],
+                    songs: [],
+                },
+                id: '0',
+                name: 'Root',
+            } as any;
+        }
+
+        // Sub-folder
+        const res = await embyApiClient(apiClientProps as any).getSongList({
+            query: {
+                ParentId: query.id,
+                UserId: userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get folder items');
+        }
+
+        const items = res.body.Items;
+        const folders = items
+            .filter((item) => item.Type === 'Folder' || item.Type === 'CollectionFolder')
+            .map((item) => ({
+                _itemType: LibraryItem.FOLDER,
+                _serverId: apiClientProps.server?.id || '',
+                _serverType: ServerType.EMBY,
+                children: {
+                    folders: [],
+                    songs: [],
+                },
+                id: item.Id,
+                name: item.Name,
+            }));
+
+        const songs = items
+            .filter((item) => item.Type === 'Audio')
+            .map((item) =>
+                embyNormalize.song(
+                    item,
+                    apiClientProps.server as any,
+                    apiClientProps.server?.id || '',
+                ),
+            );
+
+        return {
+            _itemType: LibraryItem.FOLDER,
+            _serverId: apiClientProps.server?.id || '',
+            _serverType: ServerType.EMBY,
+            children: {
+                folders: folders as any[],
+                songs,
+            },
+            id: query.id,
+            name: 'Folder',
+        } as any;
+    },
     getGenreList: async (args) => {
         const { apiClientProps, query } = args;
         await EmbyController.getMusicFolderList({ apiClientProps });
@@ -403,7 +496,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getGenreList({
+        const res = await embyApiClient(apiClientProps as any).getGenreList({
             query: {
                 ParentId: musicLibraryId,
                 Recursive: true,
@@ -420,7 +513,7 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         return {
-            items: res.body.Items.map((item) => embyNormalize.genre(item, apiClientProps.server)),
+            items: res.body.Items.map((item) => embyNormalize.genre(item, apiClientProps.server!)),
             startIndex: query.startIndex || 0,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
@@ -432,7 +525,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const songDetailRes = await embyApiClient(apiClientProps).getSongDetail({
+        const songDetailRes = await embyApiClient(apiClientProps as any).getSongDetail({
             params: {
                 id: query.songId,
                 userId: apiClientProps.server.userId,
@@ -465,7 +558,7 @@ export const EmbyController: ControllerEndpoint = {
             return [];
         }
 
-        const res = await embyApiClient(apiClientProps).getSongLyrics({
+        const res = await embyApiClient(apiClientProps as any).getSongLyrics({
             params: {
                 id: query.songId,
                 index: lrcStream.Index.toString(),
@@ -511,7 +604,7 @@ export const EmbyController: ControllerEndpoint = {
             };
         }
 
-        const res = await embyApiClient(apiClientProps).getMusicFolderList({
+        const res = await embyApiClient(apiClientProps as any).getMusicFolderList({
             params: {
                 userId,
             },
@@ -521,12 +614,10 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get music folder list');
         }
 
-        const musicLibrary = res.body.Items.find(
-            (view) => view.CollectionType === 'music' && view.Name === '音乐',
-        );
+        const musicLibrary = res.body.Items.find((view) => view.CollectionType === 'music');
 
         if (!musicLibrary) {
-            throw new Error('Could not find a music library named "音乐"');
+            throw new Error('Could not find a music library');
         }
 
         musicLibraryId = musicLibrary.Id;
@@ -544,7 +635,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getPlaylistDetail({
+        const res = await embyApiClient(apiClientProps as any).getPlaylistDetail({
             params: {
                 id: query.id,
                 userId: apiClientProps.server?.userId,
@@ -555,7 +646,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get playlist detail');
         }
 
-        return embyNormalize.playlist(res.body, apiClientProps.server);
+        return embyNormalize.playlist(res.body, apiClientProps.server!);
     },
     getPlaylistList: async (args) => {
         const { apiClientProps, query } = args;
@@ -565,7 +656,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getPlaylistList({
+        const res = await embyApiClient(apiClientProps as any).getPlaylistList({
             query: {
                 Fields: 'ChildCount,DateCreated',
                 IncludeItemTypes: 'Playlist',
@@ -586,7 +677,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             items: res.body.Items.map((item) =>
-                embyNormalize.playlist(item, apiClientProps.server),
+                embyNormalize.playlist(item, apiClientProps.server!),
             ),
             startIndex: 0,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
@@ -604,7 +695,10 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getSongList({
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
             query: {
                 Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 IncludeItemTypes: 'Audio',
@@ -627,9 +721,9 @@ export const EmbyController: ControllerEndpoint = {
             res.body.Items.map((item) =>
                 embyNormalize.songWithArtistFallback(
                     item,
-                    apiClientProps.server,
+                    apiClientProps.server!,
                     '',
-                    embyApiClient(apiClientProps),
+                    embyApiClient(apiClientProps as any),
                 ),
             ),
         );
@@ -648,7 +742,10 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getSongList({
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
             query: {
                 Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 GenreIds: query.genre ? query.genre : undefined,
@@ -669,7 +766,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             items: res.body.Items.map((item) =>
-                embyNormalize.song(item, apiClientProps.server, ''),
+                embyNormalize.song(item, apiClientProps.server!, ''),
             ),
             startIndex: 0,
             totalRecordCount: res.body?.Items?.length || 0,
@@ -691,7 +788,7 @@ export const EmbyController: ControllerEndpoint = {
             startIndex: 0,
         };
 
-        const songsRes = await embyApiClient(apiClientProps).getSongList({
+        const songsRes = await embyApiClient(apiClientProps as any).getSongList({
             query: {
                 Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
                 Filters: 'IsPlayed',
@@ -752,7 +849,7 @@ export const EmbyController: ControllerEndpoint = {
     getServerInfo: async (args) => {
         const { apiClientProps } = args;
 
-        const res = await embyApiClient(apiClientProps).getServerInfo();
+        const res = await embyApiClient(apiClientProps as any).getServerInfo();
 
         if (res.status !== 200) {
             throw new Error('Failed to get server info');
@@ -769,7 +866,7 @@ export const EmbyController: ControllerEndpoint = {
     getSimilarSongs: async (args) => {
         const { apiClientProps, query } = args;
 
-        const res = await embyApiClient(apiClientProps).getSimilarSongs({
+        const res = await embyApiClient(apiClientProps as any).getSimilarSongs({
             params: {
                 id: query.songId,
             },
@@ -781,7 +878,7 @@ export const EmbyController: ControllerEndpoint = {
         });
 
         if (res.status !== 200) {
-            const mix = await embyApiClient(apiClientProps).getInstantMix({
+            const mix = await embyApiClient(apiClientProps as any).getInstantMix({
                 params: {
                     id: query.songId,
                 },
@@ -798,7 +895,7 @@ export const EmbyController: ControllerEndpoint = {
 
             return mix.body.Items.reduce<Song[]>((acc, song) => {
                 if (song.Id !== query.songId) {
-                    acc.push(embyNormalize.song(song, apiClientProps.server, ''));
+                    acc.push(embyNormalize.song(song, apiClientProps.server as any, ''));
                 }
                 return acc;
             }, []);
@@ -806,7 +903,7 @@ export const EmbyController: ControllerEndpoint = {
 
         return res.body.Items.reduce<Song[]>((acc, song) => {
             if (song.Id !== query.songId) {
-                acc.push(embyNormalize.song(song, apiClientProps.server, ''));
+                acc.push(embyNormalize.song(song, apiClientProps.server as any, ''));
             }
             return acc;
         }, []);
@@ -814,7 +911,7 @@ export const EmbyController: ControllerEndpoint = {
     getSongDetail: async (args) => {
         const { apiClientProps, query } = args;
 
-        const res = await embyApiClient(apiClientProps).getSongDetail({
+        const res = await embyApiClient(apiClientProps as any).getSongDetail({
             params: {
                 id: query.id,
                 userId: apiClientProps.server?.userId ?? '',
@@ -825,7 +922,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('Failed to get song detail');
         }
 
-        return embyNormalize.song(res.body, apiClientProps.server, '');
+        return embyNormalize.song(res.body, apiClientProps.server as any, '');
     },
     getSongList: async (args) => {
         const { apiClientProps, query } = args;
@@ -835,7 +932,10 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getSongList({
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
             query: {
                 ArtistIds: query.artistIds
                     ? formatCommaDelimitedString(query.artistIds)
@@ -845,7 +945,7 @@ export const EmbyController: ControllerEndpoint = {
                 IncludeItemTypes: 'Audio',
                 IsFavorite: query.favorite,
                 Limit: query.limit,
-                ParentId: musicLibraryId,
+                ParentId: (query as any).parentId || musicLibraryId,
                 Recursive: true,
                 SearchTerm: query.searchTerm,
                 SortBy: songListSortMap.emby[query.sortBy] || 'Album,SortName',
@@ -863,9 +963,9 @@ export const EmbyController: ControllerEndpoint = {
             res.body.Items.map((item) =>
                 embyNormalize.songWithArtistFallback(
                     item,
-                    apiClientProps.server,
+                    apiClientProps.server as any,
                     '',
-                    embyApiClient(apiClientProps),
+                    embyApiClient(apiClientProps as any),
                     query.imageSize,
                 ),
             ),
@@ -882,33 +982,35 @@ export const EmbyController: ControllerEndpoint = {
             apiClientProps,
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
-    getTags: async (args) => {
-        const { apiClientProps } = args;
+    getStreamUrl: ({ apiClientProps: { server }, query }) => {
+        const { bitrate, format, id, transcode } = query;
+        const deviceId = server?.id || '';
 
-        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
-            return { boolTags: undefined, enumTags: undefined };
+        let url =
+            `${server?.url}/Audio/${id}/universal` +
+            `?UserId=${server?.userId}` +
+            `&DeviceId=${deviceId}` +
+            `&MaxStreamingBitrate=${bitrate ? bitrate * 1000 : 140000000}` +
+            `&Container=opus,mp3,aac,m4a,m4b,flac,wav,ogg` +
+            `&TranscodingContainer=${format || 'mp3'}` +
+            `&TranscodingProtocol=http` +
+            `&AudioCodec=${format || 'aac'}` +
+            `&api_key=${server?.credential}`;
+
+        if (transcode) {
+            if (bitrate !== undefined) {
+                url = url.replace(
+                    /MaxStreamingBitrate=\d+/,
+                    `MaxStreamingBitrate=${bitrate * 1000}`,
+                );
+            }
         }
 
-        const res = await embyApiClient(apiClientProps).getTags({
-            query: {
-                Limit: 1000,
-                StartIndex: 0,
-            },
-        });
-
-        if (res.status !== 200) {
-            throw new Error('failed to get tags');
-        }
-
-        const tags = res.body.Items || [];
-
-        return {
-            boolTags: tags
-                .map((tag) => tag.Name)
-                .sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase())),
-            enumTags: undefined,
-        };
+        console.log('[EMBY] getStreamUrl:', url);
+        return url;
     },
+    // getTags removed as it is not part of ControllerEndpoint interface
+    // getTags: async (args) => { ... }
     getTopSongs: async (args) => {
         const { apiClientProps, query } = args;
         await EmbyController.getMusicFolderList({ apiClientProps });
@@ -917,7 +1019,10 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).getSongList({
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
             query: {
                 ArtistIds: query.artistId,
                 Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
@@ -938,27 +1043,55 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             items: res.body.Items.map((item) =>
-                embyNormalize.song(item, apiClientProps.server, ''),
+                embyNormalize.song(item, apiClientProps.server as any, ''),
             ),
             startIndex: 0,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
     },
-    getTranscodingUrl: (args) => {
-        const { base, bitrate, format } = args.query;
-        let url = base;
-        if (format) {
-            url += `&audioCodec=${format}`;
+    getUserInfo: async (args) => {
+        const { apiClientProps } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
         }
-        if (bitrate !== undefined) {
-            url += `&audioBitRate=${bitrate * 1000}`;
+
+        const res = await embyApiClient(apiClientProps as any).getUserInfo({
+            params: {
+                id: apiClientProps.server.userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get user info');
         }
-        return url;
+
+        return {
+            createdAt: null,
+            email: null,
+            id: res.body.Id,
+            isAdmin: res.body.Policy.IsAdministrator,
+            lastLoginAt: res.body.LastLoginDate || null,
+            name: res.body.Name,
+            updatedAt: null,
+        };
     },
+    // getTranscodingUrl removed
+    // getTranscodingUrl: (args) => {
+    //     const { base, bitrate, format } = args.query;
+    //     let url = base;
+    //     if (format) {
+    //         url += `&audioCodec=${format}`;
+    //     }
+    //     if (bitrate !== undefined) {
+    //         url += `&audioBitRate=${bitrate * 1000}`;
+    //     }
+    //     return url;
+    // },
     movePlaylistItem: async (args) => {
         const { apiClientProps, query } = args;
 
-        const res = await embyApiClient(apiClientProps).movePlaylistItem({
+        const res = await embyApiClient(apiClientProps as any).movePlaylistItem({
             body: null,
             params: {
                 itemId: query.trackId,
@@ -977,7 +1110,7 @@ export const EmbyController: ControllerEndpoint = {
         const chunks = chunk(query.songId, MAX_ITEMS_PER_PLAYLIST_ADD);
 
         for (const chunk of chunks) {
-            const res = await embyApiClient(apiClientProps).removeFromPlaylist({
+            const res = await embyApiClient(apiClientProps as any).removeFromPlaylist({
                 params: {
                     id: query.id,
                 },
@@ -996,12 +1129,12 @@ export const EmbyController: ControllerEndpoint = {
     removeTags: async (args) => {
         const { apiClientProps, body, query } = args;
 
-        if (!hasFeature(apiClientProps.server, ServerFeature.TAGS)) {
+        if (!hasFeature(apiClientProps.server as any, ServerFeature.TAGS)) {
             throw new Error('Tags feature not supported');
         }
 
         for (const id of query.id) {
-            const res = await embyApiClient(apiClientProps).removeTags({
+            const res = await embyApiClient(apiClientProps as any).removeTags({
                 body: {
                     Tags: body.tags,
                 },
@@ -1017,6 +1150,9 @@ export const EmbyController: ControllerEndpoint = {
 
         return null;
     },
+    replacePlaylist: async () => {
+        throw new Error('Not implemented');
+    },
     scrobble: async (args) => {
         const { apiClientProps, query } = args;
         const playSessionId = apiClientProps.server?.id + '-' + query.id;
@@ -1028,7 +1164,7 @@ export const EmbyController: ControllerEndpoint = {
 
         if (query.submission) {
             // Send stopped scrobble for proper Last.fm integration
-            await embyApiClient(apiClientProps).scrobbleStopped({
+            await embyApiClient(apiClientProps as any).scrobbleStopped({
                 body: {
                     ItemId: query.id,
                     PlaySessionId: playSessionId,
@@ -1037,7 +1173,7 @@ export const EmbyController: ControllerEndpoint = {
             });
 
             // Also mark as played in Emby
-            await embyApiClient(apiClientProps).scrobbleMarkPlayed({
+            await embyApiClient(apiClientProps as any).scrobbleMarkPlayed({
                 params: {
                     id: query.id,
                     userId: apiClientProps.server.userId,
@@ -1048,7 +1184,7 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         if (query.event === 'start') {
-            await embyApiClient(apiClientProps).scrobblePlaying({
+            await embyApiClient(apiClientProps as any).scrobblePlaying({
                 body: {
                     ItemId: query.id,
                     PlaySessionId: playSessionId,
@@ -1057,7 +1193,7 @@ export const EmbyController: ControllerEndpoint = {
             return null;
         }
 
-        await embyApiClient(apiClientProps).scrobbleProgress({
+        await embyApiClient(apiClientProps as any).scrobbleProgress({
             body: {
                 EventName: query.event,
                 IsPaused: query.event === 'pause',
@@ -1082,7 +1218,7 @@ export const EmbyController: ControllerEndpoint = {
         let songs: z.infer<typeof embyType._response.songList>['Items'] = [];
 
         if (query.albumLimit) {
-            const res = await embyApiClient(apiClientProps).getAlbumList({
+            const res = await embyApiClient(apiClientProps as any).getAlbumList({
                 query: {
                     EnableTotalRecordCount: true,
                     Fields: 'ChildCount,DateCreated,MediaSources',
@@ -1105,7 +1241,7 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         if (query.albumArtistLimit) {
-            const res = await embyApiClient(apiClientProps).getAlbumArtistList({
+            const res = await embyApiClient(apiClientProps as any).getAlbumArtistList({
                 query: {
                     EnableTotalRecordCount: true,
                     Fields: 'DateCreated,Genres',
@@ -1125,7 +1261,10 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         if (query.songLimit) {
-            const res = await embyApiClient(apiClientProps).getSongList({
+            const res = await embyApiClient({
+                ...apiClientProps,
+                server: apiClientProps.server as any,
+            }).getSongList({
                 query: {
                     EnableTotalRecordCount: true,
                     Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
@@ -1148,19 +1287,19 @@ export const EmbyController: ControllerEndpoint = {
 
         return {
             albumArtists: albumArtists.map((item) =>
-                embyNormalize.albumArtist(item, apiClientProps.server),
+                embyNormalize.albumArtist(item, apiClientProps.server!),
             ),
             albums: await Promise.all(
                 albums.map((item) =>
                     embyNormalize.album(
                         item,
-                        apiClientProps.server,
-                        embyApiClient(apiClientProps),
-                        apiClientProps,
+                        apiClientProps.server!,
+                        embyApiClient(apiClientProps as any),
+                        apiClientProps as any,
                     ),
                 ),
             ),
-            songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server, '')),
+            songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server!, '')),
         };
     },
     setRating: async (args) => {
@@ -1172,10 +1311,10 @@ export const EmbyController: ControllerEndpoint = {
 
         // Handle rating deletion (rating = 0)
         if (query.rating === 0) {
-            const res = await embyApiClient(apiClientProps).deleteRating({
+            const res = await embyApiClient(apiClientProps as any).deleteRating({
                 body: {},
                 params: {
-                    id: query.item[0].id,
+                    id: query.id[0],
                     userId: apiClientProps.server.userId,
                 },
             });
@@ -1185,12 +1324,12 @@ export const EmbyController: ControllerEndpoint = {
             }
         } else {
             // Handle rating setting (rating > 0)
-            const res = await embyApiClient(apiClientProps).setRating({
+            const res = await embyApiClient(apiClientProps as any).setRating({
                 body: {
                     rating: query.rating,
                 },
                 params: {
-                    id: query.item[0].id,
+                    id: query.id[0],
                     userId: apiClientProps.server.userId,
                 },
             });
@@ -1209,7 +1348,7 @@ export const EmbyController: ControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        const res = await embyApiClient(apiClientProps).updatePlaylist({
+        const res = await embyApiClient(apiClientProps as any).updatePlaylist({
             body: {
                 Id: query.id,
                 Name: body.name,

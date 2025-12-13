@@ -2,7 +2,8 @@ import { ReactNode } from 'react';
 
 import { SettingsOptions } from '/@/renderer/features/settings/components/settings-option';
 import { useSettingSearchContext } from '/@/renderer/features/settings/context/search-context';
-import { Divider } from '/@/shared/components/divider/divider';
+import { Stack } from '/@/shared/components/stack/stack';
+import { TextTitle } from '/@/shared/components/text-title/text-title';
 
 export type SettingOption = {
     control: ReactNode;
@@ -13,11 +14,12 @@ export type SettingOption = {
 };
 
 interface SettingsSectionProps {
-    divider?: boolean;
+    extra?: ReactNode;
     options: SettingOption[];
+    title?: ReactNode;
 }
 
-export const SettingsSection = ({ divider, options }: SettingsSectionProps) => {
+export const SettingsSection = ({ extra, options, title }: SettingsSectionProps) => {
     const keyword = useSettingSearchContext();
     const hasKeyword = keyword !== '';
 
@@ -27,10 +29,17 @@ export const SettingsSection = ({ divider, options }: SettingsSectionProps) => {
 
     return (
         <>
-            {values.map((option) => (
-                <SettingsOptions key={`option-${option.title}`} {...option} />
-            ))}
-            {divider !== false && values.length > 0 && <Divider />}
+            {title && (
+                <TextTitle fw={600} order={4}>
+                    {title}
+                </TextTitle>
+            )}
+            <Stack gap="xl" px="xl">
+                {values.map((option) => (
+                    <SettingsOptions key={`option-${option.title}`} {...option} />
+                ))}
+                {extra}
+            </Stack>
         </>
     );
 };

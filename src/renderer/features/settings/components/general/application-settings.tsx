@@ -1,22 +1,29 @@
 import type { IpcRendererEvent } from 'electron';
 
+import { t } from 'i18next';
 import isElectron from 'is-electron';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import i18n, { languages } from '/@/i18n/i18n';
+import { ArtistSettings } from '/@/renderer/features/settings/components/general/artist-settings';
+import { HomeSettings } from '/@/renderer/features/settings/components/general/home-settings';
 import {
     SettingOption,
     SettingsSection,
 } from '/@/renderer/features/settings/components/settings-section';
 import {
+    SideQueueType,
     useFontSettings,
     useGeneralSettings,
     useSettingsStoreActions,
 } from '/@/renderer/store/settings.store';
+import { type Font, FONT_OPTIONS } from '/@/renderer/types/fonts';
 import { FileInput } from '/@/shared/components/file-input/file-input';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
 import { Select } from '/@/shared/components/select/select';
+import { Slider } from '/@/shared/components/slider/slider';
+import { Switch } from '/@/shared/components/switch/switch';
 import { toast } from '/@/shared/components/toast/toast';
 import { FontType } from '/@/shared/types/types';
 
@@ -25,21 +32,21 @@ const ipc = isElectron() ? window.api.ipc : null;
 // Electron 32+ removed file.path, use this which is exposed in preload to get real path
 const webUtils = isElectron() ? window.electron.webUtils : null;
 
-type Font = {
-    label: string;
-    value: string;
-};
-
-const FONT_OPTIONS: Font[] = [
-    { label: 'Archivo', value: 'Archivo' },
-    { label: 'Fredoka', value: 'Fredoka' },
-    { label: 'Inter', value: 'Inter' },
-    { label: 'League Spartan', value: 'League Spartan' },
-    { label: 'Lexend', value: 'Lexend' },
-    { label: 'Poppins', value: 'Poppins' },
-    { label: 'Raleway', value: 'Raleway' },
-    { label: 'Sora', value: 'Sora' },
-    { label: 'Work Sans', value: 'Work Sans' },
+const SIDE_QUEUE_OPTIONS = [
+    {
+        label: t('setting.sidePlayQueueStyle', {
+            context: 'optionAttached',
+            postProcess: 'sentenceCase',
+        }),
+        value: 'sideQueue',
+    },
+    {
+        label: t('setting.sidePlayQueueStyle', {
+            context: 'optionDetached',
+            postProcess: 'sentenceCase',
+        }),
+        value: 'sideDrawerQueue',
+    },
 ];
 
 const FONT_TYPES: Font[] = [
@@ -300,7 +307,311 @@ export const ApplicationSettings = () => {
                 postProcess: 'sentenceCase',
             }),
         },
+        {
+            control: (
+                <Switch
+                    defaultChecked={settings.resume}
+                    onChange={(e) => {
+                        localSettings?.set('resume', e.target.checked);
+                        setSettings({
+                            general: {
+                                ...settings,
+                                resume: e.currentTarget.checked,
+                            },
+                        });
+                    }}
+                />
+            ),
+            description: t('setting.savePlayQueue', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: !isElectron(),
+            title: t('setting.savePlayQueue', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label={t('setting.homeFeature', { postProcess: 'sentenceCase' })}
+                    defaultChecked={settings.homeFeature}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                homeFeature: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.homeFeature', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.homeFeature', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label={t('setting.albumBackground', { postProcess: 'sentenceCase' })}
+                    defaultChecked={settings.albumBackground}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                albumBackground: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.albumBackground', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.albumBackground', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Slider
+                    defaultValue={settings.albumBackgroundBlur}
+                    label={(e) => `${e} rem`}
+                    max={6}
+                    min={0}
+                    onChangeEnd={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                albumBackgroundBlur: e,
+                            },
+                        });
+                    }}
+                    step={0.5}
+                    w={100}
+                />
+            ),
+            description: t('setting.albumBackgroundBlur', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: !settings.albumBackground,
+            title: t('setting.albumBackgroundBlur', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label={t('setting.artistBackground', { postProcess: 'sentenceCase' })}
+                    defaultChecked={settings.artistBackground}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                artistBackground: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.artistBackground', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.artistBackground', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Slider
+                    defaultValue={settings.artistBackgroundBlur}
+                    label={(e) => `${e} rem`}
+                    max={6}
+                    min={0}
+                    onChangeEnd={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                artistBackgroundBlur: e,
+                            },
+                        });
+                    }}
+                    step={0.5}
+                    w={100}
+                />
+            ),
+            description: t('setting.artistBackgroundBlur', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: !settings.artistBackground,
+            title: t('setting.artistBackgroundBlur', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label="Toggle using native aspect ratio"
+                    defaultChecked={settings.nativeAspectRatio}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                nativeAspectRatio: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.imageAspectRatio', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.imageAspectRatio', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Select
+                    data={SIDE_QUEUE_OPTIONS}
+                    defaultValue={settings.sideQueueType}
+                    onChange={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                sideQueueType: e as SideQueueType,
+                            },
+                        });
+                    }}
+                />
+            ),
+            description: t('setting.sidePlayQueueStyle', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.sidePlayQueueStyle', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    defaultChecked={settings.externalLinks}
+                    onChange={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                externalLinks: e.currentTarget.checked,
+                            },
+                        });
+                    }}
+                />
+            ),
+            description: t('setting.externalLinks', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            title: t('setting.externalLinks', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    defaultChecked={settings.lastFM}
+                    onChange={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                lastFM: e.currentTarget.checked,
+                            },
+                        });
+                    }}
+                />
+            ),
+            description: t('setting.lastfm', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: !settings.externalLinks,
+            title: t('setting.lastfm', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    defaultChecked={settings.musicBrainz}
+                    onChange={(e) => {
+                        setSettings({
+                            general: {
+                                ...settings,
+                                musicBrainz: e.currentTarget.checked,
+                            },
+                        });
+                    }}
+                />
+            ),
+            description: t('setting.musicbrainz', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: !settings.externalLinks,
+            title: t('setting.musicbrainz', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label={t('setting.playerbarOpenDrawer', { postProcess: 'sentenceCase' })}
+                    defaultChecked={settings.playerbarOpenDrawer}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                playerbarOpenDrawer: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.playerbarOpenDrawer', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.playerbarOpenDrawer', { postProcess: 'sentenceCase' }),
+        },
+        {
+            control: (
+                <NumberInput
+                    defaultValue={settings.albumArtRes || undefined}
+                    hideControls={false}
+                    max={2500}
+                    onBlur={(e) => {
+                        const newVal =
+                            e.currentTarget.value !== '0'
+                                ? Math.min(Math.max(Number(e.currentTarget.value), 175), 2500)
+                                : null;
+                        setSettings({ general: { ...settings, albumArtRes: newVal } });
+                    }}
+                    placeholder="0"
+                    value={settings.albumArtRes ?? 0}
+                    width={75}
+                />
+            ),
+            description: t('setting.playerAlbumArtResolution', {
+                context: 'description',
+                postProcess: 'sentenceCase',
+            }),
+            isHidden: false,
+            title: t('setting.playerAlbumArtResolution', { postProcess: 'sentenceCase' }),
+        },
     ];
 
-    return <SettingsSection options={options} />;
+    return (
+        <SettingsSection
+            extra={
+                <>
+                    <HomeSettings />
+                    <ArtistSettings />
+                </>
+            }
+            options={options}
+            title={t('page.setting.application', { postProcess: 'sentenceCase' })}
+        />
+    );
 };

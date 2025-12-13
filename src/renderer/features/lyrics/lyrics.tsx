@@ -1,18 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
 
 import styles from './lyrics.module.css';
 
 import { queryKeys } from '/@/renderer/api/query-keys';
-import { ErrorFallback } from '/@/renderer/features/action-required';
+import { translateLyrics } from '/@/renderer/features/lyrics/api/lyric-translate';
+import { lyricsQueries } from '/@/renderer/features/lyrics/api/lyrics-api';
 import { LyricsActions } from '/@/renderer/features/lyrics/lyrics-actions';
-import {
-    useSongLyricsByRemoteId,
-    useSongLyricsBySong,
-} from '/@/renderer/features/lyrics/queries/lyric-query';
-import { translateLyrics } from '/@/renderer/features/lyrics/queries/lyric-translate';
 import {
     SynchronizedLyrics,
     SynchronizedLyricsProps,
@@ -21,38 +17,91 @@ import {
     UnsynchronizedLyrics,
     UnsynchronizedLyricsProps,
 } from '/@/renderer/features/lyrics/unsynchronized-lyrics';
+import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
+import { ComponentErrorBoundary } from '/@/renderer/features/shared/components/component-error-boundary';
 import { queryClient } from '/@/renderer/lib/react-query';
-import { useCurrentSong, useLyricsSettings, usePlayerStore } from '/@/renderer/store';
+import { useLyricsSettings, usePlayerSong } from '/@/renderer/store';
 import { Center } from '/@/shared/components/center/center';
 import { Group } from '/@/shared/components/group/group';
-import { Icon } from '/@/shared/components/icon/icon';
 import { Spinner } from '/@/shared/components/spinner/spinner';
 import { Text } from '/@/shared/components/text/text';
-import { FullLyricsMetadata, LyricSource, LyricsOverride } from '/@/shared/types/domain-types';
+import {
+    FullLyricsMetadata,
+    LyricSource,
+    LyricsOverride,
+    StructuredLyric,
+} from '/@/shared/types/domain-types';
 
 export const Lyrics = () => {
-    const currentSong = useCurrentSong();
-    const { translationApiKey, translationApiProvider, translationTargetLanguage } =
-        useLyricsSettings();
+    const currentSong = usePlayerSong();
+    const {
+        enableAutoTranslation,
+        translationApiKey,
+        translationApiProvider,
+        translationTargetLanguage,
+    } = useLyricsSettings();
     const { t } = useTranslation();
     const [index, setIndex] = useState(0);
     const [translatedLyrics, setTranslatedLyrics] = useState<null | string>(null);
     const [showTranslation, setShowTranslation] = useState(false);
 
-    const { data, isInitialLoading } = useSongLyricsBySong(
-        {
-            query: { songId: currentSong?.id || '' },
-            serverId: currentSong?.serverId || '',
-        },
-        currentSong,
+    const { data, isInitialLoading } = useQuery(
+        lyricsQueries.songLyrics(
+            {
+                query: { songId: currentSong?.id || '' },
+                serverId: currentSong?._serverId || '',
+            },
+            currentSong,
+        ),
     );
 
     const [override, setOverride] = useState<LyricsOverride | undefined>(undefined);
 
-    const [lyrics, synced] = useMemo(() => {
+    const { data: overrideData, isInitialLoading: isOverrideLoading } = useQuery(
+        lyricsQueries.songLyricsByRemoteId({
+            options: {
+                enabled: !!override,
+            },
+            query: {
+                remoteSongId: override?.id,
+                remoteSource: override?.source as LyricSource | undefined,
+                song: currentSong,
+            },
+            serverId: currentSong?._serverId || '',
+        }),
+    );
+
+    // Get the current song's offset from persisted lyrics, default to 0
+    const currentOffsetMs = useMemo(() => {
         if (Array.isArray(data)) {
             if (data.length > 0) {
-                const selectedLyric = data[Math.min(index, data.length)];
+                const selectedLyric = data[Math.min(index, data.length - 1)];
+                return selectedLyric.offsetMs ?? 0;
+            }
+        } else if (data?.offsetMs !== undefined) {
+            return data.offsetMs;
+        }
+        return 0;
+    }, [data, index]);
+
+    const [lyrics, synced] = useMemo(() => {
+        // If override data is available, use it
+        if (override && overrideData) {
+            const overrideLyrics: FullLyricsMetadata = {
+                artist: override.artist,
+                lyrics: overrideData,
+                name: override.name,
+                offsetMs: currentOffsetMs,
+                remote: override.remote ?? true,
+                source: override.source,
+            };
+            return [overrideLyrics, Array.isArray(overrideData)];
+        }
+
+        // Otherwise, use the regular data
+        if (Array.isArray(data)) {
+            if (data.length > 0) {
+                const selectedLyric = data[Math.min(index, data.length - 1)];
                 return [selectedLyric, selectedLyric.synced];
             }
         } else if (data?.lyrics) {
@@ -60,24 +109,86 @@ export const Lyrics = () => {
         }
 
         return [undefined, false];
-    }, [data, index]);
+    }, [data, index, override, overrideData, currentOffsetMs]);
 
     const handleOnSearchOverride = useCallback((params: LyricsOverride) => {
         setOverride(params);
     }, []);
 
-    const handleOnResetLyric = useCallback(() => {
-        queryClient.invalidateQueries({
-            exact: true,
-            queryKey: queryKeys.songs.lyrics(currentSong?.serverId, { songId: currentSong?.id }),
-        });
-    }, [currentSong?.id, currentSong?.serverId]);
+    // Persist override lyrics to cache with current offset
+    useEffect(() => {
+        if (override && overrideData && currentSong) {
+            const persistedLyrics: FullLyricsMetadata = {
+                artist: override.artist,
+                lyrics: overrideData,
+                name: override.name,
+                offsetMs: currentOffsetMs,
+                remote: override.remote ?? true,
+                source: override.source,
+            };
+
+            queryClient.setQueryData(
+                queryKeys.songs.lyrics(currentSong._serverId, { songId: currentSong.id }),
+                persistedLyrics,
+            );
+        }
+    }, [override, overrideData, currentSong, currentOffsetMs]);
+
+    // Callback to update the song's persisted offset
+    const handleUpdateOffset = useCallback(
+        (offsetMs: number) => {
+            if (!currentSong) return;
+
+            queryClient.setQueryData(
+                queryKeys.songs.lyrics(currentSong._serverId, { songId: currentSong.id }),
+                (prev: FullLyricsMetadata | null | StructuredLyric[] | undefined) => {
+                    if (!prev) return prev;
+
+                    // Handle array of structured lyrics
+                    if (Array.isArray(prev)) {
+                        if (prev.length > 0) {
+                            const selectedIndex = Math.min(index, prev.length - 1);
+                            const updated = [...prev];
+                            updated[selectedIndex] = {
+                                ...updated[selectedIndex],
+                                offsetMs,
+                            };
+                            return updated;
+                        }
+                        return prev;
+                    }
+
+                    // Handle single lyrics object
+                    return {
+                        ...prev,
+                        offsetMs,
+                    };
+                },
+            );
+        },
+        [currentSong, index],
+    );
+
+    // const handleOnResetLyric = useCallback(() => {
+    //     setOverride(undefined);
+    //     queryClient.invalidateQueries({
+    //         exact: true,
+    //         queryKey: queryKeys.songs.lyrics(currentSong?._serverId, { songId: currentSong?.id }),
+    //     });
+    // }, [currentSong?.id, currentSong?._serverId]);
 
     const handleOnRemoveLyric = useCallback(() => {
+        setOverride(undefined);
+
+        // Clear the main lyrics query cache
         queryClient.setQueryData(
-            queryKeys.songs.lyrics(currentSong?.serverId, { songId: currentSong?.id }),
-            (prev: FullLyricsMetadata | undefined) => {
+            queryKeys.songs.lyrics(currentSong?._serverId, { songId: currentSong?.id }),
+            (prev: FullLyricsMetadata | StructuredLyric[] | undefined) => {
                 if (!prev) {
+                    return undefined;
+                }
+
+                if (Array.isArray(prev)) {
                     return undefined;
                 }
 
@@ -87,13 +198,19 @@ export const Lyrics = () => {
                 };
             },
         );
-    }, [currentSong?.id, currentSong?.serverId]);
 
-    const handleOnTranslateLyric = useCallback(async () => {
-        if (translatedLyrics) {
-            setShowTranslation(!showTranslation);
-            return;
+        // Clear the override query cache if it exists
+        if (override) {
+            queryClient.removeQueries({
+                queryKey: queryKeys.songs.lyricsByRemoteId({
+                    remoteSongId: override.id,
+                    remoteSource: override.source,
+                }),
+            });
         }
+    }, [currentSong?.id, currentSong?._serverId, override]);
+
+    const fetchTranslation = useCallback(async () => {
         if (!lyrics) return;
         const originalLyrics = Array.isArray(lyrics.lyrics)
             ? lyrics.lyrics.map(([, line]) => line).join('\n')
@@ -106,41 +223,33 @@ export const Lyrics = () => {
         );
         setTranslatedLyrics(TranslatedText);
         setShowTranslation(true);
-    }, [
-        translatedLyrics,
-        lyrics,
-        translationApiKey,
-        translationApiProvider,
-        translationTargetLanguage,
-        showTranslation,
-    ]);
+    }, [lyrics, translationApiKey, translationApiProvider, translationTargetLanguage]);
 
-    const { isInitialLoading: isOverrideLoading } = useSongLyricsByRemoteId({
-        options: {
-            enabled: !!override,
-        },
-        query: {
-            remoteSongId: override?.id,
-            remoteSource: override?.source as LyricSource | undefined,
-            song: currentSong,
-        },
-        serverId: currentSong?.serverId,
-    });
+    const handleOnTranslateLyric = useCallback(async () => {
+        if (translatedLyrics) {
+            setShowTranslation(!showTranslation);
+            return;
+        }
+        await fetchTranslation();
+    }, [translatedLyrics, showTranslation, fetchTranslation]);
 
-    useEffect(() => {
-        const unsubSongChange = usePlayerStore.subscribe(
-            (state) => state.current.song,
-            () => {
+    usePlayerEvents(
+        {
+            onCurrentSongChange: () => {
                 setOverride(undefined);
                 setIndex(0);
+                setShowTranslation(false);
+                setTranslatedLyrics(null);
             },
-            { equalityFn: (a, b) => a?.id === b?.id },
-        );
+        },
+        [],
+    );
 
-        return () => {
-            unsubSongChange();
-        };
-    }, []);
+    useEffect(() => {
+        if (lyrics && !translatedLyrics && enableAutoTranslation) {
+            fetchTranslation();
+        }
+    }, [lyrics, translatedLyrics, enableAutoTranslation, fetchTranslation]);
 
     const languages = useMemo(() => {
         if (Array.isArray(data)) {
@@ -152,9 +261,28 @@ export const Lyrics = () => {
     const isLoadingLyrics = isInitialLoading || isOverrideLoading;
 
     const hasNoLyrics = !lyrics;
+    const [shouldFadeOut, setShouldFadeOut] = useState(false);
+
+    // Trigger fade out after a few seconds when no lyrics are found
+    useEffect(() => {
+        if (!isLoadingLyrics && hasNoLyrics) {
+            // Start fade out after 3 seconds (message visible for 3s, then 0.5s fade)
+            const timer = setTimeout(() => {
+                setShouldFadeOut(true);
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+
+        if (!hasNoLyrics) {
+            setShouldFadeOut(false);
+        }
+
+        return undefined;
+    }, [isLoadingLyrics, hasNoLyrics]);
 
     return (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ComponentErrorBoundary>
             <div className={styles.lyricsContainer}>
                 {isLoadingLyrics ? (
                     <Spinner container size={25} />
@@ -162,14 +290,19 @@ export const Lyrics = () => {
                     <AnimatePresence mode="sync">
                         {hasNoLyrics ? (
                             <Center w="100%">
-                                <Group>
-                                    <Icon icon="info" />
-                                    <Text>
-                                        {t('page.fullscreenPlayer.noLyrics', {
-                                            postProcess: 'sentenceCase',
-                                        })}
-                                    </Text>
-                                </Group>
+                                <motion.div
+                                    animate={{ opacity: shouldFadeOut ? 0 : 1 }}
+                                    initial={{ opacity: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                >
+                                    <Group>
+                                        <Text fw={500}>
+                                            {t('page.fullscreenPlayer.noLyrics', {
+                                                postProcess: 'sentenceCase',
+                                            })}
+                                        </Text>
+                                    </Group>
+                                </motion.div>
                             </Center>
                         ) : (
                             <motion.div
@@ -181,6 +314,7 @@ export const Lyrics = () => {
                                 {synced ? (
                                     <SynchronizedLyrics
                                         {...(lyrics as SynchronizedLyricsProps)}
+                                        offsetMs={currentOffsetMs}
                                         translatedLyrics={showTranslation ? translatedLyrics : null}
                                     />
                                 ) : (
@@ -197,18 +331,19 @@ export const Lyrics = () => {
                     <LyricsActions
                         index={index}
                         languages={languages}
+                        offsetMs={currentOffsetMs}
                         onRemoveLyric={handleOnRemoveLyric}
-                        onResetLyric={handleOnResetLyric}
                         onSearchOverride={handleOnSearchOverride}
                         onTranslateLyric={
                             translationApiProvider && translationApiKey
                                 ? handleOnTranslateLyric
                                 : undefined
                         }
+                        onUpdateOffset={handleUpdateOffset}
                         setIndex={setIndex}
                     />
                 </div>
             </div>
-        </ErrorBoundary>
+        </ComponentErrorBoundary>
     );
 };

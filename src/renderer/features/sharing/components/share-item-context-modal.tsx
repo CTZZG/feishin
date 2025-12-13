@@ -1,17 +1,17 @@
-import { useForm } from '@mantine/form';
 import { closeModal, ContextModalProps } from '@mantine/modals';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 import { useShareItem } from '/@/renderer/features/sharing/mutations/share-item-mutation';
 import { useCurrentServer } from '/@/renderer/store';
-import { Button } from '/@/shared/components/button/button';
 import { DateTimePicker } from '/@/shared/components/date-time-picker/date-time-picker';
 import { Group } from '/@/shared/components/group/group';
+import { ModalButton } from '/@/shared/components/modal/model-shared';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { Textarea } from '/@/shared/components/textarea/textarea';
 import { toast } from '/@/shared/components/toast/toast';
+import { useForm } from '/@/shared/hooks/use-form';
 
 export const ShareItemContextModal = ({
     id,
@@ -48,6 +48,7 @@ export const ShareItemContextModal = ({
     const handleSubmit = form.onSubmit(async (values) => {
         shareItemMutation.mutate(
             {
+                apiClientProps: { serverId: server?.id || '' },
                 body: {
                     description: values.description,
                     downloadable: values.allowDownloading,
@@ -55,7 +56,6 @@ export const ShareItemContextModal = ({
                     resourceIds: itemIds.join(),
                     resourceType,
                 },
-                serverId: server?.id,
             },
             {
                 onError: () => {
@@ -127,14 +127,10 @@ export const ShareItemContextModal = ({
                 />
 
                 <Group justify="flex-end">
-                    <Group>
-                        <Button onClick={() => closeModal(id)} size="md" variant="subtle">
-                            {t('common.cancel', { postProcess: 'titleCase' })}
-                        </Button>
-                        <Button size="md" type="submit" variant="filled">
-                            {t('common.share', { postProcess: 'titleCase' })}
-                        </Button>
-                    </Group>
+                    <ModalButton onClick={() => closeModal(id)}>{t('common.cancel')}</ModalButton>
+                    <ModalButton type="submit" variant="filled">
+                        {t('common.share')}
+                    </ModalButton>
                 </Group>
             </Stack>
         </form>

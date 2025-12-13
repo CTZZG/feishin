@@ -1,51 +1,42 @@
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
+import { useMemo, useState } from 'react';
 
-import { useMemo, useRef } from 'react';
-
-import { VirtualInfiniteGridRef } from '/@/renderer/components/virtual-grid';
 import { ListContext } from '/@/renderer/context/list-context';
 import { ArtistListContent } from '/@/renderer/features/artists/components/artist-list-content';
 import { ArtistListHeader } from '/@/renderer/features/artists/components/artist-list-header';
-import { useArtistListCount } from '/@/renderer/features/artists/queries/artist-list-count-query';
-import { AnimatedPage } from '/@/renderer/features/shared';
-import { useCurrentServer } from '/@/renderer/store/auth.store';
-import { useListFilterByKey } from '/@/renderer/store/list.store';
-import { ArtistListQuery, LibraryItem } from '/@/shared/types/domain-types';
+import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
+import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
+import { ItemListKey } from '/@/shared/types/types';
 
 const ArtistListRoute = () => {
-    const gridRef = useRef<null | VirtualInfiniteGridRef>(null);
-    const tableRef = useRef<AgGridReactType | null>(null);
-    const pageKey = LibraryItem.ARTIST;
-    const server = useCurrentServer();
+    const pageKey = ItemListKey.ARTIST;
 
-    const artistListFilter = useListFilterByKey<ArtistListQuery>({ key: pageKey });
-
-    const itemCountCheck = useArtistListCount({
-        options: {
-            cacheTime: 1000 * 60,
-            staleTime: 1000 * 60,
-        },
-        query: artistListFilter,
-        serverId: server?.id,
-    });
-
-    const itemCount = itemCountCheck.data === null ? undefined : itemCountCheck.data;
+    const [itemCount, setItemCount] = useState<number | undefined>(undefined);
 
     const providerValue = useMemo(() => {
         return {
             id: undefined,
+            itemCount,
             pageKey,
+            setItemCount,
         };
-    }, [pageKey]);
+    }, [itemCount, pageKey, setItemCount]);
 
     return (
         <AnimatedPage>
             <ListContext.Provider value={providerValue}>
-                <ArtistListHeader gridRef={gridRef} itemCount={itemCount} tableRef={tableRef} />
-                <ArtistListContent gridRef={gridRef} itemCount={itemCount} tableRef={tableRef} />
+                <ArtistListHeader />
+                <ArtistListContent />
             </ListContext.Provider>
         </AnimatedPage>
     );
 };
 
-export default ArtistListRoute;
+const ArtistListRouteWithBoundary = () => {
+    return (
+        <PageErrorBoundary>
+            <ArtistListRoute />
+        </PageErrorBoundary>
+    );
+};
+
+export default ArtistListRouteWithBoundary;

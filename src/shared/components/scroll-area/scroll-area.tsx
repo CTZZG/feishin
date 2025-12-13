@@ -1,5 +1,4 @@
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
-import { useMergedRef } from '@mantine/hooks';
 import clsx from 'clsx';
 import { useOverlayScrollbars } from 'overlayscrollbars-react';
 import { forwardRef, Ref, useEffect, useRef, useState } from 'react';
@@ -7,16 +6,27 @@ import { forwardRef, Ref, useEffect, useRef, useState } from 'react';
 import styles from './scroll-area.module.css';
 import './scroll-area.css';
 
+import { useMergedRef } from '/@/shared/hooks/use-merged-ref';
 import { DragData, DragTarget } from '/@/shared/types/drag-and-drop';
 
 interface ScrollAreaProps extends React.ComponentPropsWithoutRef<'div'> {
     allowDragScroll?: boolean;
     debugScrollPosition?: boolean;
     scrollHideDelay?: number;
+    scrollX?: boolean;
+    scrollY?: boolean;
 }
 
 export const ScrollArea = forwardRef((props: ScrollAreaProps, ref: Ref<HTMLDivElement>) => {
-    const { allowDragScroll, children, className, scrollHideDelay, ...htmlProps } = props;
+    const {
+        allowDragScroll,
+        children,
+        className,
+        scrollHideDelay,
+        scrollX = false,
+        scrollY = true,
+        ...htmlProps
+    } = props;
 
     const containerRef = useRef(null);
     const [scroller, setScroller] = useState<HTMLElement | null | Window>(null);
@@ -24,7 +34,7 @@ export const ScrollArea = forwardRef((props: ScrollAreaProps, ref: Ref<HTMLDivEl
     const [initialize, osInstance] = useOverlayScrollbars({
         defer: false,
         options: {
-            overflow: { x: 'hidden', y: 'scroll' },
+            overflow: { x: scrollX ? 'scroll' : 'hidden', y: scrollY ? 'scroll' : 'hidden' },
             scrollbars: {
                 autoHide: 'leave',
                 autoHideDelay: scrollHideDelay || 500,

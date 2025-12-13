@@ -1,30 +1,48 @@
-import isElectron from 'is-electron';
+import { useMemo } from 'react';
+import { Fragment } from 'react/jsx-runtime';
 
 import { ApplicationSettings } from '/@/renderer/features/settings/components/general/application-settings';
-import { ArtistSettings } from '/@/renderer/features/settings/components/general/artist-settings';
-import { ContextMenuSettings } from '/@/renderer/features/settings/components/general/context-menu-settings';
 import { ControlSettings } from '/@/renderer/features/settings/components/general/control-settings';
-import { HomeSettings } from '/@/renderer/features/settings/components/general/home-settings';
-import { RemoteSettings } from '/@/renderer/features/settings/components/general/remote-settings';
-import { SidebarReorder } from '/@/renderer/features/settings/components/general/sidebar-reorder';
+import { LyricSettings } from '/@/renderer/features/settings/components/general/lyric-settings';
+import { QueryBuilderSettings } from '/@/renderer/features/settings/components/general/query-builder-settings';
+import { ScrobbleSettings } from '/@/renderer/features/settings/components/general/scrobble-settings';
 import { SidebarSettings } from '/@/renderer/features/settings/components/general/sidebar-settings';
 import { ThemeSettings } from '/@/renderer/features/settings/components/general/theme-settings';
-import { CacheSettings } from '/@/renderer/features/settings/components/window/cache-settngs';
+import { useCurrentServer } from '/@/renderer/store';
+import { hasFeature } from '/@/shared/api/utils';
+import { Divider } from '/@/shared/components/divider/divider';
 import { Stack } from '/@/shared/components/stack/stack';
+import { ServerFeature } from '/@/shared/types/features-types';
 
 export const GeneralTab = () => {
+    const server = useCurrentServer();
+    const supportsSmartPlaylists = hasFeature(server, ServerFeature.PLAYLISTS_SMART);
+
+    const sections = useMemo(() => {
+        const baseSections = [
+            { component: ApplicationSettings, key: 'application' },
+            { component: ThemeSettings, key: 'theme' },
+            { component: ControlSettings, key: 'control' },
+            { component: SidebarSettings, key: 'sidebar' },
+            { component: ScrobbleSettings, key: 'scrobble' },
+            { component: LyricSettings, key: 'lyrics' },
+        ];
+
+        if (supportsSmartPlaylists) {
+            baseSections.push({ component: QueryBuilderSettings, key: 'queryBuilder' });
+        }
+
+        return baseSections;
+    }, [supportsSmartPlaylists]);
+
     return (
         <Stack gap="md">
-            <ApplicationSettings />
-            <ThemeSettings />
-            <ControlSettings />
-            <HomeSettings />
-            <ArtistSettings />
-            <SidebarReorder />
-            <SidebarSettings />
-            <ContextMenuSettings />
-            {isElectron() && <RemoteSettings />}
-            <CacheSettings />
+            {sections.map(({ component: Section, key }, index) => (
+                <Fragment key={key}>
+                    <Section />
+                    {index < sections.length - 1 && <Divider />}
+                </Fragment>
+            ))}
         </Stack>
     );
 };

@@ -3,33 +3,44 @@ import { AxiosError } from 'axios';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
+import {
+    applyDeletePlaylistOptimisticUpdates,
+    PreviousQueryData,
+    restorePlaylistQueryData,
+} from '/@/renderer/features/playlists/mutations/playlist-optimistic-updates';
 import { MutationHookArgs } from '/@/renderer/lib/react-query';
-import { getServerById, useCurrentServer } from '/@/renderer/store';
 import { DeletePlaylistArgs, DeletePlaylistResponse } from '/@/shared/types/domain-types';
 
 export const useDeletePlaylist = (args: MutationHookArgs) => {
     const { options } = args || {};
     const queryClient = useQueryClient();
-    const server = useCurrentServer();
 
-    return useMutation<
-        DeletePlaylistResponse,
-        AxiosError,
-        Omit<DeletePlaylistArgs, 'apiClientProps' | 'server'>,
-        null
-    >({
-        mutationFn: (args) => {
-            const server = getServerById(args.serverId);
-            if (!server) throw new Error('Server not found');
-            return api.controller.deletePlaylist({ ...args, apiClientProps: { server } });
+    return useMutation<DeletePlaylistResponse, AxiosError, DeletePlaylistArgs, PreviousQueryData[]>(
+        {
+            mutationFn: (args) => {
+                return api.controller.deletePlaylist({
+                    ...args,
+                    apiClientProps: { serverId: args.apiClientProps.serverId },
+                });
+            },
+            onError: (_error, _variables, context) => {
+                if (context) {
+                    restorePlaylistQueryData(queryClient, context);
+                }
+            },
+            onMutate: (variables) => {
+                queryClient.cancelQueries({
+                    queryKey: queryKeys.playlists.list(variables.apiClientProps.serverId),
+                });
+                return applyDeletePlaylistOptimisticUpdates(queryClient, variables);
+            },
+            onSuccess: (_data, variables) => {
+                queryClient.invalidateQueries({
+                    exact: false,
+                    queryKey: queryKeys.playlists.list(variables.apiClientProps.serverId),
+                });
+            },
+            ...options,
         },
-        onMutate: () => {
-            queryClient.cancelQueries(queryKeys.playlists.list(server?.id || ''));
-            return null;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(queryKeys.playlists.list(server?.id || ''));
-        },
-        ...options,
-    });
+    );
 };

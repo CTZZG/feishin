@@ -3,38 +3,45 @@ import { AxiosError } from 'axios';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
+import { useRecentPlaylists } from '/@/renderer/features/playlists/hooks/use-recent-playlists';
 import { MutationHookArgs } from '/@/renderer/lib/react-query';
-import { getServerById } from '/@/renderer/store';
+import { useCurrentServerId } from '/@/renderer/store';
 import { AddToPlaylistArgs, AddToPlaylistResponse } from '/@/shared/types/domain-types';
 
 export const useAddToPlaylist = (args: MutationHookArgs) => {
     const { options } = args || {};
     const queryClient = useQueryClient();
+    const serverId = useCurrentServerId();
 
-    return useMutation<
-        AddToPlaylistResponse,
-        AxiosError,
-        Omit<AddToPlaylistArgs, 'apiClientProps' | 'server'>,
-        null
-    >({
+    const { addRecentPlaylist } = useRecentPlaylists(serverId);
+
+    return useMutation<AddToPlaylistResponse, AxiosError, AddToPlaylistArgs, null>({
         mutationFn: (args) => {
-            const server = getServerById(args.serverId);
-            if (!server) throw new Error('Server not found');
-            return api.controller.addToPlaylist({ ...args, apiClientProps: { server } });
+            return api.controller.addToPlaylist({
+                ...args,
+                apiClientProps: { serverId: args.apiClientProps.serverId },
+            });
         },
-        onSuccess: (_data, variables) => {
-            const { serverId } = variables;
+        onSuccess: (_data, variables, context) => {
+            const { apiClientProps } = variables;
+            const serverId = apiClientProps.serverId;
 
             if (!serverId) return;
 
-            queryClient.invalidateQueries(queryKeys.playlists.list(serverId), { exact: false });
-            queryClient.invalidateQueries(queryKeys.playlists.detail(serverId, variables.query.id));
-            queryClient.invalidateQueries(
-                queryKeys.playlists.detailSongList(serverId, variables.query.id),
-            );
-            queryClient.invalidateQueries(
-                queryKeys.playlists.songList(serverId, variables.query.id),
-            );
+            queryClient.invalidateQueries({
+                exact: false,
+                queryKey: queryKeys.playlists.list(serverId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.playlists.detail(serverId, variables.query.id),
+            });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.playlists.songList(serverId, variables.query.id),
+            });
+
+            addRecentPlaylist(variables.query.id);
+
+            options?.onSuccess?.(_data, variables, context);
         },
         ...options,
     });

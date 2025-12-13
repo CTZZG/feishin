@@ -2,19 +2,19 @@ import { useRef } from 'react';
 
 import styles from './left-sidebar.module.css';
 
-import { ResizeHandle } from '/@/renderer/features/shared';
+import { ResizeHandle } from '/@/renderer/features/shared/components/resize-handle';
 import { CollapsedSidebar } from '/@/renderer/features/sidebar/components/collapsed-sidebar';
 import { Sidebar } from '/@/renderer/features/sidebar/components/sidebar';
-import { useSidebarStore } from '/@/renderer/store';
+import { useAppStore } from '/@/renderer/store';
 
 interface LeftSidebarProps {
     isResizing: boolean;
-    startResizing: (direction: 'left' | 'right') => void;
+    startResizing: (direction: 'left' | 'right', mouseEvent?: MouseEvent) => void;
 }
 
 export const LeftSidebar = ({ isResizing, startResizing }: LeftSidebarProps) => {
     const sidebarRef = useRef<HTMLDivElement | null>(null);
-    const { collapsed } = useSidebarStore();
+    const collapsed = useAppStore((state) => state.sidebar.collapsed);
 
     return (
         <aside className={styles.container} id="sidebar">

@@ -7,6 +7,10 @@ import styles from './hotkeys-manager-settings.module.css';
 
 import i18n from '/@/i18n/i18n';
 import { SettingsOptions } from '/@/renderer/features/settings/components/settings-option';
+import {
+    SettingOption,
+    SettingsSection,
+} from '/@/renderer/features/settings/components/settings-section';
 import { useSettingSearchContext } from '/@/renderer/features/settings/context/search-context';
 import { BindingActions, useHotkeySettings, useSettingsStoreActions } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
@@ -150,12 +154,12 @@ export const HotkeyManagerSettings = () => {
         20,
     );
 
-    const handleSetHotkey = useCallback(debouncedSetHotkey, [
-        bindings,
-        globalMediaHotkeys,
-        setSettings,
-        debouncedSetHotkey,
-    ]);
+    const handleSetHotkey = useCallback(
+        (binding: BindingActions, e: KeyboardEvent<HTMLInputElement>) => {
+            debouncedSetHotkey(binding, e);
+        },
+        [debouncedSetHotkey],
+    );
 
     const handleSetGlobalHotkey = useCallback(
         (binding: BindingActions, e: ChangeEvent<HTMLInputElement>) => {
@@ -232,85 +236,97 @@ export const HotkeyManagerSettings = () => {
         });
     }, [bindings, keyword]);
 
+    const options: SettingOption[] = [];
+
     return (
-        <>
-            <SettingsOptions
-                control={<></>}
-                description={t('setting.applicationHotkeys', {
-                    context: 'description',
-                    postProcess: 'sentenceCase',
-                })}
-                title={t('setting.applicationHotkeys', { postProcess: 'sentenceCase' })}
-            />
-            <div className={styles.container}>
-                {filteredBindings.map((binding) => (
-                    <Group key={`hotkey-${binding}`} wrap="nowrap">
-                        <TextInput
-                            readOnly
-                            style={{ userSelect: 'none' }}
-                            value={BINDINGS_MAP[binding as keyof typeof BINDINGS_MAP]}
-                        />
-                        <TextInput
-                            id={`hotkey-${binding}`}
-                            leftSection={<Icon icon="keyboard" />}
-                            onBlur={() => setSelected(null)}
-                            onChange={() => {}}
-                            onKeyDownCapture={(e) => {
-                                if (selected !== (binding as BindingActions)) return;
-                                handleSetHotkey(binding as BindingActions, e);
-                            }}
-                            readOnly
-                            rightSection={
-                                <ActionIcon
-                                    icon="edit"
-                                    onClick={() => {
-                                        setSelected(binding as BindingActions);
-                                        document.getElementById(`hotkey-${binding}`)?.focus();
-                                    }}
-                                    variant="transparent"
+        <SettingsSection
+            extra={
+                <>
+                    <SettingsOptions
+                        control={<></>}
+                        description={t('setting.applicationHotkeys', {
+                            context: 'description',
+                            postProcess: 'sentenceCase',
+                        })}
+                        title={t('setting.applicationHotkeys', { postProcess: 'sentenceCase' })}
+                    />
+                    <div className={styles.container}>
+                        {filteredBindings.map((binding) => (
+                            <Group key={`hotkey-${binding}`} wrap="nowrap">
+                                <TextInput
+                                    readOnly
+                                    style={{ userSelect: 'none' }}
+                                    value={BINDINGS_MAP[binding as keyof typeof BINDINGS_MAP]}
                                 />
-                            }
-                            style={{
-                                opacity: selected === (binding as BindingActions) ? 0.8 : 1,
-                                outline: duplicateHotkeyMap.includes(
-                                    bindings[binding as keyof typeof BINDINGS_MAP].hotkey!,
-                                )
-                                    ? '1px dashed red'
-                                    : undefined,
-                            }}
-                            value={bindings[binding as keyof typeof BINDINGS_MAP].hotkey}
-                        />
-                        {isElectron() && (
-                            <Checkbox
-                                checked={bindings[binding as keyof typeof BINDINGS_MAP].isGlobal}
-                                disabled={
-                                    bindings[binding as keyof typeof BINDINGS_MAP].hotkey === ''
-                                }
-                                onChange={(e) =>
-                                    handleSetGlobalHotkey(binding as BindingActions, e)
-                                }
-                                size="md"
-                                style={{
-                                    opacity: bindings[binding as keyof typeof BINDINGS_MAP]
-                                        .allowGlobal
-                                        ? 1
-                                        : 0,
-                                }}
-                            />
-                        )}
-                        {bindings[binding as keyof typeof BINDINGS_MAP].hotkey && (
-                            <ActionIcon
-                                icon="x"
-                                iconProps={{
-                                    color: 'error',
-                                }}
-                                onClick={() => handleClearHotkey(binding as BindingActions)}
-                                variant="transparent"
-                            />
-                        )}
-                    </Group>
-                ))}
-            </div>
-        </>
+                                <TextInput
+                                    id={`hotkey-${binding}`}
+                                    leftSection={<Icon icon="keyboard" />}
+                                    onBlur={() => setSelected(null)}
+                                    onChange={() => {}}
+                                    onKeyDownCapture={(e) => {
+                                        if (selected !== (binding as BindingActions)) return;
+                                        handleSetHotkey(binding as BindingActions, e);
+                                    }}
+                                    readOnly
+                                    rightSection={
+                                        <ActionIcon
+                                            icon="edit"
+                                            onClick={() => {
+                                                setSelected(binding as BindingActions);
+                                                document
+                                                    .getElementById(`hotkey-${binding}`)
+                                                    ?.focus();
+                                            }}
+                                            variant="transparent"
+                                        />
+                                    }
+                                    style={{
+                                        opacity: selected === (binding as BindingActions) ? 0.8 : 1,
+                                        outline: duplicateHotkeyMap.includes(
+                                            bindings[binding as keyof typeof BINDINGS_MAP].hotkey!,
+                                        )
+                                            ? '1px dashed red'
+                                            : undefined,
+                                    }}
+                                    value={bindings[binding as keyof typeof BINDINGS_MAP].hotkey}
+                                />
+                                {isElectron() && (
+                                    <Checkbox
+                                        checked={
+                                            bindings[binding as keyof typeof BINDINGS_MAP].isGlobal
+                                        }
+                                        disabled={
+                                            bindings[binding as keyof typeof BINDINGS_MAP]
+                                                .hotkey === ''
+                                        }
+                                        onChange={(e) =>
+                                            handleSetGlobalHotkey(binding as BindingActions, e)
+                                        }
+                                        size="md"
+                                        style={{
+                                            opacity: bindings[binding as keyof typeof BINDINGS_MAP]
+                                                .allowGlobal
+                                                ? 1
+                                                : 0,
+                                        }}
+                                    />
+                                )}
+                                {bindings[binding as keyof typeof BINDINGS_MAP].hotkey && (
+                                    <ActionIcon
+                                        icon="x"
+                                        iconProps={{
+                                            color: 'error',
+                                        }}
+                                        onClick={() => handleClearHotkey(binding as BindingActions)}
+                                        variant="transparent"
+                                    />
+                                )}
+                            </Group>
+                        ))}
+                    </div>
+                </>
+            }
+            options={options}
+        />
     );
 };

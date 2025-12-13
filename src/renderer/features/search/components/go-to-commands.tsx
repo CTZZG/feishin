@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { Command, CommandPalettePages } from '/@/renderer/features/search/components/command';
+import { openSettingsModal } from '/@/renderer/features/settings/utils/open-settings-modal';
 import { AppRoute } from '/@/renderer/router/routes';
 
 interface GoToCommandsProps {
@@ -34,7 +35,11 @@ export const GoToCommands = ({ handleClose, setPages, setQuery }: GoToCommandsPr
                 <Command.Item onSelect={() => goTo('/search/song')}>
                     {t('page.sidebar.search', { postProcess: 'titleCase' })}
                 </Command.Item>
-                <Command.Item onSelect={() => goTo(AppRoute.SETTINGS)}>
+                <Command.Item
+                    onSelect={() => {
+                        openSettingsModal();
+                    }}
+                >
                     {t('page.sidebar.settings', { postProcess: 'titleCase' })}
                 </Command.Item>
             </Command.Group>

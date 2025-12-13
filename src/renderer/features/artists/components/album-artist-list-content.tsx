@@ -1,51 +1,156 @@
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
+import { lazy, Suspense, useMemo } from 'react';
 
-import { lazy, MutableRefObject, Suspense } from 'react';
-
-import { VirtualInfiniteGridRef } from '/@/renderer/components/virtual-grid';
-import { useListContext } from '/@/renderer/context/list-context';
-import { useListStoreByKey } from '/@/renderer/store';
+import { useAlbumArtistListFilters } from '/@/renderer/features/artists/hooks/use-album-artist-list-filters';
+import { ItemListSettings, useCurrentServer, useListSettings } from '/@/renderer/store';
 import { Spinner } from '/@/shared/components/spinner/spinner';
-import { ListDisplayType } from '/@/shared/types/types';
+import { AlbumArtistListQuery } from '/@/shared/types/domain-types';
+import { ItemListKey, ListDisplayType, ListPaginationType } from '/@/shared/types/types';
 
-const AlbumArtistListGridView = lazy(() =>
-    import('/@/renderer/features/artists/components/album-artist-list-grid-view').then(
+const AlbumArtistListInfiniteGrid = lazy(() =>
+    import('/@/renderer/features/artists/components/album-artist-list-infinite-grid').then(
         (module) => ({
-            default: module.AlbumArtistListGridView,
+            default: module.AlbumArtistListInfiniteGrid,
         }),
     ),
 );
 
-const AlbumArtistListTableView = lazy(() =>
-    import('/@/renderer/features/artists/components/album-artist-list-table-view').then(
+const AlbumArtistListPaginatedGrid = lazy(() =>
+    import('/@/renderer/features/artists/components/album-artist-list-paginated-grid').then(
         (module) => ({
-            default: module.AlbumArtistListTableView,
+            default: module.AlbumArtistListPaginatedGrid,
         }),
     ),
 );
 
-interface AlbumArtistListContentProps {
-    gridRef: MutableRefObject<null | VirtualInfiniteGridRef>;
-    itemCount?: number;
-    tableRef: MutableRefObject<AgGridReactType | null>;
-}
+const AlbumArtistListInfiniteTable = lazy(() =>
+    import('/@/renderer/features/artists/components/album-artist-list-infinite-table').then(
+        (module) => ({
+            default: module.AlbumArtistListInfiniteTable,
+        }),
+    ),
+);
 
-export const AlbumArtistListContent = ({
-    gridRef,
-    itemCount,
-    tableRef,
-}: AlbumArtistListContentProps) => {
-    const { pageKey } = useListContext();
-    const { display } = useListStoreByKey({ key: pageKey });
-    const isGrid = display === ListDisplayType.CARD || display === ListDisplayType.GRID;
+const AlbumArtistListPaginatedTable = lazy(() =>
+    import('/@/renderer/features/artists/components/album-artist-list-paginated-table').then(
+        (module) => ({
+            default: module.AlbumArtistListPaginatedTable,
+        }),
+    ),
+);
+
+export const AlbumArtistListContent = () => {
+    const { display, grid, itemsPerPage, pagination, table } = useListSettings(
+        ItemListKey.ALBUM_ARTIST,
+    );
 
     return (
         <Suspense fallback={<Spinner container />}>
-            {isGrid ? (
-                <AlbumArtistListGridView gridRef={gridRef} itemCount={itemCount} />
-            ) : (
-                <AlbumArtistListTableView itemCount={itemCount} tableRef={tableRef} />
-            )}
+            <AlbumArtistListView
+                display={display}
+                grid={grid}
+                itemsPerPage={itemsPerPage}
+                pagination={pagination}
+                table={table}
+            />
         </Suspense>
     );
+};
+
+export type OverrideAlbumArtistListQuery = Omit<AlbumArtistListQuery, 'limit' | 'startIndex'>;
+
+export const AlbumArtistListView = ({
+    display,
+    grid,
+    itemsPerPage,
+    overrideQuery,
+    pagination,
+    table,
+}: ItemListSettings & { overrideQuery?: OverrideAlbumArtistListQuery }) => {
+    const server = useCurrentServer();
+
+    const { query } = useAlbumArtistListFilters();
+
+    const mergedQuery = useMemo(() => {
+        if (!overrideQuery) {
+            return query;
+        }
+
+        return {
+            ...query,
+            ...overrideQuery,
+            sortBy: overrideQuery.sortBy || query.sortBy,
+            sortOrder: overrideQuery.sortOrder || query.sortOrder,
+        };
+    }, [query, overrideQuery]);
+
+    switch (display) {
+        case ListDisplayType.GRID: {
+            switch (pagination) {
+                case ListPaginationType.INFINITE: {
+                    return (
+                        <AlbumArtistListInfiniteGrid
+                            gap={grid.itemGap}
+                            itemsPerPage={itemsPerPage}
+                            itemsPerRow={grid.itemsPerRowEnabled ? grid.itemsPerRow : undefined}
+                            query={mergedQuery}
+                            serverId={server.id}
+                        />
+                    );
+                }
+                case ListPaginationType.PAGINATED: {
+                    return (
+                        <AlbumArtistListPaginatedGrid
+                            gap={grid.itemGap}
+                            itemsPerPage={itemsPerPage}
+                            itemsPerRow={grid.itemsPerRowEnabled ? grid.itemsPerRow : undefined}
+                            query={mergedQuery}
+                            serverId={server.id}
+                        />
+                    );
+                }
+                default:
+                    return null;
+            }
+        }
+        case ListDisplayType.TABLE: {
+            switch (pagination) {
+                case ListPaginationType.INFINITE: {
+                    return (
+                        <AlbumArtistListInfiniteTable
+                            autoFitColumns={table.autoFitColumns}
+                            columns={table.columns}
+                            enableAlternateRowColors={table.enableAlternateRowColors}
+                            enableHorizontalBorders={table.enableHorizontalBorders}
+                            enableRowHoverHighlight={table.enableRowHoverHighlight}
+                            enableVerticalBorders={table.enableVerticalBorders}
+                            itemsPerPage={itemsPerPage}
+                            query={mergedQuery}
+                            serverId={server.id}
+                            size={table.size}
+                        />
+                    );
+                }
+                case ListPaginationType.PAGINATED: {
+                    return (
+                        <AlbumArtistListPaginatedTable
+                            autoFitColumns={table.autoFitColumns}
+                            columns={table.columns}
+                            enableAlternateRowColors={table.enableAlternateRowColors}
+                            enableHorizontalBorders={table.enableHorizontalBorders}
+                            enableRowHoverHighlight={table.enableRowHoverHighlight}
+                            enableVerticalBorders={table.enableVerticalBorders}
+                            itemsPerPage={itemsPerPage}
+                            query={mergedQuery}
+                            serverId={server.id}
+                            size={table.size}
+                        />
+                    );
+                }
+                default:
+                    return null;
+            }
+        }
+    }
+
+    return null;
 };

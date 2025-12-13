@@ -45,6 +45,11 @@ const config: UserConfig = {
         },
     },
     renderer: {
+        build: {
+            cssMinify: 'esbuild',
+            minify: 'esbuild',
+            sourcemap: true,
+        },
         css: {
             modules: {
                 generateScopedName: 'fs-[name]-[local]',

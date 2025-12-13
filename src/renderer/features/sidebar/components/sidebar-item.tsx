@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { memo } from 'react';
-import { Link, LinkProps } from 'react-router-dom';
+import { Link, LinkProps, useLocation } from 'react-router';
 
 import styles from './sidebar-item.module.css';
 
@@ -11,12 +11,23 @@ interface SidebarItemProps extends ButtonProps {
 }
 
 export const SidebarItem = ({ children, className, to, ...props }: SidebarItemProps) => {
+    const location = useLocation();
+    const toPath = typeof to === 'string' ? to : to.pathname || '';
+    const isActive = location.pathname === toPath;
+
+    const handleLinkDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
         <Button
             className={clsx(
                 {
+                    [styles.active]: isActive,
                     [styles.disabled]: props.disabled,
                     [styles.link]: true,
+                    [styles.root]: true,
                 },
                 className,
             )}
@@ -25,6 +36,8 @@ export const SidebarItem = ({ children, className, to, ...props }: SidebarItemPr
                 label: styles.label,
             }}
             component={Link}
+            draggable={false}
+            onDragStart={handleLinkDragStart}
             to={to}
             variant="subtle"
             {...props}

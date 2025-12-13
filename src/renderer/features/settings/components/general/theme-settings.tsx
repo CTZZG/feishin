@@ -1,6 +1,7 @@
 import isElectron from 'is-electron';
 import { useTranslation } from 'react-i18next';
 
+import { StylesSettings } from '/@/renderer/features/settings/components/advanced/styles-settings';
 import {
     SettingOption,
     SettingsSection,
@@ -163,5 +164,11 @@ export const ThemeSettings = () => {
         },
     ];
 
-    return <SettingsSection options={themeOptions} />;
+    return (
+        <SettingsSection
+            extra={<StylesSettings />}
+            options={themeOptions}
+            title={t('page.setting.theme', { postProcess: 'sentenceCase' })}
+        />
+    );
 };

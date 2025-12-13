@@ -1,7 +1,9 @@
 import { BrowserWindow, globalShortcut, systemPreferences } from 'electron';
 
-import { isMacOS } from '../../../utils';
+import { isLinux, isMacOS } from '../../../utils';
 import { store } from '../settings';
+
+import { PlayerType } from '/@/shared/types/types';
 
 export const enableMediaKeys = (window: BrowserWindow | null) => {
     if (isMacOS()) {
@@ -23,21 +25,26 @@ export const enableMediaKeys = (window: BrowserWindow | null) => {
         }
     }
 
-    globalShortcut.register('MediaStop', () => {
-        window?.webContents.send('renderer-player-stop');
-    });
+    const enableMediaSession = store.get('mediaSession', false) as boolean;
+    const playbackType = store.get('playbackType', PlayerType.WEB) as PlayerType;
 
-    globalShortcut.register('MediaPlayPause', () => {
-        window?.webContents.send('renderer-player-play-pause');
-    });
+    if (!enableMediaSession || isLinux() || playbackType !== PlayerType.WEB) {
+        globalShortcut.register('MediaStop', () => {
+            window?.webContents.send('renderer-player-stop');
+        });
 
-    globalShortcut.register('MediaNextTrack', () => {
-        window?.webContents.send('renderer-player-next');
-    });
+        globalShortcut.register('MediaPlayPause', () => {
+            window?.webContents.send('renderer-player-play-pause');
+        });
 
-    globalShortcut.register('MediaPreviousTrack', () => {
-        window?.webContents.send('renderer-player-previous');
-    });
+        globalShortcut.register('MediaNextTrack', () => {
+            window?.webContents.send('renderer-player-next');
+        });
+
+        globalShortcut.register('MediaPreviousTrack', () => {
+            window?.webContents.send('renderer-player-previous');
+        });
+    }
 };
 
 export const disableMediaKeys = () => {

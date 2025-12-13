@@ -1,13 +1,18 @@
 import { createContext, useContext } from 'react';
 
-import { ListKey } from '/@/renderer/store';
-import { Play } from '/@/shared/types/types';
+import { ItemListKey } from '/@/shared/types/types';
 
 interface ListContextProps {
     customFilters?: Record<string, unknown>;
-    handlePlay?: (args: { initialSongId?: string; playType: Play }) => void;
     id?: string;
-    pageKey: ListKey;
+    isSmartPlaylist?: boolean;
+    itemCount?: number;
+    listData?: unknown[];
+    mode?: 'edit' | 'view';
+    pageKey: ItemListKey | string;
+    setItemCount?: (itemCount: number) => void;
+    setListData?: (items: unknown[]) => void;
+    setMode?: (mode: 'edit' | 'view') => void;
 }
 
 export const ListContext = createContext<ListContextProps>({

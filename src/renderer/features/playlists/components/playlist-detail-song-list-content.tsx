@@ -1,347 +1,260 @@
-import type {
-    BodyScrollEvent,
-    ColDef,
-    GridReadyEvent,
-    IDatasource,
-    PaginationChangedEvent,
-    RowDoubleClickedEvent,
-    RowDragEvent,
-} from '@ag-grid-community/core';
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
-
-import { useQueryClient } from '@tanstack/react-query';
-import debounce from 'lodash/debounce';
-import { AnimatePresence } from 'motion/react';
-import { MutableRefObject, useCallback, useMemo } from 'react';
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { api } from '/@/renderer/api';
-import { queryKeys } from '/@/renderer/api/query-keys';
-import { VirtualGridAutoSizerContainer } from '/@/renderer/components/virtual-grid';
-import { getColumnDefs, TablePagination, VirtualTable } from '/@/renderer/components/virtual-table';
-import { useCurrentSongRowStyles } from '/@/renderer/components/virtual-table/hooks/use-current-song-row-styles';
-import { useHandleTableContextMenu } from '/@/renderer/features/context-menu';
+import { ItemListHandle } from '/@/renderer/components/item-list/types';
+import { useListContext } from '/@/renderer/context/list-context';
+import { eventEmitter } from '/@/renderer/events/event-emitter';
+import { playlistsQueries } from '/@/renderer/features/playlists/api/playlists-api';
+import { PlaylistDetailSongListEditTable } from '/@/renderer/features/playlists/components/playlist-detail-song-list-table';
+import { useCurrentServer, useListSettings } from '/@/renderer/store';
+import { Spinner } from '/@/shared/components/spinner/spinner';
 import {
-    PLAYLIST_SONG_CONTEXT_MENU_ITEMS,
-    SMART_PLAYLIST_SONG_CONTEXT_MENU_ITEMS,
-} from '/@/renderer/features/context-menu/context-menu-items';
-import { usePlayQueueAdd } from '/@/renderer/features/player';
-import { usePlaylistDetail } from '/@/renderer/features/playlists/queries/playlist-detail-query';
-import { usePlaylistSongList } from '/@/renderer/features/playlists/queries/playlist-song-list-query';
-import { useAppFocus } from '/@/renderer/hooks';
-import {
-    useCurrentServer,
-    useCurrentSong,
-    useCurrentStatus,
-    usePlaylistDetailStore,
-    usePlaylistDetailTablePagination,
-    useSetPlaylistDetailTable,
-    useSetPlaylistDetailTablePagination,
-} from '/@/renderer/store';
-import { PersistedTableColumn, usePlayButtonBehavior } from '/@/renderer/store/settings.store';
-import { toast } from '/@/shared/components/toast/toast';
-import {
-    LibraryItem,
     PlaylistSongListQuery,
-    QueueSong,
-    Song,
+    PlaylistSongListResponse,
     SongListSort,
     SortOrder,
 } from '/@/shared/types/domain-types';
-import { ListDisplayType, ServerType } from '/@/shared/types/types';
+import { ItemListKey, ListDisplayType, TableColumn } from '/@/shared/types/types';
 
-interface PlaylistDetailContentProps {
-    songs?: Song[];
-    tableRef: MutableRefObject<AgGridReactType | null>;
-}
+const PlaylistDetailSongListTable = lazy(() =>
+    import('/@/renderer/features/playlists/components/playlist-detail-song-list-table').then(
+        (module) => ({
+            default: module.PlaylistDetailSongListTable,
+        }),
+    ),
+);
 
-export const PlaylistDetailSongListContent = ({ songs, tableRef }: PlaylistDetailContentProps) => {
+export const PlaylistDetailSongListContent = () => {
     const { playlistId } = useParams() as { playlistId: string };
-    const queryClient = useQueryClient();
-    const status = useCurrentStatus();
-    const isFocused = useAppFocus();
-    const currentSong = useCurrentSong();
     const server = useCurrentServer();
-    const page = usePlaylistDetailStore();
-    const filters: Partial<PlaylistSongListQuery> = useMemo(() => {
-        return {
-            sortBy: page?.table.id[playlistId]?.filter?.sortBy || SongListSort.ID,
-            sortOrder: page?.table.id[playlistId]?.filter?.sortOrder || SortOrder.ASC,
-        };
-    }, [page?.table.id, playlistId]);
+    const { setItemCount } = useListContext();
+    const queryClient = useQueryClient();
 
-    const detailQuery = usePlaylistDetail({ query: { id: playlistId }, serverId: server?.id });
-
-    const p = usePlaylistDetailTablePagination(playlistId);
-    const pagination = {
-        currentPage: p?.currentPage || 0,
-        itemsPerPage: p?.itemsPerPage || 100,
-        scrollOffset: p?.scrollOffset || 0,
-        totalItems: p?.totalItems || 1,
-        totalPages: p?.totalPages || 1,
-    };
-
-    const setPagination = useSetPlaylistDetailTablePagination();
-    const setTable = useSetPlaylistDetailTable();
-    const handlePlayQueueAdd = usePlayQueueAdd();
-    const playButtonBehavior = usePlayButtonBehavior();
-
-    const isPaginationEnabled = page.display === ListDisplayType.TABLE_PAGINATED;
-
-    const iSClientSide = server?.type === ServerType.SUBSONIC;
-
-    const checkPlaylistList = usePlaylistSongList({
-        options: {
-            enabled: !iSClientSide,
-        },
-        query: {
-            id: playlistId,
-            limit: 1,
-            startIndex: 0,
-        },
-        serverId: server?.id,
-    });
-
-    const columnDefs: ColDef[] = useMemo(
-        () => getColumnDefs(page.table.columns, false, 'generic'),
-        [page.table.columns],
-    );
-
-    const onGridReady = useCallback(
-        (params: GridReadyEvent) => {
-            if (!iSClientSide) {
-                const dataSource: IDatasource = {
-                    getRows: async (params) => {
-                        const limit = params.endRow - params.startRow;
-                        const startIndex = params.startRow;
-
-                        const query: PlaylistSongListQuery = {
-                            id: playlistId,
-                            limit,
-                            startIndex,
-                            ...filters,
-                        };
-
-                        const queryKey = queryKeys.playlists.songList(
-                            server?.id || '',
-                            playlistId,
-                            query,
-                        );
-
-                        if (!server) return;
-
-                        const songsRes = await queryClient.fetchQuery(
-                            queryKey,
-                            async ({ signal }) =>
-                                api.controller.getPlaylistSongList({
-                                    apiClientProps: {
-                                        server,
-                                        signal,
-                                    },
-                                    query,
-                                }),
-                        );
-
-                        params.successCallback(
-                            songsRes?.items || [],
-                            songsRes?.totalRecordCount || 0,
-                        );
-                    },
-                    rowCount: undefined,
-                };
-                params.api.setDatasource(dataSource);
-            }
-            params.api?.ensureIndexVisible(pagination.scrollOffset, 'top');
-        },
-        [filters, iSClientSide, pagination.scrollOffset, playlistId, queryClient, server],
-    );
-
-    const handleDragEnd = useCallback(
-        async (e: RowDragEvent<Song>) => {
-            if (!e.nodes.length) return;
-
-            const trackId = e.node.data?.playlistItemId;
-            if (trackId && e.node.rowIndex !== null && e.overIndex !== e.node.rowIndex) {
-                try {
-                    await api.controller.movePlaylistItem({
-                        apiClientProps: {
-                            server,
-                        },
-                        query: {
-                            endingIndex: e.overIndex,
-                            playlistId,
-                            startingIndex: e.node.rowIndex + 1,
-                            trackId,
-                        },
-                    });
-
-                    setTimeout(() => {
-                        queryClient.invalidateQueries({
-                            queryKey: queryKeys.playlists.songList(server?.id || '', playlistId),
-                        });
-                        e.api.refreshInfiniteCache();
-                    }, 200);
-                } catch (error) {
-                    toast.error({
-                        message: (error as Error).message,
-                        title: `Failed to move song ${e.node.data?.name} to ${e.overIndex}`,
-                    });
-                }
-            }
-        },
-        [playlistId, queryClient, server],
-    );
-
-    const handleGridSizeChange = () => {
-        if (page.table.autoFit) {
-            tableRef?.current?.api?.sizeColumnsToFit();
-        }
-    };
-
-    const onPaginationChanged = useCallback(
-        (event: PaginationChangedEvent) => {
-            if (!isPaginationEnabled || !event.api) return;
-
-            try {
-                // Scroll to top of page on pagination change
-                const currentPageStartIndex = pagination.currentPage * pagination.itemsPerPage;
-                event.api?.ensureIndexVisible(currentPageStartIndex, 'top');
-            } catch (err) {
-                console.error(err);
-            }
-
-            setPagination(playlistId, {
-                itemsPerPage: event.api.paginationGetPageSize(),
-                totalItems: event.api.paginationGetRowCount(),
-                totalPages: event.api.paginationGetTotalPages() + 1,
-            });
-        },
-        [
-            isPaginationEnabled,
-            pagination.currentPage,
-            pagination.itemsPerPage,
-            playlistId,
-            setPagination,
-        ],
-    );
-
-    const handleColumnChange = useCallback(() => {
-        const { columnApi } = tableRef?.current || {};
-        const columnsOrder = columnApi?.getAllGridColumns();
-
-        if (!columnsOrder) return;
-
-        const columnsInSettings = page.table.columns;
-        const updatedColumns: PersistedTableColumn[] = [];
-        for (const column of columnsOrder) {
-            const columnInSettings = columnsInSettings.find(
-                (c) => c.column === column.getColDef().colId,
-            );
-
-            if (columnInSettings) {
-                updatedColumns.push({
-                    ...columnInSettings,
-                    ...(!page.table.autoFit && {
-                        width: column.getActualWidth(),
-                    }),
-                });
-            }
-        }
-
-        setTable({ columns: updatedColumns });
-    }, [page.table.autoFit, page.table.columns, setTable, tableRef]);
-
-    const debouncedColumnChange = debounce(handleColumnChange, 200);
-
-    const handleScroll = (e: BodyScrollEvent) => {
-        const scrollOffset = Number((e.top / page.table.rowHeight).toFixed(0));
-        setPagination(playlistId, { scrollOffset });
-    };
-
-    const contextMenuItems = useMemo(() => {
-        if (detailQuery?.data?.rules) {
-            return SMART_PLAYLIST_SONG_CONTEXT_MENU_ITEMS;
-        }
-
-        return PLAYLIST_SONG_CONTEXT_MENU_ITEMS;
-    }, [detailQuery?.data?.rules]);
-
-    const handleContextMenu = useHandleTableContextMenu(LibraryItem.SONG, contextMenuItems, {
-        playlistId,
-        tableRef,
-    });
-
-    const handleRowDoubleClick = (e: RowDoubleClickedEvent<QueueSong>) => {
-        if (!e.data) return;
-        handlePlayQueueAdd?.({
-            byItemType: {
-                id: [playlistId],
-                type: LibraryItem.PLAYLIST,
+    const playlistSongsQuery = useSuspenseQuery(
+        playlistsQueries.songList({
+            query: {
+                id: playlistId,
+                sortBy: SongListSort.LIST_ITEM_ORDER,
+                sortOrder: SortOrder.ASC,
+                startIndex: 0,
             },
-            initialSongId: e.data.id,
-            playType: playButtonBehavior,
-        });
-    };
+            serverId: server?.id,
+        }),
+    );
 
-    const { rowClassRules } = useCurrentSongRowStyles({ tableRef });
+    useEffect(() => {
+        if (
+            playlistSongsQuery.data?.totalRecordCount !== undefined &&
+            playlistSongsQuery.data.totalRecordCount !== null
+        ) {
+            setItemCount?.(playlistSongsQuery.data.totalRecordCount);
+        }
+    }, [playlistSongsQuery.data?.totalRecordCount, setItemCount]);
 
-    const canDrag =
-        filters.sortBy === SongListSort.ID && !detailQuery?.data?.rules && !iSClientSide;
+    useEffect(() => {
+        const handleRefresh = async (payload: { key: string }) => {
+            if (payload.key !== ItemListKey.PLAYLIST_SONG) {
+                return;
+            }
+
+            const queryKey = playlistsQueries.songList({
+                query: {
+                    id: playlistId,
+                    sortBy: SongListSort.LIST_ITEM_ORDER,
+                    sortOrder: SortOrder.ASC,
+                    startIndex: 0,
+                },
+                serverId: server?.id,
+            }).queryKey;
+
+            await queryClient.invalidateQueries({ queryKey });
+            await queryClient.refetchQueries({ queryKey });
+        };
+
+        eventEmitter.on('ITEM_LIST_REFRESH', handleRefresh);
+
+        return () => {
+            eventEmitter.off('ITEM_LIST_REFRESH', handleRefresh);
+        };
+    }, [playlistId, queryClient, server.id]);
 
     return (
-        <>
-            <VirtualGridAutoSizerContainer>
-                <VirtualTable
-                    alwaysShowHorizontalScroll
-                    autoFitColumns={page.table.autoFit}
-                    columnDefs={columnDefs}
-                    context={{
-                        currentSong,
-                        isFocused,
-                        itemType: LibraryItem.SONG,
-                        onCellContextMenu: handleContextMenu,
-                        status,
-                    }}
-                    getRowId={(data) => data.data.uniqueId}
-                    infiniteInitialRowCount={
-                        iSClientSide ? undefined : checkPlaylistList.data?.totalRecordCount || 100
-                    }
-                    // https://github.com/ag-grid/ag-grid/issues/5284
-                    // Key is used to force remount of table when display, rowHeight, or server changes
-                    key={`table-${page.display}-${page.table.rowHeight}-${server?.id}`}
-                    onBodyScrollEnd={handleScroll}
-                    onCellContextMenu={handleContextMenu}
-                    onColumnMoved={handleColumnChange}
-                    onColumnResized={debouncedColumnChange}
-                    onGridReady={onGridReady}
-                    onGridSizeChanged={handleGridSizeChange}
-                    onPaginationChanged={onPaginationChanged}
-                    onRowDoubleClicked={handleRowDoubleClick}
-                    onRowDragEnd={handleDragEnd}
-                    pagination={isPaginationEnabled}
-                    paginationAutoPageSize={isPaginationEnabled}
-                    paginationPageSize={pagination.itemsPerPage || 100}
-                    ref={tableRef}
-                    rowClassRules={rowClassRules}
-                    rowData={songs}
-                    rowDragEntireRow={canDrag}
-                    rowHeight={page.table.rowHeight || 40}
-                    rowModelType={iSClientSide ? 'clientSide' : 'infinite'}
-                    shouldUpdateSong
-                />
-            </VirtualGridAutoSizerContainer>
-            {isPaginationEnabled && (
-                <AnimatePresence initial={false} mode="wait" presenceAffectsLayout>
-                    {page.display === ListDisplayType.TABLE_PAGINATED && (
-                        <TablePagination
-                            pageKey={playlistId}
-                            pagination={pagination}
-                            setIdPagination={setPagination}
-                            tableRef={tableRef}
-                        />
-                    )}
-                </AnimatePresence>
-            )}
-        </>
+        <Suspense fallback={<Spinner container />}>
+            <PlaylistDetailSongList data={playlistSongsQuery.data} />
+        </Suspense>
     );
+};
+
+export type OverridePlaylistSongListQuery = Omit<Partial<PlaylistSongListQuery>, 'id'>;
+
+export const PlaylistDetailSongListView = ({ data }: { data: PlaylistSongListResponse }) => {
+    const server = useCurrentServer();
+    const { display, table } = useListSettings(ItemListKey.PLAYLIST_SONG);
+
+    switch (display) {
+        case ListDisplayType.TABLE: {
+            return (
+                <PlaylistDetailSongListTable
+                    autoFitColumns={table.autoFitColumns}
+                    columns={table.columns}
+                    data={data}
+                    enableAlternateRowColors={table.enableAlternateRowColors}
+                    enableHorizontalBorders={table.enableHorizontalBorders}
+                    enableRowHoverHighlight={table.enableRowHoverHighlight}
+                    enableVerticalBorders={table.enableVerticalBorders}
+                    serverId={server.id}
+                    size={table.size}
+                />
+            );
+        }
+        default:
+            return null;
+    }
+};
+
+export const PlaylistDetailSongListEdit = ({ data }: { data: PlaylistSongListResponse }) => {
+    const { playlistId } = useParams() as { playlistId: string };
+    const server = useCurrentServer();
+    const { display, table } = useListSettings(ItemListKey.PLAYLIST_SONG);
+
+    const [localData, setLocalData] = useState<PlaylistSongListResponse>(data);
+
+    const tableRef = useRef<ItemListHandle | null>(null);
+
+    // Listen for playlist reorder events
+    useEffect(() => {
+        const handleReorder = (payload: {
+            edge: 'bottom' | 'top' | null;
+            playlistId: string;
+            sourceIds: string[];
+            targetId: string;
+        }) => {
+            // Only handle events for this playlist
+            if (payload.playlistId !== playlistId) {
+                return;
+            }
+
+            setLocalData((prev) => {
+                if (!prev?.items || !payload.edge) {
+                    return prev;
+                }
+
+                // Create a list of IDs in current order
+                const currentIds = prev.items.map((item) => item.id);
+
+                // Find the target index
+                const targetIndex = currentIds.indexOf(payload.targetId);
+                if (targetIndex === -1) {
+                    return prev;
+                }
+
+                // Remove all source IDs from their current positions
+                const idsWithoutSources = currentIds.filter(
+                    (id) => !payload.sourceIds.includes(id),
+                );
+
+                // Calculate the insertion index based on the original target position
+                const sourcesBeforeTarget = payload.sourceIds.filter((id) => {
+                    const sourceIndex = currentIds.indexOf(id);
+                    return sourceIndex !== -1 && sourceIndex < targetIndex;
+                }).length;
+
+                // Calculate the insert index in the filtered list
+                const insertIndexInFiltered =
+                    payload.edge === 'top'
+                        ? targetIndex - sourcesBeforeTarget
+                        : targetIndex - sourcesBeforeTarget + 1;
+
+                // Ensure insertIndex is within bounds
+                const insertIndex = Math.max(
+                    0,
+                    Math.min(insertIndexInFiltered, idsWithoutSources.length),
+                );
+
+                // Insert source IDs at the calculated position
+                const reorderedIds = [
+                    ...idsWithoutSources.slice(0, insertIndex),
+                    ...payload.sourceIds,
+                    ...idsWithoutSources.slice(insertIndex),
+                ];
+
+                // Create a map for quick lookup
+                const itemMap = new Map(prev.items.map((item) => [item.id, item]));
+
+                // Reorder items based on new ID order
+                const reorderedItems = reorderedIds
+                    .map((id) => itemMap.get(id))
+                    .filter((item): item is NonNullable<typeof item> => item !== undefined);
+
+                return {
+                    ...prev,
+                    items: reorderedItems,
+                };
+            });
+        };
+
+        eventEmitter.on('PLAYLIST_REORDER', handleReorder);
+
+        return () => {
+            eventEmitter.off('PLAYLIST_REORDER', handleReorder);
+        };
+    }, [playlistId]);
+
+    const columns = useMemo(() => {
+        return [
+            {
+                align: 'center' as 'center' | 'end' | 'start',
+                id: TableColumn.PLAYLIST_REORDER,
+                isEnabled: true,
+                pinned: 'left' as 'left' | 'right' | null,
+                width: 100,
+            },
+            ...table.columns,
+        ];
+    }, [table.columns]);
+
+    const { setListData } = useListContext();
+
+    useEffect(() => {
+        setListData?.(localData.items);
+    }, [localData, setListData]);
+
+    switch (display) {
+        case ListDisplayType.TABLE: {
+            return (
+                <PlaylistDetailSongListEditTable
+                    autoFitColumns={table.autoFitColumns}
+                    columns={columns}
+                    data={localData}
+                    enableAlternateRowColors={table.enableAlternateRowColors}
+                    enableHorizontalBorders={table.enableHorizontalBorders}
+                    enableRowHoverHighlight={table.enableRowHoverHighlight}
+                    enableVerticalBorders={table.enableVerticalBorders}
+                    ref={tableRef}
+                    serverId={server.id}
+                    size={table.size}
+                />
+            );
+        }
+        default:
+            return null;
+    }
+};
+
+const PlaylistDetailSongList = ({ data }: { data: PlaylistSongListResponse }) => {
+    const { isSmartPlaylist, mode } = useListContext();
+
+    if (isSmartPlaylist) {
+        return <PlaylistDetailSongListView data={data} />;
+    }
+
+    switch (mode) {
+        case 'edit':
+            return <PlaylistDetailSongListEdit data={data} />;
+        case 'view':
+            return <PlaylistDetailSongListView data={data} />;
+        default:
+            return null;
+    }
 };

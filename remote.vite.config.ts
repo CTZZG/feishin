@@ -7,7 +7,9 @@ import { version } from './package.json';
 
 export default defineConfig({
     build: {
+        cssMinify: 'esbuild',
         emptyOutDir: true,
+        minify: 'esbuild',
         outDir: path.resolve(__dirname, './out/remote'),
         rollupOptions: {
             input: {

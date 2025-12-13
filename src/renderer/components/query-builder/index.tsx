@@ -1,8 +1,8 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
-import i18n from '/@/i18n/i18n';
 import { QueryBuilderOption } from '/@/renderer/components/query-builder/query-builder-option';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
+import { Box } from '/@/shared/components/box/box';
 import { DropdownMenu } from '/@/shared/components/dropdown-menu/dropdown-menu';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
@@ -10,36 +10,24 @@ import { Select } from '/@/shared/components/select/select';
 import { Stack } from '/@/shared/components/stack/stack';
 import { QueryBuilderGroup, QueryBuilderRule } from '/@/shared/types/types';
 
-const FILTER_GROUP_OPTIONS_DATA = [
-    {
-        label: i18n.t('form.queryEditor.input', {
-            context: 'optionMatchAll',
-            postProcess: 'sentenceCase',
-        }),
-        value: 'all',
-    },
-    {
-        label: i18n.t('form.queryEditor.input', {
-            context: 'optionMatchAny',
-            postProcess: 'sentenceCase',
-        }),
-        value: 'any',
-    },
-];
+export type FilterGroup = { group: string; items: FilterItem[] };
 
+export type FilterItem = { label: string; type: string; value: string };
+
+export type Filters = FilterGroup[] | FilterItem[];
 type AddArgs = {
     groupIndex: number[];
     level: number;
 };
-
 type DeleteArgs = {
     groupIndex: number[];
     level: number;
     uniqueId: string;
 };
+
 interface QueryBuilderProps {
     data: Record<string, any>;
-    filters: { label: string; type: string; value: string }[];
+    filters: Filters;
     groupIndex: number[];
     level: number;
     onAddRule: (args: AddArgs) => void;
@@ -60,6 +48,7 @@ interface QueryBuilderProps {
         string: { label: string; value: string }[];
     };
     playlists?: { label: string; value: string }[];
+    saveActions?: React.ReactNode;
     uniqueId: string;
 }
 
@@ -80,8 +69,28 @@ export const QueryBuilder = ({
     onResetFilters,
     operators,
     playlists,
+    saveActions,
     uniqueId,
 }: QueryBuilderProps) => {
+    const { t } = useTranslation();
+
+    const FILTER_GROUP_OPTIONS_DATA = [
+        {
+            label: t('form.queryEditor.input', {
+                context: 'optionMatchAll',
+                postProcess: 'sentenceCase',
+            }),
+            value: 'all',
+        },
+        {
+            label: t('form.queryEditor.input', {
+                context: 'optionMatchAny',
+                postProcess: 'sentenceCase',
+            }),
+            value: 'any',
+        },
+    ];
+
     const handleAddRule = () => {
         onAddRule({ groupIndex, level });
     };
@@ -99,75 +108,86 @@ export const QueryBuilder = ({
     };
 
     return (
-        <Stack gap="sm" ml={`${level * 10}px`}>
-            <Group gap="sm">
-                <Select
-                    data={FILTER_GROUP_OPTIONS_DATA}
-                    maxWidth={175}
-                    onChange={handleChangeType}
-                    size="sm"
-                    value={data.type}
-                    width="20%"
-                />
-                <ActionIcon icon="add" onClick={handleAddRule} size="sm" variant="subtle" />
-                <DropdownMenu position="bottom-start">
-                    <DropdownMenu.Target>
-                        <ActionIcon
-                            icon="ellipsisVertical"
+        <Box
+            p="md"
+            style={{
+                border: '1px solid var(--theme-colors-border)',
+                borderRadius: 'var(--theme-radius-md)',
+                marginLeft: level > 0 ? '20px' : '0px',
+            }}
+        >
+            <Stack gap="sm">
+                <Group gap="sm" justify="space-between" wrap="nowrap">
+                    <Group gap="sm" wrap="nowrap">
+                        <Select
+                            data={FILTER_GROUP_OPTIONS_DATA}
+                            maxWidth={170}
+                            onChange={handleChangeType}
                             size="sm"
-                            style={{
-                                padding: 0,
-                            }}
-                            variant="subtle"
+                            value={data.type}
                         />
-                    </DropdownMenu.Target>
-                    <DropdownMenu.Dropdown>
-                        <DropdownMenu.Item
-                            leftSection={<Icon icon="add" />}
-                            onClick={handleAddRuleGroup}
-                        >
-                            Add rule group
-                        </DropdownMenu.Item>
+                        <ActionIcon icon="add" onClick={handleAddRule} size="sm" variant="subtle" />
+                        <DropdownMenu position="bottom-start">
+                            <DropdownMenu.Target>
+                                <ActionIcon
+                                    icon="ellipsisVertical"
+                                    size="sm"
+                                    style={{
+                                        padding: 0,
+                                    }}
+                                    variant="subtle"
+                                />
+                            </DropdownMenu.Target>
+                            <DropdownMenu.Dropdown>
+                                <DropdownMenu.Item
+                                    leftSection={<Icon icon="add" />}
+                                    onClick={handleAddRuleGroup}
+                                >
+                                    {t('form.queryEditor.addRuleGroup', {
+                                        postProcess: 'sentenceCase',
+                                    })}
+                                </DropdownMenu.Item>
 
-                        {level > 0 && (
-                            <DropdownMenu.Item
-                                leftSection={<Icon icon="delete" />}
-                                onClick={handleDeleteRuleGroup}
-                            >
-                                Remove rule group
-                            </DropdownMenu.Item>
-                        )}
-                        {level === 0 && (
-                            <>
-                                <DropdownMenu.Divider />
-                                <DropdownMenu.Item
-                                    isDanger
-                                    leftSection={<Icon color="error" icon="refresh" />}
-                                    onClick={onResetFilters}
-                                >
-                                    Reset to default
-                                </DropdownMenu.Item>
-                                <DropdownMenu.Item
-                                    isDanger
-                                    leftSection={<Icon color="error" icon="delete" />}
-                                    onClick={onClearFilters}
-                                >
-                                    Clear filters
-                                </DropdownMenu.Item>
-                            </>
-                        )}
-                    </DropdownMenu.Dropdown>
-                </DropdownMenu>
-            </Group>
-            <AnimatePresence initial={false}>
+                                {level > 0 && (
+                                    <DropdownMenu.Item
+                                        leftSection={<Icon icon="delete" />}
+                                        onClick={handleDeleteRuleGroup}
+                                    >
+                                        {t('form.queryEditor.removeRuleGroup', {
+                                            postProcess: 'sentenceCase',
+                                        })}
+                                    </DropdownMenu.Item>
+                                )}
+                                {level === 0 && (
+                                    <>
+                                        <DropdownMenu.Divider />
+                                        <DropdownMenu.Item
+                                            isDanger
+                                            leftSection={<Icon color="error" icon="refresh" />}
+                                            onClick={onResetFilters}
+                                        >
+                                            {t('form.queryEditor.resetToDefault', {
+                                                postProcess: 'sentenceCase',
+                                            })}
+                                        </DropdownMenu.Item>
+                                        <DropdownMenu.Item
+                                            isDanger
+                                            leftSection={<Icon color="error" icon="delete" />}
+                                            onClick={onClearFilters}
+                                        >
+                                            {t('form.queryEditor.clearFilters', {
+                                                postProcess: 'sentenceCase',
+                                            })}
+                                        </DropdownMenu.Item>
+                                    </>
+                                )}
+                            </DropdownMenu.Dropdown>
+                        </DropdownMenu>
+                    </Group>
+                    {level === 0 && saveActions}
+                </Group>
                 {data?.rules?.map((rule: QueryBuilderRule) => (
-                    <motion.div
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -25 }}
-                        initial={{ opacity: 0, x: -25 }}
-                        key={rule.uniqueId}
-                        transition={{ duration: 0.2, ease: 'easeInOut' }}
-                    >
+                    <div key={rule.uniqueId}>
                         <QueryBuilderOption
                             data={rule}
                             filters={filters}
@@ -181,42 +201,36 @@ export const QueryBuilder = ({
                             operators={operators}
                             selectData={playlists}
                         />
-                    </motion.div>
+                    </div>
                 ))}
-            </AnimatePresence>
-            {data?.group && (
-                <AnimatePresence initial={false}>
-                    {data.group?.map((group: QueryBuilderGroup, index: number) => (
-                        <motion.div
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -25 }}
-                            initial={{ opacity: 0, x: -25 }}
-                            key={group.uniqueId}
-                            transition={{ duration: 0.2, ease: 'easeInOut' }}
-                        >
-                            <QueryBuilder
-                                data={group}
-                                filters={filters}
-                                groupIndex={[...(groupIndex || []), index]}
-                                level={level + 1}
-                                onAddRule={onAddRule}
-                                onAddRuleGroup={onAddRuleGroup}
-                                onChangeField={onChangeField}
-                                onChangeOperator={onChangeOperator}
-                                onChangeType={onChangeType}
-                                onChangeValue={onChangeValue}
-                                onClearFilters={onClearFilters}
-                                onDeleteRule={onDeleteRule}
-                                onDeleteRuleGroup={onDeleteRuleGroup}
-                                onResetFilters={onResetFilters}
-                                operators={operators}
-                                playlists={playlists}
-                                uniqueId={group.uniqueId}
-                            />
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            )}
-        </Stack>
+                {data?.group && (
+                    <>
+                        {data.group?.map((group: QueryBuilderGroup, index: number) => (
+                            <div key={group.uniqueId}>
+                                <QueryBuilder
+                                    data={group}
+                                    filters={filters}
+                                    groupIndex={[...(groupIndex || []), index]}
+                                    level={level + 1}
+                                    onAddRule={onAddRule}
+                                    onAddRuleGroup={onAddRuleGroup}
+                                    onChangeField={onChangeField}
+                                    onChangeOperator={onChangeOperator}
+                                    onChangeType={onChangeType}
+                                    onChangeValue={onChangeValue}
+                                    onClearFilters={onClearFilters}
+                                    onDeleteRule={onDeleteRule}
+                                    onDeleteRuleGroup={onDeleteRuleGroup}
+                                    onResetFilters={onResetFilters}
+                                    operators={operators}
+                                    playlists={playlists}
+                                    uniqueId={group.uniqueId}
+                                />
+                            </div>
+                        ))}
+                    </>
+                )}
+            </Stack>
+        </Box>
     );
 };

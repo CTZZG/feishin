@@ -1,7 +1,6 @@
-@import url('./ag-grid.css');
-
 * {
     box-sizing: border-box;
+    outline: none;
 }
 
 *,
@@ -121,58 +120,24 @@ button {
 }
 
 @font-face {
-    font-family: Archivo;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Archivo-VariableFont_wdth,wght.ttf');
-}
-
-@font-face {
-    font-family: Raleway;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Raleway-VariableFont_wght.ttf');
-}
-
-@font-face {
-    font-family: Fredoka;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Fredoka-VariableFont_wdth,wght.ttf');
-}
-
-@font-face {
-    font-family: 'League Spartan';
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/LeagueSpartan-VariableFont_wght.ttf');
-}
-
-@font-face {
-    font-family: Lexend;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Lexend-VariableFont_wght.ttf');
-}
-
-@font-face {
     font-family: Inter;
     font-weight: 100 1000;
-    src: url('../../../assets/fonts/Inter-VariableFont_slnt,wght.ttf');
-}
-
-@font-face {
-    font-family: Sora;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Sora-VariableFont_wght.ttf');
-}
-
-@font-face {
-    font-family: 'Work Sans';
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/WorkSans-VariableFont_wght.ttf');
+    src: url('../../../assets/fonts/Inter-VariableFont_slnt,wght.woff2');
 }
 
 @font-face {
     font-family: Poppins;
     font-style: normal;
     font-weight: 400;
-    src: url('../../../assets/fonts/Poppins-Regular.ttf');
+    src: url('../../../assets/fonts/Poppins-Regular.woff2');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: Poppins;
+    font-style: normal;
+    font-weight: 500;
+    src: url('../../../assets/fonts/Poppins-Medium.woff2');
     font-display: swap;
 }
 
@@ -180,7 +145,7 @@ button {
     font-family: Poppins;
     font-style: normal;
     font-weight: 600;
-    src: url('../../../assets/fonts/Poppins-SemiBold.ttf');
+    src: url('../../../assets/fonts/Poppins-SemiBold.woff2');
     font-display: swap;
 }
 
@@ -188,7 +153,7 @@ button {
     font-family: Poppins;
     font-style: normal;
     font-weight: 700;
-    src: url('../../../assets/fonts/Poppins-Bold.ttf');
+    src: url('../../../assets/fonts/Poppins-Bold.woff2');
     font-display: swap;
 }
 
@@ -196,7 +161,7 @@ button {
     font-family: Poppins;
     font-style: normal;
     font-weight: 800;
-    src: url('../../../assets/fonts/Poppins-ExtraBold.ttf');
+    src: url('../../../assets/fonts/Poppins-ExtraBold.woff2');
     font-display: swap;
 }
 
@@ -204,20 +169,47 @@ button {
     font-family: Poppins;
     font-style: normal;
     font-weight: 900;
-    src: url('../../../assets/fonts/Poppins-Black.ttf');
+    src: url('../../../assets/fonts/Poppins-Black.woff2');
     font-display: swap;
 }
 
 @font-face {
-    font-family: Raleway;
-    font-weight: 100 1000;
-    src: url('../../../assets/fonts/Raleway-VariableFont_wght.ttf');
+    font-family: 'Noto Sans JP';
+    font-variation-settings: 'wght' 500;
+    font-weight: 400;
+    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.woff2');
+    unicode-range: U+3000-9FFF, U+FF00-FFEF; /* Japanese characters */
 }
 
 @font-face {
     font-family: 'Noto Sans JP';
-    font-weight: 100 900;
-    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.ttf');
+    font-variation-settings: 'wght' 600;
+    font-weight: 500;
+    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.woff2');
+    unicode-range: U+3000-9FFF, U+FF00-FFEF; /* Japanese characters */
+}
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-variation-settings: 'wght' 700;
+    font-weight: 600;
+    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.woff2');
+    unicode-range: U+3000-9FFF, U+FF00-FFEF; /* Japanese characters */
+}
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-variation-settings: 'wght' 800;
+    font-weight: 700;
+    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.woff2');
+    unicode-range: U+3000-9FFF, U+FF00-FFEF; /* Japanese characters */
+}
+
+@font-face {
+    font-family: 'Noto Sans JP';
+    font-variation-settings: 'wght' 900;
+    font-weight: 800 1000;
+    src: url('../../../assets/fonts/NotoSansJP-VariableFont_wght.woff2');
     unicode-range: U+3000-9FFF, U+FF00-FFEF; /* Japanese characters */
 }
 
@@ -294,97 +286,5 @@ button {
 
     @mixin dark-root {
         --theme-colors-border: rgb(255 255 255 / 10%);
-    }
-
-    .ag-theme-alpine-dark {
-        --ag-font-family: var(--theme-content-font-family);
-        --ag-borders: none;
-        --ag-border-color: var(--theme-colors-border);
-        --ag-header-background-color: var(--theme-colors-background);
-        --ag-header-foreground-color: var(--theme-colors-foreground);
-        --ag-background-color: var(--theme-colors-background);
-        --ag-odd-row-background-color: var(--theme-colors-background);
-        --ag-foreground-color: var(--theme-colors-foreground);
-        --ag-cell-horizontal-padding: var(--theme-spacing-sm);
-        --ag-row-hover-color: lighten(var(--theme-colors-background), 5%);
-        --ag-selected-row-background-color: lighten(var(--theme-colors-background), 10%);
-        --ag-header-column-resize-handle-width: 0;
-    }
-
-    .ag-header {
-        width: auto;
-        border-bottom: 2px solid var(--theme-colors-border);
-    }
-
-    .ag-ltr .ag-header-cell-resize {
-        right: 0;
-    }
-
-    .ag-header:hover .ag-header-cell-resize {
-        position: absolute;
-        top: 25%;
-        width: 0.2em;
-        height: 50%;
-        border: 1px var(--theme-colors-border) solid;
-    }
-
-    .ag-header-cell-label {
-        font-family: var(--theme-content-font-family);
-        font-weight: 500;
-        text-transform: uppercase;
-    }
-
-    .ag-cell-rating,
-    .ag-cell-favorite {
-        display: none;
-    }
-
-    .ag-cell-transparent {
-        opacity: 0;
-    }
-
-    .ag-cell-rating.visible {
-        display: block;
-    }
-
-    .ag-cell-favorite.visible {
-        display: block;
-    }
-
-    .ag-row-hover {
-        .ag-cell-transparent {
-            opacity: 1;
-        }
-
-        .ag-cell-rating,
-        .ag-cell-favorite {
-            display: block;
-        }
-    }
-
-    .ag-cell-focus {
-        border: 1px var(--theme-colors-border) solid !important;
-    }
-
-    @mixin dark-root {
-        .current-song {
-            .current-song-child {
-                font-weight: 500;
-                color: var(--theme-colors-primary-filled);
-            }
-        }
-    }
-
-    @mixin light-root {
-        .current-song {
-            .current-song-child {
-                font-weight: 500;
-                color: var(--theme-colors-primary-filled);
-            }
-        }
-    }
-
-    .current-song > .row-index.playing .current-song-index {
-        display: none;
     }
 }

@@ -248,6 +248,14 @@ export const contract = c.router({
             400: embyType._response.error,
         },
     },
+    getUserInfo: {
+        method: 'GET',
+        path: 'users/:id',
+        responses: {
+            200: embyType._response.user,
+            400: embyType._response.error,
+        },
+    },
     movePlaylistItem: {
         body: z.null(),
         method: 'POST',
@@ -392,7 +400,7 @@ const parsePath = (fullPath: string) => {
 
 export const createAuthHeader = (server: null | ServerListItem): string => {
     const authStore = useAuthStore.getState();
-    const token = server?.credential || '';
+    const token = (server as any)?.credential || '';
     const userId = server?.userId || '';
 
     return `Emby UserId="${userId}", Client="Feishin", Device="${getClientType()}", DeviceId="${authStore.deviceId}", Version="${packageJson.version}", Token="${token}"`;

@@ -1,0 +1,39 @@
+.container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    container-type: inline-size;
+    overflow: hidden;
+}
+
+.sidebar-container {
+    position: relative;
+    display: none;
+    flex-shrink: 0;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+    height: 100%;
+    overflow: hidden;
+    border-right: 1px solid var(--theme-colors-border);
+}
+
+@container (min-width: $mantine-breakpoint-lg) {
+    .sidebar-container {
+        display: block;
+    }
+}
+
+.content-container {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+}

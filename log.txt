@@ -1,0 +1,17 @@
+
+> feishin@0.22.0 typecheck:web
+> tsc --noEmit -p tsconfig.web.json --composite false
+
+src/renderer/features/context-menu/actions/add-to-playlist-action.tsx(351,13): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/context-menu/actions/share-action.tsx(39,13): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/player/components/shuffle-all-modal.tsx(192,9): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/playlists/components/playlist-detail-song-list-header-filters.tsx(134,9): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/servers/components/server-list.tsx(39,13): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/settings/utils/open-settings-modal.ts(6,9): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/features/sidebar/components/sidebar-playlist-list.tsx(141,21): error TS2561: Object literal may only specify known properties, but 'modal' does not exist in type '{ modalKey: string; } & Partial<Omit<ModalProps, "opened">> & { modalId?: string | undefined; } & { innerProps: any; } & DataAttributes'. Did you mean to write 'mod'?
+src/renderer/utils/normalize-release-types.tsx(1,10): error TS2305: Module '"react-i18next"' has no exported member 'TFunction'.
+src/shared/components/drag-drop-zone/drag-drop-zone.tsx(15,27): error TS2554: Expected 1 arguments, but got 0.
+src/shared/components/drag-drop-zone/drag-drop-zone.tsx(125,17): error TS2322: Type '(self: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type 'Ref<HTMLInputElement> | undefined'.
+  Type '(self: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type '(instance: HTMLInputElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'HTMLInputElement | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.

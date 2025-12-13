@@ -1,4 +1,3 @@
-import { useForm } from '@mantine/form';
 import { closeAllModals, openModal } from '@mantine/modals';
 import { useTranslation } from 'react-i18next';
 
@@ -9,13 +8,14 @@ import { useUpdatePlaylist } from '/@/renderer/features/playlists/mutations/upda
 import { queryClient } from '/@/renderer/lib/react-query';
 import { useCurrentServer } from '/@/renderer/store';
 import { hasFeature } from '/@/shared/api/utils';
-import { Button } from '/@/shared/components/button/button';
 import { Group } from '/@/shared/components/group/group';
+import { ModalButton } from '/@/shared/components/modal/model-shared';
 import { Select } from '/@/shared/components/select/select';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { TextInput } from '/@/shared/components/text-input/text-input';
 import { toast } from '/@/shared/components/toast/toast';
+import { useForm } from '/@/shared/hooks/use-form';
 import {
     PlaylistDetailResponse,
     ServerListItem,
@@ -48,26 +48,21 @@ export const UpdatePlaylistForm = ({ body, onCancel, query, users }: UpdatePlayl
 
     const form = useForm<UpdatePlaylistBody>({
         initialValues: {
-            _custom: {
-                navidrome: {
-                    owner: body?._custom?.navidrome?.owner || '',
-                    ownerId: body?._custom?.navidrome?.ownerId || '',
-                    rules: undefined,
-                    sync: body?._custom?.navidrome?.sync || false,
-                },
-            },
             comment: body?.comment || '',
             name: body?.name || '',
+            ownerId: body.ownerId,
             public: body.public,
+            queryBuilderRules: body.queryBuilderRules,
+            sync: body.sync,
         },
     });
 
     const handleSubmit = form.onSubmit((values) => {
         mutation.mutate(
             {
+                apiClientProps: { serverId: server?.id || '' },
                 body: values,
                 query,
-                serverId: server?.id,
             },
             {
                 onError: (err) => {
@@ -88,7 +83,7 @@ export const UpdatePlaylistForm = ({ body, onCancel, query, users }: UpdatePlayl
 
     const isPublicDisplayed = hasFeature(server, ServerFeature.PUBLIC_PLAYLIST);
     const isOwnerDisplayed = server?.type === ServerType.NAVIDROME && userList;
-    const isSubmitDisabled = !form.values.name || mutation.isLoading;
+    const isSubmitDisabled = !form.values.name || mutation.isPending;
 
     return (
         <form onSubmit={handleSubmit}>
@@ -114,7 +109,7 @@ export const UpdatePlaylistForm = ({ body, onCancel, query, users }: UpdatePlayl
                 {isOwnerDisplayed && (
                     <Select
                         data={userList || []}
-                        {...form.getInputProps('_custom.navidrome.ownerId')}
+                        {...form.getInputProps('ownerId')}
                         label={t('form.createPlaylist.input', {
                             context: 'owner',
                             postProcess: 'titleCase',
@@ -140,17 +135,15 @@ export const UpdatePlaylistForm = ({ body, onCancel, query, users }: UpdatePlayl
                     </>
                 )}
                 <Group justify="flex-end">
-                    <Button onClick={onCancel} variant="subtle">
-                        {t('common.cancel', { postProcess: 'titleCase' })}
-                    </Button>
-                    <Button
+                    <ModalButton onClick={onCancel}>{t('common.cancel')}</ModalButton>
+                    <ModalButton
                         disabled={isSubmitDisabled}
-                        loading={mutation.isLoading}
+                        loading={mutation.isPending}
                         type="submit"
                         variant="filled"
                     >
-                        {t('common.save', { postProcess: 'titleCase' })}
-                    </Button>
+                        {t('common.save')}
+                    </ModalButton>
                 </Group>
             </Stack>
         </form>
@@ -176,7 +169,10 @@ export const openUpdatePlaylistModal = async (args: {
             ? await queryClient
                   .fetchQuery({
                       queryFn: ({ signal }) =>
-                          api.controller.getUserList({ apiClientProps: { server, signal }, query }),
+                          api.controller.getUserList({
+                              apiClientProps: { serverId: server?.id || '', signal },
+                              query,
+                          }),
                       queryKey: queryKeys.users.list(server?.id || '', query),
                   })
                   .catch((error) => {
@@ -190,18 +186,13 @@ export const openUpdatePlaylistModal = async (args: {
         children: (
             <UpdatePlaylistForm
                 body={{
-                    _custom: {
-                        navidrome: {
-                            owner: playlist?.owner || undefined,
-                            ownerId: playlist?.ownerId || undefined,
-                            rules: playlist?.rules || undefined,
-                            sync: playlist?.sync || undefined,
-                        },
-                    },
                     comment: playlist?.description || undefined,
                     genres: playlist?.genres,
                     name: playlist?.name,
+                    ownerId: playlist?.ownerId || undefined,
                     public: playlist?.public || false,
+                    queryBuilderRules: playlist?.rules || undefined,
+                    sync: playlist?.sync || undefined,
                 }}
                 onCancel={closeAllModals}
                 query={{ id: playlist?.id }}

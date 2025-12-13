@@ -1,12 +1,11 @@
-import { useMergedRef } from '@mantine/hooks';
-import { useInView } from 'motion/react';
 import { useOverlayScrollbars } from 'overlayscrollbars-react';
-import { CSSProperties, forwardRef, ReactNode, Ref, useEffect, useRef, useState } from 'react';
+import { CSSProperties, forwardRef, memo, ReactNode, Ref, useEffect, useRef } from 'react';
 
 import styles from './native-scroll-area.module.css';
 
 import { PageHeader, PageHeaderProps } from '/@/renderer/components/page-header/page-header';
 import { useWindowSettings } from '/@/renderer/store/settings.store';
+import { useMergedRef } from '/@/shared/hooks/use-merged-ref';
 import { Platform } from '/@/shared/types/types';
 
 interface NativeScrollAreaProps {
@@ -19,43 +18,43 @@ interface NativeScrollAreaProps {
     style?: CSSProperties;
 }
 
-export const NativeScrollArea = forwardRef(
+const BaseNativeScrollArea = forwardRef(
     (
         { children, noHeader, pageHeaderProps, scrollHideDelay, ...props }: NativeScrollAreaProps,
         ref: Ref<HTMLDivElement>,
     ) => {
         const { windowBarStyle } = useWindowSettings();
-        const containerRef = useRef(null);
-        const [isPastOffset, setIsPastOffset] = useState(false);
+        const containerRef = useRef<HTMLDivElement | null>(null);
 
-        const isInView = useInView({
-            current: pageHeaderProps?.target?.current,
-        });
+        const scrollHandlerRef = useRef<null | number>(null);
 
         const [initialize] = useOverlayScrollbars({
             defer: false,
             events: {
                 scroll: (_instance, e) => {
-                    if (noHeader) {
-                        return setIsPastOffset(true);
+                    if (scrollHandlerRef.current) {
+                        cancelAnimationFrame(scrollHandlerRef.current);
                     }
 
-                    if (pageHeaderProps?.target || !pageHeaderProps?.offset) {
-                        return setIsPastOffset(true);
-                    }
+                    scrollHandlerRef.current = requestAnimationFrame(() => {
+                        if (noHeader || !pageHeaderProps) {
+                            return;
+                        }
 
-                    const offset = pageHeaderProps?.offset;
-                    const scrollTop = (e?.target as HTMLDivElement)?.scrollTop;
+                        const scrollElement = e?.target as HTMLDivElement;
+                        if (!scrollElement || !containerRef.current) {
+                            return;
+                        }
 
-                    if (scrollTop > offset && isPastOffset === false) {
-                        return setIsPastOffset(true);
-                    }
+                        const offset = pageHeaderProps.offset || 0;
+                        const scrollTop = scrollElement.scrollTop;
 
-                    if (scrollTop <= offset && isPastOffset === true) {
-                        return setIsPastOffset(false);
-                    }
-
-                    return null;
+                        if (scrollTop > offset) {
+                            containerRef.current.setAttribute('data-scrolled', 'true');
+                        } else {
+                            containerRef.current.setAttribute('data-scrolled', 'false');
+                        }
+                    });
                 },
             },
             options: {
@@ -73,21 +72,22 @@ export const NativeScrollArea = forwardRef(
         useEffect(() => {
             if (containerRef.current) {
                 initialize(containerRef.current as HTMLDivElement);
+                if (!noHeader && pageHeaderProps) {
+                    containerRef.current.setAttribute('data-scrolled', 'false');
+                }
             }
-        }, [initialize]);
+        }, [initialize, noHeader, pageHeaderProps]);
 
         const mergedRef = useMergedRef(ref, containerRef);
-
-        const shouldShowHeader = !noHeader && isPastOffset && !isInView;
 
         return (
             <>
                 {windowBarStyle === Platform.WEB && <div className={styles.dragContainer} />}
-                {shouldShowHeader && (
+                {!noHeader && pageHeaderProps && (
                     <PageHeader
                         animated
-                        isHidden={false}
                         position="absolute"
+                        scrollContainerRef={containerRef}
                         {...pageHeaderProps}
                     />
                 )}
@@ -98,3 +98,7 @@ export const NativeScrollArea = forwardRef(
         );
     },
 );
+
+export const NativeScrollArea = memo(BaseNativeScrollArea);
+
+NativeScrollArea.displayName = 'NativeScrollArea';

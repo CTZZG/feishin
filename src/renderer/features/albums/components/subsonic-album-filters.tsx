@@ -1,11 +1,13 @@
-import debounce from 'lodash/debounce';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { ChangeEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
-import { useAlbumArtistList } from '/@/renderer/features/artists/queries/album-artist-list-query';
-import { useGenreList } from '/@/renderer/features/genres';
-import { AlbumListFilter, useListStoreActions, useListStoreByKey } from '/@/renderer/store';
+import { useListContext } from '/@/renderer/context/list-context';
+import { useAlbumListFilters } from '/@/renderer/features/albums/hooks/use-album-list-filters';
+import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
+import { useGenreList } from '/@/renderer/features/genres/api/genres-api';
+import { useCurrentServerId } from '/@/renderer/store';
 import { Divider } from '/@/shared/components/divider/divider';
 import { Group } from '/@/shared/components/group/group';
 import { NumberInput } from '/@/shared/components/number-input/number-input';
@@ -14,77 +16,61 @@ import { SpinnerIcon } from '/@/shared/components/spinner/spinner';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Switch } from '/@/shared/components/switch/switch';
 import { Text } from '/@/shared/components/text/text';
-import {
-    AlbumArtistListSort,
-    AlbumListQuery,
-    GenreListSort,
-    LibraryItem,
-    SortOrder,
-} from '/@/shared/types/domain-types';
+import { useDebouncedCallback } from '/@/shared/hooks/use-debounced-callback';
+import { AlbumArtistListSort, SortOrder } from '/@/shared/types/domain-types';
 
 interface SubsonicAlbumFiltersProps {
     disableArtistFilter?: boolean;
-    onFilterChange: (filters: AlbumListFilter) => void;
-    pageKey: string;
-    serverId?: string;
 }
 
-export const SubsonicAlbumFilters = ({
-    disableArtistFilter,
-    onFilterChange,
-    pageKey,
-    serverId,
-}: SubsonicAlbumFiltersProps) => {
+export const SubsonicAlbumFilters = ({ disableArtistFilter }: SubsonicAlbumFiltersProps) => {
     const { t } = useTranslation();
-    const { filter } = useListStoreByKey<AlbumListQuery>({ key: pageKey });
-    const { setFilter } = useListStoreActions();
+
+    const serverId = useCurrentServerId();
+
+    const { customFilters } = useListContext();
+
+    const isGenrePage = customFilters?.genreIds !== undefined;
+
+    const { query, setAlbumArtist, setFavorite, setGenreId, setMaxYear, setMinYear } =
+        useAlbumListFilters();
+
     const [albumArtistSearchTerm, setAlbumArtistSearchTerm] = useState<string>('');
 
-    const albumArtistListQuery = useAlbumArtistList({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
-        },
-        query: {
-            sortBy: AlbumArtistListSort.NAME,
-            sortOrder: SortOrder.ASC,
-            startIndex: 0,
-        },
-        serverId,
-    });
+    const albumArtistListQuery = useSuspenseQuery(
+        artistsQueries.albumArtistList({
+            options: {
+                gcTime: 1000 * 60 * 2,
+                staleTime: 1000 * 60 * 1,
+            },
+            query: {
+                sortBy: AlbumArtistListSort.NAME,
+                sortOrder: SortOrder.ASC,
+                startIndex: 0,
+            },
+            serverId,
+        }),
+    );
+
+    const items = albumArtistListQuery?.data?.items;
 
     const selectableAlbumArtists = useMemo(() => {
-        if (!albumArtistListQuery?.data?.items) return [];
+        if (!items) return [];
 
-        return albumArtistListQuery?.data?.items?.map((artist) => ({
+        return items.map((artist) => ({
             label: artist.name,
             value: artist.id,
         }));
-    }, [albumArtistListQuery?.data?.items]);
+    }, [items]);
 
-    const handleAlbumArtistFilter = (e: null | string[]) => {
-        const updatedFilters = setFilter({
-            data: {
-                artistIds: e?.length ? e : undefined,
-            },
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
-        onFilterChange(updatedFilters);
-    };
+    const handleAlbumArtistFilter = useMemo(
+        () => (e: null | string[]) => {
+            setAlbumArtist(e ?? null);
+        },
+        [setAlbumArtist],
+    );
 
-    const genreListQuery = useGenreList({
-        options: {
-            cacheTime: 1000 * 60 * 2,
-            staleTime: 1000 * 60 * 1,
-        },
-        query: {
-            sortBy: GenreListSort.NAME,
-            sortOrder: SortOrder.ASC,
-            startIndex: 0,
-        },
-        serverId,
-    });
+    const genreListQuery = useGenreList();
 
     const genreList = useMemo(() => {
         if (!genreListQuery?.data) return [];
@@ -94,113 +80,121 @@ export const SubsonicAlbumFilters = ({
         }));
     }, [genreListQuery.data]);
 
-    const handleGenresFilter = debounce((e: null | string) => {
-        const updatedFilters = setFilter({
-            data: {
-                genres: e ? [e] : undefined,
-            },
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
-
-        onFilterChange(updatedFilters);
-    }, 250);
-
-    const toggleFilters = [
-        {
-            label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
-            onChange: (e: ChangeEvent<HTMLInputElement>) => {
-                const updatedFilters = setFilter({
-                    data: {
-                        favorite: e.target.checked ? true : undefined,
-                    },
-                    itemType: LibraryItem.ALBUM,
-                    key: pageKey,
-                }) as AlbumListFilter;
-                onFilterChange(updatedFilters);
-            },
-            value: filter.favorite,
+    const handleGenresFilter = useMemo(
+        () => (e: null | string) => {
+            setGenreId(e ? [e] : null);
         },
-    ];
+        [setGenreId],
+    );
 
-    const handleYearFilter = debounce((e: number | string, type: 'max' | 'min') => {
-        let data: Partial<AlbumListQuery> = {};
+    const toggleFilters = useMemo(
+        () => [
+            {
+                label: t('filter.isFavorited', { postProcess: 'sentenceCase' }),
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
+                    const favoriteValue = e.target.checked ? true : undefined;
+                    setFavorite(favoriteValue ?? null);
+                },
+                value: query.favorite,
+            },
+        ],
+        [t, query.favorite, setFavorite],
+    );
 
-        if (type === 'min') {
-            data = {
-                minYear: e ? Number(e) : undefined,
-            };
-        } else {
-            data = {
-                maxYear: e ? Number(e) : undefined,
-            };
-        }
+    const handleMinYearFilter = useMemo(
+        () => (e: number | string) => {
+            // Handle empty string, null, undefined, or invalid numbers as clearing
+            if (e === '' || e === null || e === undefined || isNaN(Number(e))) {
+                setMinYear(null);
+                return;
+            }
 
-        const updatedFilters = setFilter({
-            data,
-            itemType: LibraryItem.ALBUM,
-            key: pageKey,
-        }) as AlbumListFilter;
+            const year = typeof e === 'number' ? e : Number(e);
+            // If it's a valid number, set it; otherwise clear
+            if (!isNaN(year) && isFinite(year) && year > 0) {
+                setMinYear(year);
+            } else {
+                setMinYear(null);
+            }
+        },
+        [setMinYear],
+    );
 
-        onFilterChange(updatedFilters);
-    }, 500);
+    const handleMaxYearFilter = useMemo(
+        () => (e: number | string) => {
+            // Handle empty string, null, undefined, or invalid numbers as clearing
+            if (e === '' || e === null || e === undefined || isNaN(Number(e))) {
+                setMaxYear(null);
+                return;
+            }
+
+            const year = typeof e === 'number' ? e : Number(e);
+            // If it's a valid number, set it; otherwise clear
+            if (!isNaN(year) && isFinite(year) && year > 0) {
+                setMaxYear(year);
+            } else {
+                setMaxYear(null);
+            }
+        },
+        [setMaxYear],
+    );
+
+    const debouncedHandleMinYearFilter = useDebouncedCallback(handleMinYearFilter, 300);
+    const debouncedHandleMaxYearFilter = useDebouncedCallback(handleMaxYearFilter, 300);
 
     return (
-        <Stack p="0.8rem">
+        <Stack p="md">
             {toggleFilters.map((filter) => (
-                <Group justify="space-between" key={`nd-filter-${filter.label}`}>
+                <Group justify="space-between" key={`ss-filter-${filter.label}`}>
                     <Text>{filter.label}</Text>
-                    <Switch checked={filter?.value || false} onChange={filter.onChange} />
+                    <Switch defaultChecked={filter.value ?? false} onChange={filter.onChange} />
                 </Group>
             ))}
-            <Divider my="0.5rem" />
+            <Divider my="md" />
             <Group grow>
                 <NumberInput
-                    defaultValue={filter.minYear}
-                    disabled={filter.genres?.length !== undefined}
+                    defaultValue={query.minYear ?? undefined}
+                    disabled={Boolean(query.genreIds && query.genreIds.length > 0)}
                     hideControls={false}
                     label={t('filter.fromYear', { postProcess: 'sentenceCase' })}
                     max={5000}
                     min={0}
-                    onChange={(e) => handleYearFilter(e, 'min')}
+                    onChange={(e) => debouncedHandleMinYearFilter(e)}
                 />
                 <NumberInput
-                    defaultValue={filter.maxYear}
-                    disabled={filter.genres?.length !== undefined}
+                    defaultValue={query.maxYear ?? undefined}
+                    disabled={Boolean(query.genreIds && query.genreIds.length > 0)}
                     hideControls={false}
                     label={t('filter.toYear', { postProcess: 'sentenceCase' })}
                     max={5000}
                     min={0}
-                    onChange={(e) => handleYearFilter(e, 'max')}
+                    onChange={(e) => debouncedHandleMaxYearFilter(e)}
                 />
             </Group>
-            <Group grow>
+            {!isGenrePage && (
                 <Select
                     clearable
                     data={genreList}
-                    defaultValue={filter.genres?.length ? filter.genres[0] : undefined}
-                    disabled={Boolean(filter.minYear || filter.maxYear)}
+                    defaultValue={query.genreIds?.[0] ?? undefined}
+                    disabled={Boolean(query.minYear || query.maxYear)}
                     label={t('entity.genre', { count: 1, postProcess: 'titleCase' })}
-                    onChange={handleGenresFilter}
+                    onChange={(e) => handleGenresFilter(e)}
                     searchable
                 />
-            </Group>
-            <Group grow>
-                <MultiSelectWithInvalidData
-                    clearable
-                    data={selectableAlbumArtists}
-                    defaultValue={filter?.artistIds}
-                    disabled={disableArtistFilter}
-                    label={t('entity.artist', { count: 2, postProcess: 'sentenceCase' })}
-                    limit={300}
-                    onChange={handleAlbumArtistFilter}
-                    onSearchChange={setAlbumArtistSearchTerm}
-                    placeholder="Type to search for an artist"
-                    rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
-                    searchable
-                    searchValue={albumArtistSearchTerm}
-                />
-            </Group>
+            )}
+            <MultiSelectWithInvalidData
+                clearable
+                data={selectableAlbumArtists}
+                defaultValue={query.artistIds ?? []}
+                disabled={disableArtistFilter}
+                label={t('entity.artist', { count: 2, postProcess: 'sentenceCase' })}
+                limit={300}
+                onChange={handleAlbumArtistFilter}
+                onSearchChange={setAlbumArtistSearchTerm}
+                rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
+                searchable
+                searchValue={albumArtistSearchTerm}
+            />
         </Stack>
     );
 };

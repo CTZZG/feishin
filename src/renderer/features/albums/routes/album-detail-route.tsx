@@ -1,48 +1,48 @@
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
-
+import { useQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 
 import { NativeScrollArea } from '/@/renderer/components/native-scroll-area/native-scroll-area';
+import { albumQueries } from '/@/renderer/features/albums/api/album-api';
 import { AlbumDetailContent } from '/@/renderer/features/albums/components/album-detail-content';
 import { AlbumDetailHeader } from '/@/renderer/features/albums/components/album-detail-header';
-import { useAlbumDetail } from '/@/renderer/features/albums/queries/album-detail-query';
-import { usePlayQueueAdd } from '/@/renderer/features/player';
-import { AnimatedPage, LibraryHeaderBar } from '/@/renderer/features/shared';
+import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
+import {
+    LibraryBackgroundImage,
+    LibraryBackgroundOverlay,
+} from '/@/renderer/features/shared/components/library-background-overlay';
+import { LibraryContainer } from '/@/renderer/features/shared/components/library-container';
+import { LibraryHeaderBar } from '/@/renderer/features/shared/components/library-header-bar';
+import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
 import { useFastAverageColor } from '/@/renderer/hooks';
 import { useCurrentServer, useGeneralSettings } from '/@/renderer/store';
-import { usePlayButtonBehavior } from '/@/renderer/store/settings.store';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
 const AlbumDetailRoute = () => {
-    const tableRef = useRef<AgGridReactType | null>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLDivElement>(null);
     const { albumBackground, albumBackgroundBlur } = useGeneralSettings();
 
     const { albumId } = useParams() as { albumId: string };
     const server = useCurrentServer();
-    const detailQuery = useAlbumDetail({ query: { id: albumId }, serverId: server?.id });
-    const { background: backgroundColor, colorId } = useFastAverageColor({
+
+    const location = useLocation();
+
+    const detailQuery = useQuery({
+        ...albumQueries.detail({ query: { id: albumId }, serverId: server?.id }),
+        initialData: location.state?.item,
+        staleTime: 0,
+    });
+
+    const { background: backgroundColor } = useFastAverageColor({
         id: albumId,
         src: detailQuery.data?.imageUrl,
         srcLoaded: !detailQuery.isLoading,
     });
-    const handlePlayQueueAdd = usePlayQueueAdd();
-    const playButtonBehavior = usePlayButtonBehavior();
 
-    const handlePlay = () => {
-        handlePlayQueueAdd?.({
-            byItemType: {
-                id: [albumId],
-                type: LibraryItem.ALBUM,
-            },
-            playType: playButtonBehavior,
-        });
-    };
+    const background = backgroundColor;
 
-    const backgroundUrl = detailQuery.data?.imageUrl || '';
-    const background = (albumBackground && `url(${backgroundUrl})`) || backgroundColor;
+    const showBlurredImage = albumBackground;
 
     return (
         <AnimatedPage key={`album-detail-${albumId}`}>
@@ -51,7 +51,11 @@ const AlbumDetailRoute = () => {
                     backgroundColor: backgroundColor || undefined,
                     children: (
                         <LibraryHeaderBar>
-                            <LibraryHeaderBar.PlayButton onClick={handlePlay} />
+                            <LibraryHeaderBar.PlayButton
+                                ids={[albumId]}
+                                itemType={LibraryItem.ALBUM}
+                                variant="default"
+                            />
                             <LibraryHeaderBar.Title>
                                 {detailQuery?.data?.name}
                             </LibraryHeaderBar.Title>
@@ -62,18 +66,30 @@ const AlbumDetailRoute = () => {
                 }}
                 ref={scrollAreaRef}
             >
-                <AlbumDetailHeader
-                    background={{
-                        background,
-                        blur: (albumBackground && albumBackgroundBlur) || 0,
-                        loading: !backgroundColor || colorId !== albumId,
-                    }}
-                    ref={headerRef}
-                />
-                <AlbumDetailContent background={background} tableRef={tableRef} />
+                {showBlurredImage ? (
+                    <LibraryBackgroundImage
+                        blur={albumBackgroundBlur}
+                        headerRef={headerRef}
+                        imageUrl={detailQuery.data?.imageUrl}
+                    />
+                ) : (
+                    <LibraryBackgroundOverlay backgroundColor={background} headerRef={headerRef} />
+                )}
+                <LibraryContainer>
+                    <AlbumDetailHeader ref={headerRef as React.Ref<HTMLDivElement>} />
+                    <AlbumDetailContent />
+                </LibraryContainer>
             </NativeScrollArea>
         </AnimatedPage>
     );
 };
 
-export default AlbumDetailRoute;
+const AlbumDetailRouteWithBoundary = () => {
+    return (
+        <PageErrorBoundary>
+            <AlbumDetailRoute />
+        </PageErrorBoundary>
+    );
+};
+
+export default AlbumDetailRouteWithBoundary;

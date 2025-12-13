@@ -9,6 +9,7 @@ export interface AppSlice extends AppState {
     actions: {
         setAppStore: (data: Partial<AppSlice>) => void;
         setPrivateMode: (enabled: boolean) => void;
+        setShowTimeRemaining: (enabled: boolean) => void;
         setSideBar: (options: Partial<SidebarProps>) => void;
         setTitleBar: (options: Partial<TitlebarProps>) => void;
     };
@@ -19,6 +20,7 @@ export interface AppState {
     isReorderingQueue: boolean;
     platform: Platform;
     privateMode: boolean;
+    showTimeRemaining: boolean;
     sidebar: SidebarProps;
     titlebar: TitlebarProps;
 }
@@ -57,6 +59,11 @@ export const useAppStore = createWithEqualityFn<AppSlice>()(
                             state.privateMode = privateMode;
                         });
                     },
+                    setShowTimeRemaining: (showTimeRemaining) => {
+                        set((state) => {
+                            state.showTimeRemaining = showTimeRemaining;
+                        });
+                    },
                     setSideBar: (options) => {
                         set((state) => {
                             state.sidebar = { ...state.sidebar, ...options };
@@ -89,13 +96,14 @@ export const useAppStore = createWithEqualityFn<AppSlice>()(
                 isReorderingQueue: false,
                 platform: Platform.WINDOWS,
                 privateMode: false,
+                showTimeRemaining: false,
                 sidebar: {
                     collapsed: false,
                     expanded: [],
                     image: false,
                     leftWidth: '400px',
                     rightExpanded: false,
-                    rightWidth: '400px',
+                    rightWidth: '600px',
                 },
                 titlebar: {
                     backgroundColor: '#000000',
@@ -108,8 +116,15 @@ export const useAppStore = createWithEqualityFn<AppSlice>()(
             merge: (persistedState, currentState) => {
                 return merge(currentState, persistedState);
             },
+            migrate: (persistedState, version) => {
+                if (version <= 2) {
+                    return {} as AppState;
+                }
+
+                return persistedState;
+            },
             name: 'store_app',
-            version: 2,
+            version: 3,
         },
     ),
 );

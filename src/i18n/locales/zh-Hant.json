@@ -91,7 +91,22 @@
         "tags": "標籤",
         "trackGain": "曲目增益",
         "trackPeak": "歌曲峰值",
-        "translation": "翻譯"
+        "translation": "翻譯",
+        "doNotShowAgain": "不再顯示",
+        "externalLinks": "外部連結",
+        "faster": "更快",
+        "private": "私人",
+        "public": "公開",
+        "recordLabel": "唱片公司",
+        "releaseType": "發行類型",
+        "slower": "更慢",
+        "sort": "排序",
+        "tableColumns": "表格欄位",
+        "clean": "清除",
+        "explicitStatus": "Explicit狀態",
+        "explicit": "Explicit",
+        "gridRows": "網格行",
+        "noFilters": "未設定任何過濾器"
     },
     "error": {
         "endpointNotImplementedError": "{{serverType}} 尚未實現端點 {{endpoint}}",
@@ -113,7 +128,7 @@
         "serverNotSelectedError": "未選擇伺服器",
         "mpvRequired": "需要 MPV",
         "playbackError": "無法播放媒體",
-        "badAlbum": "您看到此頁面是因為這首歌不是專輯的一部分。如果您的音樂資料夾頂層有一首歌，則很可能會看到此問題。 Jellyfin 僅將資料夾中的曲目分組。",
+        "badAlbum": "您看到此頁面是因為這首歌不是專輯的一部分。如果您的音樂資料夾頂層有一首歌，則很可能會看到此問題。 Jellyfin 僅將資料夾中的曲目分組",
         "badValue": "無效選項“{{value}}”。該值不再存在",
         "networkError": "發生網路錯誤",
         "notificationDenied": "通知權限被拒絕。此設定無效",
@@ -142,7 +157,11 @@
             "playSimilarSongs": "$t(player.playSimilarSongs)",
             "playShuffled": "$t(player.shuffle)",
             "shareItem": "分享項目",
-            "showDetails": "取得資訊"
+            "showDetails": "取得資訊",
+            "goToAlbum": "前往 $t(entity.album_one)",
+            "goToAlbumArtist": "前往 $t(entity.albumArtist_one)",
+            "moveItems": "$t(action.moveItems)",
+            "goTo": "前往"
         },
         "globalSearch": {
             "title": "指令",
@@ -157,7 +176,9 @@
             "recentlyPlayed": "最近播放",
             "title": "$t(common.home)",
             "mostPlayed": "最多播放",
-            "newlyAdded": "最近新增的發行"
+            "newlyAdded": "最近新增的發行",
+            "recentlyReleased": "最近發佈",
+            "genres": "$t(entity.genre_other)"
         },
         "appMenu": {
             "openBrowserDevtools": "打開瀏覽器開發者工具",
@@ -169,7 +190,13 @@
             "selectServer": "選擇伺服器",
             "settings": "$t(common.setting_other)",
             "version": "版本 {{version}}",
-            "manageServers": "管理伺服器"
+            "manageServers": "管理伺服器",
+            "privateModeOff": "關閉私人模式",
+            "privateModeOn": "開啟私人模式",
+            "selectMusicFolder": "選擇媒體庫",
+            "noMusicFolder": "未選取任何媒體庫",
+            "multipleMusicFolders": "已選取 {{count}} 個媒體庫",
+            "commandPalette": "開啟命令面板"
         },
         "fullscreenPlayer": {
             "config": {
@@ -202,7 +229,24 @@
             "playbackTab": "播放",
             "windowTab": "視窗",
             "generalTab": "一般",
-            "advanced": "進階"
+            "advanced": "進階",
+            "analytics": "分析",
+            "updates": "更新",
+            "cache": "快取",
+            "application": "應用程式",
+            "theme": "主題",
+            "controls": "控制面板",
+            "sidebar": "側邊攔",
+            "remote": "遠端控制",
+            "exportImport": "匯入/匯出",
+            "scrobble": "記錄播放資訊",
+            "audio": "音訊",
+            "lyrics": "歌詞",
+            "transcoding": "轉碼",
+            "discord": "Discord",
+            "queryBuilder": "查詢建構器",
+            "playerFilters": "播放過濾器",
+            "logger": "日誌記錄器"
         },
         "albumArtistList": {
             "title": "$t(entity.albumArtist_other)"
@@ -235,7 +279,8 @@
             "nowPlaying": "正在播放",
             "playlists": "$t(entity.playlist_other)",
             "myLibrary": "我的資料庫",
-            "shared": "已分享 $t(entity.playlist_other)"
+            "shared": "已分享 $t(entity.playlist_other)",
+            "favorites": "$t(entity.favorite_other)"
         },
         "trackList": {
             "title": "$t(entity.track_other)",
@@ -268,6 +313,12 @@
         },
         "playlist": {
             "reorder": "僅當按 ID 排序時才啟用重新排序"
+        },
+        "favorites": {
+            "title": "$t(entity.favorite_other)"
+        },
+        "folderList": {
+            "title": "$t(entity.folder_other)"
         }
     },
     "player": {
@@ -286,7 +337,7 @@
         "repeat": "循環",
         "repeat_all": "全部循環",
         "repeat_off": "不循環",
-        "shuffle": "隨機播放",
+        "shuffle": "播放 (隨機)",
         "shuffle_off": "未啟用隨機播放",
         "skip": "跳過",
         "skip_back": "向後跳過",
@@ -301,13 +352,18 @@
         "queue_moveToBottom": "使所選置頂",
         "queue_moveToTop": "使所選置底",
         "playSimilarSongs": "播放相似歌曲",
-        "viewQueue": "檢視佇列"
+        "viewQueue": "檢視佇列",
+        "addLastShuffled": "新增到尾端 (隨機)",
+        "addNextShuffled": "新增到下一首 (隨機)",
+        "queueType": "佇列類型",
+        "queueType_default": "預設",
+        "queueType_priority": "優先",
+        "holdToShuffle": "按住以隨機"
     },
     "setting": {
         "audioPlayer_description": "選擇用於播放的音訊播放器",
         "themeLight": "主題（淺色）",
         "themeLight_description": "應用程式將使用淺色主題",
-        "discordRichPresence": "{{discord}} rich presence",
         "hotkey_volumeDown": "音量降低",
         "hotkey_volumeMute": "靜音",
         "minimumScrobblePercentage": "最小紀錄時長（百分比）",
@@ -324,7 +380,6 @@
         "audioPlayer": "音訊播放器",
         "crossfadeDuration": "淡入淡出持續時間",
         "crossfadeDuration_description": "設定淡入淡出持續時間",
-        "crossfadeStyle": "淡入淡出風格",
         "crossfadeStyle_description": "選擇用於音訊播放器的淡入淡出風格",
         "customFontPath": "自定字體路徑",
         "customFontPath_description": "設定應用程式使用的自定字體路徑",
@@ -340,11 +395,10 @@
         "enableRemote": "啟用遠端控制伺服器",
         "enableRemote_description": "啟用遠端控制伺服器，以允許其他設備控制此應用程式",
         "exitToTray": "退出時最小化到托盤",
-        "floatingQueueArea_description": "在螢幕右側顯示一個懸停圖示，以查看佇列",
         "followLyric": "跟隨目前歌詞",
         "font_description": "設定應用程式使用的字體",
         "fontType": "字體類型",
-        "fontType_description": "內建字體可以選擇 Feishin 提供的字體之一。系統字體允許您選擇作業系統提供的任何字體。自定選項允許您使用自己的字體",
+        "fontType_description": "內建字體可以選擇 feishin 提供的字體之一。系統字體允許您選擇作業系統提供的任何字體。自定選項允許您使用自己的字體",
         "fontType_optionBuiltIn": "內建字體",
         "fontType_optionCustom": "自定字體",
         "fontType_optionSystem": "系統字體",
@@ -378,14 +432,13 @@
         "hotkey_unfavoritePreviousSong": "取消收藏$t(common.previousSong)",
         "hotkey_zoomIn": "放大",
         "hotkey_zoomOut": "縮小",
-        "language": "語言",
         "language_description": "設定應用程式的語言（$t(common.restartRequired)）",
         "lyricFetch": "從網路取得歌詞",
-        "lyricFetch_description": "從多個網路源取得歌詞",
-        "lyricFetchProvider": "歌詞源",
+        "lyricFetch_description": "從多個網路來源取得歌詞",
+        "lyricFetchProvider": "歌詞來源",
         "lyricOffset": "歌詞偏移（毫秒）",
         "lyricOffset_description": "將歌詞偏移指定的毫秒數",
-        "lyricFetchProvider_description": "選擇歌詞源。 歌詞源順序與搜尋順序一致",
+        "lyricFetchProvider_description": "選擇歌詞來源。 來源順序即為搜尋的順序",
         "minimizeToTray": "最小化到托盤",
         "minimizeToTray_description": "將應用程式最小化到系統托盤",
         "minimumScrobbleSeconds": "最小紀錄時間（秒）",
@@ -445,7 +498,6 @@
         "showSkipButtons_description": "在播放條顯示/隱藏播放按鈕",
         "playbackStyle": "播放風格",
         "exitToTray_description": "退出應用程式時最小化到系統托盤而非關閉",
-        "floatingQueueArea": "顯示浮動佇列懸停區域",
         "followLyric_description": "滾動歌詞到目前播放位置",
         "font": "字體",
         "globalMediaHotkeys_description": "啟用或禁用系統媒體快捷鍵以控制播放",
@@ -454,7 +506,6 @@
         "hotkey_playbackStop": "停止",
         "hotkey_rate0": "清除評分",
         "mpvExecutablePath_description": "設定 mpv 執行檔的路徑。如果留空，則使用預設路徑",
-        "mpvExtraParameters": "mpv 參數",
         "playbackStyle_description": "選擇播放器的播放風格",
         "playButtonBehavior_optionPlay": "$t(player.play)",
         "remotePassword": "遠端控制伺服器密碼",
@@ -480,24 +531,20 @@
         "contextMenu": "右鍵選單配置",
         "contextMenu_description": "允許您隱藏在右鍵選單項目時顯示的項目。未選取的項目將被隱藏",
         "customCssEnable": "啟用自訂CSS",
-        "customCssEnable_description": "允許撰寫自訂CSS。",
-        "customCssNotice": "警告：雖然有一些清理措施（不允許 url() 和 content:），但使用自訂 CSS 仍然會透過更改介面帶來風險。",
+        "customCssEnable_description": "允許撰寫自訂CSS",
+        "customCssNotice": "警告：雖然有一些清理措施（不允許 url() 和 content:），但使用自訂 CSS 仍然會透過更改介面帶來風險",
         "customCss": "自訂CSS",
-        "customCss_description": "自訂 CSS 內容。注意：內容和遠端 URL 是不允許使用的屬性。您的內容預覽如下所示。由於需要進行清理，因此存在一些您未設定的其他欄位。",
+        "customCss_description": "自訂 CSS 內容。注意：內容和遠端 URL 是不允許使用的屬性。您的內容預覽如下所示。由於需要進行清理，因此存在一些您未設定的其他欄位",
         "discordPausedStatus": "暫停時顯示 rich presence",
         "discordPausedStatus_description": "啟用後，播放器暫停時將顯示狀態",
         "discordListening": "將狀態設為\"正在聽\"",
         "discordListening_description": "將狀態顯示為\"正在聽\"而不是\"正在玩\"",
         "discordServeImage": "從伺服器提供{{discord}}圖片",
-        "discordServeImage_description": "從伺服器本身為 {{discord}} rich presence 分享封面圖片，只在jellyfin和navidrome可用",
-        "doubleClickBehavior": "雙擊時將所有搜尋到的曲目加入佇列",
-        "doubleClickBehavior_description": "如果為 true，則歌曲搜尋中所有符合的歌曲都會被加入佇列。否則，只有被點擊的歌曲才會被加入佇列",
+        "discordServeImage_description": "從伺服器本身分享 {{discord}} Rich Presence的封面圖片，僅支援 Jellyfin 與 Navidrome。{{discord}} 會透過機器人擷取圖片，因此您的伺服器必須能從公開網路連線",
         "externalLinks": "顯示外部連結",
         "externalLinks_description": "在藝術家/專輯頁面顯示外部連結(Last.fm, MusicBrainz)",
         "preferLocalLyrics": "偏好本地歌詞",
         "preferLocalLyrics_description": "優先選擇本地歌詞，而不是遠端歌詞（如果可用）",
-        "genreBehavior": "曲風頁面預設動作",
-        "genreBehavior_description": "決定點擊某個曲風時是否預設開啟曲目或專輯列表",
         "homeConfiguration": "首頁配置",
         "homeConfiguration_description": "配置在首頁上顯示哪些項目以及顯示順序",
         "homeFeature": "首頁特色輪播",
@@ -505,18 +552,16 @@
         "imageAspectRatio": "使用原生封面照長寬比",
         "imageAspectRatio_description": "如果啟用，封面照將使用其原始長寬比顯示。對於非 1:1 的封面，剩餘空間將為空",
         "lastfm": "顯示 last.fm 連結",
-        "lastfm_description": "在藝術家/專輯頁面顯示 last.fm 連結",
+        "lastfm_description": "在藝術家/專輯頁面顯示 Last.fm 連結",
         "lastfmApiKey": "{{lastfm}} API金鑰",
         "lastfmApiKey_description": "{{lastfm}}的API金鑰。用於封面照",
-        "notify": "啟用歌曲通知",
-        "notify_description": "當切換目前歌曲時顯示通知",
         "mpvExtraParameters_help": "一行一個",
-        "musicbrainz": "顯示 musicbrainz 連結",
-        "musicbrainz_description": "在存在 mbid 的藝術家/專輯頁面上顯示 musicbrainz 的鏈接",
+        "musicbrainz": "顯示 MusicBrainz 連結",
+        "musicbrainz_description": "在存在 MusicBrainz ID 的藝術家/專輯頁面上顯示 MusicBrainz 的鏈接",
         "neteaseTranslation": "啟用網易翻譯",
-        "neteaseTranslation_description": "啟用後，將從網易取得並顯示翻譯的歌詞（如果有）。",
+        "neteaseTranslation_description": "啟用後，將從網易取得並顯示翻譯的歌詞（如果有）",
         "passwordStore": "密碼/secret儲存",
-        "passwordStore_description": "使用什麼密碼/secret儲存。如果您在儲存密碼時遇到問題，請變更此項目。",
+        "passwordStore_description": "使用什麼密碼/secret儲存。如果您在儲存密碼時遇到問題，請變更此項目",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
         "playerAlbumArtResolution": "播放器專輯封面解析度",
         "playerAlbumArtResolution_description": "大型播放器專輯封面預覽的解析度。較大的解析度使其看起來更清晰，但可能會減慢載入速度。預設為 0，表示自動",
@@ -524,8 +569,6 @@
         "playerbarOpenDrawer_description": "允許點擊播放器列以開啟全螢幕播放器",
         "startMinimized": "最小化啟動",
         "startMinimized_description": "在系統托盤中啟動應用程式",
-        "transcodeNote": "將在播放1 (web) - 2 (mpv)首歌後生效",
-        "transcode": "啟用轉碼",
         "transcode_description": "啟用轉碼到不同格式",
         "transcodeBitrate": "要轉碼的比特率",
         "transcodeBitrate_description": "選擇要轉碼的比特率。 0 表示讓伺服器選擇",
@@ -534,7 +577,7 @@
         "translationApiProvider": "翻譯API提供者",
         "translationApiProvider_description": "翻譯API的提供者",
         "translationApiKey": "翻譯API金鑰",
-        "translationApiKey_description": "翻譯的API金鑰（僅支援全域服務端點）",
+        "translationApiKey_description": "翻譯的API金鑰（僅限全域服務端點）",
         "translationTargetLanguage": "目標翻譯語言",
         "translationTargetLanguage_description": "翻譯的目標語言",
         "trayEnabled": "顯示托盤",
@@ -544,7 +587,86 @@
         "webAudio": "使用網頁音訊",
         "webAudio_description": "使用網頁音訊。這將啟用重播增益等進階功能。如果您遇到其他問題，請停用",
         "preservePitch": "保持音高",
-        "preservePitch_description": "修改播放速度時保留音調"
+        "preservePitch_description": "修改播放速度時保留音調",
+        "artistBackground": "藝人背景圖片",
+        "artistBackground_description": "為藝人頁面新增含藝人圖片的背景圖像",
+        "artistBackgroundBlur": "藝人背景圖片模糊程度",
+        "artistBackgroundBlur_description": "調整套用至藝人背景圖片的模糊程度",
+        "releaseChannel_optionLatest": "最新版本",
+        "releaseChannel_optionBeta": "測試版",
+        "releaseChannel_description": "選擇自動更新時要使用穩定版本或是測試版本",
+        "discordDisplayType": "{{discord}} presence 顯示類型",
+        "discordDisplayType_description": "變更您在狀態中正在聆聽的內容",
+        "discordDisplayType_songname": "歌曲名稱",
+        "discordDisplayType_artistname": "藝人名稱",
+        "discordLinkType": "{{discord}} presence 連結",
+        "discordLinkType_description": "在 {{discord}} Rich Presence中，為歌曲和藝人欄位新增 {{lastfm}} 或 {{musicbrainz}} 的外部連結。{{musicbrainz}} 的準確度最高，但需要標籤且不提供藝人連結；而 {{lastfm}} 通常都能提供連結。此功能不會產生額外的網路請求",
+        "discordLinkType_none": "$t(common.none)",
+        "discordLinkType_mbz_lastfm": "{{musicbrainz}} 並以 {{lastfm}} 備用",
+        "hotkey_navigateHome": "導航至首頁",
+        "preventSleepOnPlayback": "防止播放時進入睡眠狀態",
+        "preventSleepOnPlayback_description": "在音樂播放時防止螢幕進入睡眠狀態",
+        "mediaSession": "啟用Media Session",
+        "mediaSession_description": "啟用 Windows Media Session 整合功能，於系統音量Overlay和鎖定畫面中顯示媒體資料與控制面板（僅限 Windows）",
+        "releaseChannel": "發佈通道",
+        "analyticsDisable": "選擇退出使用情況分析",
+        "analyticsDisable_description": "經過匿名處理的使用情況資料將傳送給開發者，以協助改進應用程式",
+        "crossfadeStyle": "交叉淡入淡出風格",
+        "discordRichPresence": "{{discord}} Rich Presence",
+        "enableAutoTranslation_description": "歌詞載入時自動啟用翻譯功能",
+        "enableAutoTranslation": "啟用自動翻譯",
+        "exportImportSettings_control_description": "使用 JSON 匯出與匯入設定",
+        "exportImportSettings_control_exportText": "匯出設定",
+        "exportImportSettings_control_importText": "匯入設定",
+        "exportImportSettings_control_title": "匯入/匯出設定",
+        "exportImportSettings_destructiveWarning": "匯入設定會覆蓋現有資料，請在點擊下方「匯入」按鈕前詳閱上述內容！",
+        "exportImportSettings_importBtn": "匯入設定",
+        "exportImportSettings_importModalTitle": "匯入Feishin設定",
+        "exportImportSettings_importSuccess": "設定已成功匯入！",
+        "exportImportSettings_notValidJSON": "傳遞的檔案不是有效的 JSON",
+        "exportImportSettings_offendingKeyError": "\"{{offendingKey}}\" 不正確 - {{reason}}",
+        "language": "語言",
+        "notify": "啟用歌曲通知",
+        "notify_description": "當歌曲變更時顯示通知",
+        "playerbarSlider": "播放進度條",
+        "playerbarSliderType_optionSlider": "滑桿",
+        "playerbarSliderType_optionWaveform": "波型",
+        "playerbarWaveformAlign": "波形對齊",
+        "playerbarWaveformAlign_optionTop": "靠上對齊",
+        "playerbarWaveformAlign_optionCenter": "置中對齊",
+        "playerbarWaveformAlign_optionBottom": "靠下對齊",
+        "playerbarWaveformBarWidth": "波形寬度",
+        "playerbarWaveformGap": "波形間距",
+        "playerbarWaveformRadius": "波形圓角",
+        "showLyricsInSidebar_description": "在播放佇列增加一個面板來顯示歌詞",
+        "showLyricsInSidebar": "在播放器側邊欄顯示歌詞",
+        "showVisualizerInSidebar_description": "在播放佇列增加一個面板來顯示視覺化效果",
+        "showVisualizerInSidebar": "在播放器側邊欄顯示視覺化效果",
+        "transcode": "啟用轉碼功能",
+        "queryBuilderCustomFields_inputLabel": "唱片公司",
+        "queryBuilderCustomFields_inputTag": "標籤",
+        "queryBuilderCustomFields": "自訂欄位",
+        "audioFadeOnStatusChange": "狀態變更時音訊淡入淡出",
+        "audioFadeOnStatusChange_description": "當播放/暫停狀態變更時，啟用淡入淡出效果",
+        "queryBuilder": "查詢建構器",
+        "queryBuilderCustomFields_description": "在查詢建構器中新增自訂欄位",
+        "followCurrentSong_description": "自動將播放佇列捲動至當前播放的歌曲",
+        "followCurrentSong": "跟隨當前歌曲",
+        "playerbarSlider_description": "不建議在網路速度緩慢或計費的網路下使用波形",
+        "playerFilters": "從佇列中過濾歌曲",
+        "playerFilters_description": "根據以下條件，排除要新增至佇列中的歌曲",
+        "autoDJ": "Auto DJ",
+        "autoDJ_description": "自動將相似的歌曲加入到播放佇列",
+        "autoDJ_itemCount": "項目數量",
+        "autoDJ_itemCount_description": "在啟用Auto DJ時嘗試加入佇列的項目數量",
+        "autoDJ_timing_description": "佇列中剩餘多少歌曲時啟動 Auto DJ",
+        "autoDJ_timing": "觸發時機",
+        "logLevel": "log等級",
+        "logLevel_description": "設定要顯示的最低日誌等級。Debug 會顯示所有日誌，Error 僅會顯示錯誤訊息",
+        "logLevel_optionDebug": "Debug",
+        "logLevel_optionError": "Error",
+        "logLevel_optionInfo": "Info",
+        "logLevel_optionWarn": "Warn"
     },
     "table": {
         "config": {
@@ -556,7 +678,28 @@
                 "autoFitColumns": "列寬自適應",
                 "followCurrentSong": "跟隨目前歌曲",
                 "itemGap": "項目間隔 (px)",
-                "itemSize": "項目大小 (px)"
+                "itemSize": "項目大小 (px)",
+                "advancedSettings": "進階設定",
+                "autosize": "自動調整大小",
+                "moveUp": "往上",
+                "moveDown": "往下",
+                "pinToLeft": "固定在左側",
+                "pinToRight": "固定在右側",
+                "alignLeft": "靠左對齊",
+                "alignCenter": "置中對齊",
+                "alignRight": "靠右對齊",
+                "itemsPerRow": "每行項目數",
+                "size_default": "預設",
+                "size_compact": "緊湊",
+                "size_large": "大型",
+                "pagination": "分頁模式",
+                "pagination_itemsPerPage": "每頁項目數",
+                "pagination_infinite": "無限滾動",
+                "pagination_paginate": "分頁式",
+                "alternateRowColors": "隔行上色",
+                "horizontalBorders": "行邊框線",
+                "rowHoverHighlight": "滑鼠懸停Highlight",
+                "verticalBorders": "列邊框線"
             },
             "label": {
                 "actions": "$t(common.action_other)",
@@ -586,11 +729,14 @@
                 "year": "$t(common.year)",
                 "rating": "$t(common.rating)",
                 "codec": "$t(common.codec)",
-                "songCount": "$t(entity.track_other)"
+                "songCount": "$t(entity.track_other)",
+                "albumCount": "$t(entity.album_other)",
+                "genreBadge": "$t(entity.genre_one) (徽章)",
+                "image": "圖片",
+                "bitDepth": "$t(common.bitDepth)",
+                "sampleRate": "$t(common.sampleRate)"
             },
             "view": {
-                "card": "卡片",
-                "poster": "海報",
                 "table": "表格",
                 "grid": "網格",
                 "list": "列表"
@@ -620,7 +766,10 @@
             "title": "標題",
             "trackNumber": "曲目編號",
             "size": "$t(common.size)",
-            "codec": "$t(common.codec)"
+            "codec": "$t(common.codec)",
+            "owner": "擁有者",
+            "bitDepth": "$t(common.bitDepth)",
+            "sampleRate": "$t(common.sampleRate)"
         }
     },
     "action": {
@@ -645,7 +794,17 @@
         "openIn": {
             "lastfm": "在Last.fm開啟",
             "musicbrainz": "在MusicBrainz開啟"
-        }
+        },
+        "downloadStarted": "已開始下載 {{count}} 項內容",
+        "moveItems": "移動項目",
+        "shuffle": "隨機播放",
+        "shuffleAll": "全部隨機播放",
+        "shuffleSelected": "隨機播放選取項目",
+        "viewMore": "查看更多",
+        "moveUp": "向上移動",
+        "moveDown": "向下移動",
+        "holdToMoveToTop": "按住以移動至頂部",
+        "holdToMoveToBottom": "按住以移動至底部"
     },
     "entity": {
         "album_other": "專輯",
@@ -709,7 +868,8 @@
         "search": "搜尋",
         "title": "標題",
         "toYear": "從年份",
-        "trackNumber": "曲目"
+        "trackNumber": "曲目",
+        "explicitStatus": "$t(common.explicitStatus)"
     },
     "form": {
         "addServer": {
@@ -723,13 +883,17 @@
             "title": "新增伺服器",
             "error_savePassword": "儲存密碼時出現錯誤",
             "ignoreCors": "忽略 cors $t(common.restartRequired)",
-            "ignoreSsl": "忽略 ssl $t(common.restartRequired)"
+            "ignoreSsl": "忽略 ssl $t(common.restartRequired)",
+            "input_preferInstantMix": "偏好即時混音",
+            "input_preferInstantMixDescription": "僅使用即時混音功能來獲取相似歌曲。若您擁有能修改此行為的外掛，此功能將相當實用"
         },
         "addToPlaylist": {
             "input_playlists": "$t(entity.playlist_other)",
             "input_skipDuplicates": "跳過重複",
             "success": "新增 $t(entity.trackWithCount, {\"count\": {{message}} }) 到 $t(entity.playlistWithCount, {\"count\": {{numOfPlaylists}} })",
-            "title": "新增到$t(entity.playlist_one)"
+            "title": "新增到$t(entity.playlist_one)",
+            "create": "創建 $t(entity.playlist_one) {{playlist}}",
+            "searchOrCreate": "搜尋$t(entity.playlist_other) 或輸入內容以建立新項目"
         },
         "createPlaylist": {
             "input_description": "$t(common.description)",
@@ -747,7 +911,11 @@
         "queryEditor": {
             "input_optionMatchAll": "匹配全部",
             "input_optionMatchAny": "匹配任何",
-            "title": "查詢編輯器"
+            "title": "查詢編輯器",
+            "addRuleGroup": "新增規則群組",
+            "removeRuleGroup": "移除規則群組",
+            "resetToDefault": "恢復為預設值",
+            "clearFilters": "清除篩選"
         },
         "updateServer": {
             "success": "伺服器已更新成功",
@@ -761,7 +929,8 @@
         "editPlaylist": {
             "title": "編輯$t(entity.playlist_one)",
             "publicJellyfinNote": "Jellyfin 出於某種原因，不會顯示播放清單是否公開。如果您希望保持公開狀態，請選擇以下輸入",
-            "success": "$t(entity.playlist_one) 更新成功"
+            "success": "$t(entity.playlist_one) 更新成功",
+            "editNote": "不建議手動編輯大型播放清單，你確定要承擔覆寫現有播放清單可能造成的資料遺失風險嗎？"
         },
         "shareItem": {
             "allowDownloading": "允許下載",
@@ -770,6 +939,76 @@
             "success": "分享連結已複製到剪貼簿（或點擊此處開啟）",
             "expireInvalid": "到期日必須是未來",
             "createFailed": "無法建立分享（分享是否啟用？）"
+        },
+        "privateMode": {
+            "enabled": "已啟用私人模式，播放狀態將對外部整合隱藏",
+            "disabled": "已停用私人模式，播放狀態現對已啟用的外部整合可見",
+            "title": "私人模式"
+        },
+        "largeFetchConfirmation": {
+            "title": "將項目加入佇列",
+            "description": "此操作將新增目前篩選檢視中的所有項目"
+        },
+        "shuffleAll": {
+            "title": "隨機播放",
+            "input_genre": "$t(entity.genre_one)",
+            "input_limit": "多少曲目？",
+            "input_minYear": "起始年份",
+            "input_maxYear": "結束年份",
+            "input_played": "播放過濾器",
+            "input_played_optionAll": "所有曲目",
+            "input_played_optionUnplayed": "僅未播放的曲目",
+            "input_played_optionPlayed": "僅播放過的曲目"
         }
+    },
+    "releaseType": {
+        "primary": {
+            "album": "$t(entity.album_one)",
+            "ep": "EP",
+            "other": "其他",
+            "broadcast": "廣播",
+            "single": "單曲"
+        },
+        "secondary": {
+            "audiobook": "有聲書",
+            "audioDrama": "廣播劇",
+            "compilation": "合輯",
+            "djMix": "DJ Mix",
+            "fieldRecording": "現場錄音",
+            "demo": "Demo",
+            "interview": "訪談",
+            "live": "Live",
+            "mixtape": "混音帶",
+            "remix": "Remix",
+            "soundtrack": "原聲帶"
+        }
+    },
+    "dragDropZone": {
+        "error_oneFileOnly": "請僅選擇一個檔案",
+        "error_readingFile": "讀取檔案時發生問題：{{errorMessage}}",
+        "mainText": "將檔案拖放到此處"
+    },
+    "queryBuilder": {
+        "standardTags": "標準標籤",
+        "customTags": "自訂標籤"
+    },
+    "filterOperator": {
+        "after": "在…之後",
+        "afterDate": "晚於 (日期)",
+        "before": "在…之前",
+        "beforeDate": "早於 (日期)",
+        "contains": "包含",
+        "endsWith": "以…結尾",
+        "inPlaylist": "在…之中",
+        "inTheRange": "在範圍內",
+        "inTheRangeDate": "在（日期）範圍內",
+        "is": "是",
+        "isNot": "不是",
+        "isGreaterThan": "大於",
+        "isLessThan": "小於",
+        "matchesRegex": "符合正規表達式",
+        "notContains": "不包含",
+        "notInPlaylist": "不在…之中",
+        "startsWith": "以…開頭"
     }
 }

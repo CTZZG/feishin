@@ -1,60 +1,44 @@
-import type { AgGridReact as AgGridReactType } from '@ag-grid-community/react/lib/agGridReact';
-
-import { useMemo, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { VirtualInfiniteGridRef } from '/@/renderer/components/virtual-grid';
 import { ListContext } from '/@/renderer/context/list-context';
 import { PlaylistListContent } from '/@/renderer/features/playlists/components/playlist-list-content';
 import { PlaylistListHeader } from '/@/renderer/features/playlists/components/playlist-list-header';
-import { usePlaylistList } from '/@/renderer/features/playlists/queries/playlist-list-query';
-import { AnimatedPage } from '/@/renderer/features/shared';
-import { useCurrentServer, useListStoreByKey } from '/@/renderer/store';
-import { PlaylistListSort, PlaylistSongListQuery, SortOrder } from '/@/shared/types/domain-types';
+import { AnimatedPage } from '/@/renderer/features/shared/components/animated-page';
+import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
+import { ItemListKey } from '/@/shared/types/types';
 
 const PlaylistListRoute = () => {
-    const gridRef = useRef<null | VirtualInfiniteGridRef>(null);
-    const tableRef = useRef<AgGridReactType | null>(null);
-    const server = useCurrentServer();
     const { playlistId } = useParams();
-    const pageKey = 'playlist';
-    const { filter } = useListStoreByKey<PlaylistSongListQuery>({ key: pageKey });
+    const pageKey = ItemListKey.PLAYLIST;
 
-    const itemCountCheck = usePlaylistList({
-        options: {
-            cacheTime: 1000 * 60 * 60 * 2,
-            staleTime: 1000 * 60 * 60 * 2,
-        },
-        query: {
-            ...filter,
-            limit: 1,
-            sortBy: PlaylistListSort.NAME,
-            sortOrder: SortOrder.ASC,
-            startIndex: 0,
-        },
-        serverId: server?.id,
-    });
-
-    const itemCount =
-        itemCountCheck.data?.totalRecordCount === null
-            ? undefined
-            : itemCountCheck.data?.totalRecordCount;
+    const [itemCount, setItemCount] = useState<number | undefined>(undefined);
 
     const providerValue = useMemo(() => {
         return {
             id: playlistId,
+            itemCount,
             pageKey,
+            setItemCount,
         };
-    }, [playlistId]);
+    }, [playlistId, itemCount, pageKey, setItemCount]);
 
     return (
         <AnimatedPage>
             <ListContext.Provider value={providerValue}>
-                <PlaylistListHeader gridRef={gridRef} itemCount={itemCount} tableRef={tableRef} />
-                <PlaylistListContent gridRef={gridRef} itemCount={itemCount} tableRef={tableRef} />
+                <PlaylistListHeader />
+                <PlaylistListContent />
             </ListContext.Provider>
         </AnimatedPage>
     );
 };
 
-export default PlaylistListRoute;
+const PlaylistListRouteWithBoundary = () => {
+    return (
+        <PageErrorBoundary>
+            <PlaylistListRoute />
+        </PageErrorBoundary>
+    );
+};
+
+export default PlaylistListRouteWithBoundary;

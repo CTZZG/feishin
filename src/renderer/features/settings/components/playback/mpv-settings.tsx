@@ -6,11 +6,9 @@ import {
     SettingOption,
     SettingsSection,
 } from '/@/renderer/features/settings/components/settings-section';
-import { usePlayerControls, usePlayerStore, useQueueControls } from '/@/renderer/store';
 import {
     SettingsState,
     usePlaybackSettings,
-    useSettingsStore,
     useSettingsStoreActions,
 } from '/@/renderer/store/settings.store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
@@ -22,7 +20,7 @@ import { Switch } from '/@/shared/components/switch/switch';
 import { TextInput } from '/@/shared/components/text-input/text-input';
 import { Text } from '/@/shared/components/text/text';
 import { Textarea } from '/@/shared/components/textarea/textarea';
-import { PlaybackType } from '/@/shared/types/types';
+import { PlayerType } from '/@/shared/types/types';
 
 const localSettings = isElectron() ? window.api.localSettings : null;
 const mpvPlayer = isElectron() ? window.api.mpvPlayer : null;
@@ -74,8 +72,8 @@ export const MpvSettings = () => {
     const { t } = useTranslation();
     const settings = usePlaybackSettings();
     const { setSettings } = useSettingsStoreActions();
-    const { pause } = usePlayerControls();
-    const { clearQueue } = useQueueControls();
+    // const { pause } = usePlayerControls();
+    // const { clearQueue } = useQueueControls();
 
     const [mpvPath, setMpvPath] = useState(
         (localSettings?.get('mpv_path') as string | undefined) || '',
@@ -129,21 +127,21 @@ export const MpvSettings = () => {
         mpvPlayer?.setProperties(mpvSetting);
     };
 
-    const handleReloadMpv = () => {
-        pause();
-        clearQueue();
+    // const handleReloadMpv = () => {
+    //     pause();
+    //     clearQueue();
 
-        const extraParameters = useSettingsStore.getState().playback.mpvExtraParameters;
-        const properties: Record<string, any> = {
-            speed: usePlayerStore.getState().speed,
-            ...getMpvProperties(useSettingsStore.getState().playback.mpvProperties),
-        };
-        mpvPlayer?.restart({
-            binaryPath: mpvPath || undefined,
-            extraParameters,
-            properties,
-        });
-    };
+    //     const extraParameters = useSettingsStore.getState().playback.mpvExtraParameters;
+    //     const properties: Record<string, any> = {
+    //         speed: usePlayerStore.getState().speed,
+    //         ...getMpvProperties(useSettingsStore.getState().playback.mpvProperties),
+    //     };
+    //     mpvPlayer?.restart({
+    //         binaryPath: mpvPath || undefined,
+    //         extraParameters,
+    //         properties,
+    //     });
+    // };
 
     const handleSetExtraParameters = (data: string[]) => {
         setSettings({
@@ -160,7 +158,7 @@ export const MpvSettings = () => {
                 <Group gap="sm">
                     <ActionIcon
                         icon="refresh"
-                        onClick={handleReloadMpv}
+                        // onClick={handleReloadMpv}
                         tooltip={{
                             label: t('common.reload', { postProcess: 'titleCase' }),
                             openDelay: 0,
@@ -194,7 +192,7 @@ export const MpvSettings = () => {
                 context: 'description',
                 postProcess: 'sentenceCase',
             }),
-            isHidden: settings.type !== PlaybackType.LOCAL,
+            isHidden: settings.type !== PlayerType.LOCAL,
             note: 'Restart required',
             title: t('setting.mpvExecutablePath', { postProcess: 'sentenceCase' }),
         },
@@ -235,7 +233,7 @@ export const MpvSettings = () => {
                     </Text>
                 </Stack>
             ),
-            isHidden: settings.type !== PlaybackType.LOCAL,
+            isHidden: settings.type !== PlayerType.LOCAL,
             note: t('common.restartRequired', {
                 postProcess: 'sentenceCase',
             }),
@@ -268,7 +266,7 @@ export const MpvSettings = () => {
                 context: 'description',
                 postProcess: 'sentenceCase',
             }),
-            isHidden: settings.type !== PlaybackType.LOCAL,
+            isHidden: settings.type !== PlayerType.LOCAL,
             title: t('setting.gaplessAudio', { postProcess: 'sentenceCase' }),
         },
         {
@@ -311,7 +309,7 @@ export const MpvSettings = () => {
                 context: 'description',
                 postProcess: 'sentenceCase',
             }),
-            isHidden: settings.type !== PlaybackType.LOCAL,
+            isHidden: settings.type !== PlayerType.LOCAL,
             title: t('setting.audioExclusiveMode', { postProcess: 'sentenceCase' }),
         },
     ];
@@ -362,7 +360,7 @@ export const MpvSettings = () => {
             control: (
                 <NumberInput
                     defaultValue={settings.mpvProperties.replayGainPreampDB}
-                    onChange={(e) => handleSetMpvProperty('replayGainPreampDB', e)}
+                    onChange={(e) => handleSetMpvProperty('replayGainPreampDB', Number(e) || 0)}
                     width={75}
                 />
             ),

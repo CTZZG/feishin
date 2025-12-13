@@ -42,8 +42,15 @@ export const useFullScreenPlayerStore = createWithEqualityFn<FullScreenPlayerSli
             merge: (persistedState, currentState) => {
                 return merge(currentState, persistedState);
             },
+            migrate: (persistedState, version) => {
+                if (version <= 2) {
+                    return {} as FullScreenPlayerState;
+                }
+
+                return persistedState;
+            },
             name: 'store_full_screen_player',
-            version: 2,
+            version: 3,
         },
     ),
 );

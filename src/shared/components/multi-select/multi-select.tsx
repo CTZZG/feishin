@@ -23,6 +23,7 @@ export const MultiSelect = ({
             classNames={{
                 dropdown: styles.dropdown,
                 input: styles.input,
+                label: styles.label,
                 option: styles.option,
                 root: styles.root,
                 ...classNames,
