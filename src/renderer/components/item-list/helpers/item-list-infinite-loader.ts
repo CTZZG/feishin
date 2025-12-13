@@ -123,7 +123,13 @@ export const useItemListInfiniteLoader = ({
             // Update the query data with the fetched page
             queryClient.setQueryData(
                 dataQueryKey,
-                (oldData: { data: unknown[]; pagesLoaded: Record<string, boolean> }) => {
+                (
+                    oldData: undefined | { data: unknown[]; pagesLoaded: Record<string, boolean> },
+                ) => {
+                    if (!oldData) {
+                        return oldData;
+                    }
+
                     const newData = [
                         ...oldData.data.slice(0, startIndex),
                         ...result.items,

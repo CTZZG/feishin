@@ -219,7 +219,7 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
         };
     }, [isTransitioning, duration, onProgress]);
 
-    const { mediaAutoNext } = usePlayerActions();
+    const { mediaAutoNext, mediaPause } = usePlayerActions();
 
     useEffect(() => {
         if (!mpvPlayerListener) {
@@ -242,6 +242,7 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
         {
             onMediaNext: () => {
                 replaceMpvQueue(transcode);
+                mediaPause();
             },
             onMediaPrev: () => {
                 replaceMpvQueue(transcode);
