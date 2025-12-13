@@ -17,7 +17,6 @@ import { Badge } from '/@/shared/components/badge/badge';
 import { Group } from '/@/shared/components/group/group';
 import { Image } from '/@/shared/components/image/image';
 import { Stack } from '/@/shared/components/stack/stack';
-import { TextTitle } from '/@/shared/components/text-title/text-title';
 import { Text } from '/@/shared/components/text/text';
 import { Album, LibraryItem } from '/@/shared/types/domain-types';
 import { Play } from '/@/shared/types/types';
@@ -105,9 +104,9 @@ const CarouselItem = ({ album }: CarouselItemProps) => {
             >
                 <div className={styles.content}>
                     <div className={styles.titleSection}>
-                        <TextTitle className={styles.title} fw={700} lineClamp={2} order={4}>
+                        <Text className={styles.title} fw={700} lineClamp={2} size="lg" ta="center">
                             {album.name}
-                        </TextTitle>
+                        </Text>
                     </div>
 
                     <div className={styles.imageSection}>
@@ -123,19 +122,15 @@ const CarouselItem = ({ album }: CarouselItemProps) => {
 
                     <div className={styles.metadataSection}>
                         <Stack gap="sm">
-                            {album.albumArtists.slice(0, 1).map((artist) => (
-                                <Text
-                                    className={styles.artist}
-                                    fw={500}
-                                    key={`artist-${artist.id}`}
-                                    size="md"
-                                >
-                                    {artist.name}
+                            {album.albumArtists?.[0] && (
+                                <Text className={styles.artist} fw={500} size="md">
+                                    {album.albumArtists[0].name}
                                 </Text>
-                            ))}
+                            )}
                             <Group gap="xs" justify="center" wrap="wrap">
                                 {album.genres?.slice(0, 2).map((genre) => (
                                     <Badge
+                                        classNames={{ label: styles.badge }}
                                         key={`genre-${genre.id}`}
                                         size="sm"
                                         variant="transparent"
@@ -144,7 +139,11 @@ const CarouselItem = ({ album }: CarouselItemProps) => {
                                     </Badge>
                                 ))}
                                 {album.releaseYear && (
-                                    <Badge size="sm" variant="transparent">
+                                    <Badge
+                                        classNames={{ label: styles.badge }}
+                                        size="sm"
+                                        variant="transparent"
+                                    >
                                         {album.releaseYear}
                                     </Badge>
                                 )}
@@ -254,6 +253,12 @@ export const FeatureCarousel = ({ data, onNearEnd }: FeatureCarouselProps) => {
                         onClick={handlePrevious}
                         radius="50%"
                         size="md"
+                        styles={{
+                            icon: {
+                                color: 'white',
+                                fill: 'white',
+                            },
+                        }}
                         variant="subtle"
                     />
                     <ActionIcon
@@ -263,6 +268,12 @@ export const FeatureCarousel = ({ data, onNearEnd }: FeatureCarouselProps) => {
                         onClick={handleNext}
                         radius="50%"
                         size="md"
+                        styles={{
+                            icon: {
+                                color: 'white',
+                                fill: 'white',
+                            },
+                        }}
                         variant="subtle"
                     />
                 </>

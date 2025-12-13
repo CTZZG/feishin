@@ -371,8 +371,14 @@ ipcMain.on('player-set-queue', async (_event, current?: string, next?: string, p
 // Replaces the queue in position 1 to the given data
 ipcMain.on('player-set-queue-next', async (_event, url?: string) => {
     try {
+        const size = await getMpvInstance()?.getPlaylistSize();
+
+        if (size && size > 1) {
+            await getMpvInstance()?.playlistRemove(1);
+        }
+
         if (url) {
-            await getMpvInstance()?.load(url, 'append');
+            getMpvInstance()?.load(url, 'append');
         }
     } catch (err: any | NodeMpvError) {
         mpvLog({ action: `Failed to set play queue` }, err);

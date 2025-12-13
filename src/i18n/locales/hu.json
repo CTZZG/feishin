@@ -391,7 +391,7 @@
             "selectMusicFolder": "zene mappa kiválasztása",
             "noMusicFolder": "nincs zene mappa kiválasztva",
             "multipleMusicFolders": "{{count}} kiválasztott zene mappák",
-            "commandPalette": "nyisd meg a parancspalettát"
+            "commandPalette": "Parancspaletta"
         },
         "manageServers": {
             "title": "Szerverek kezelés",
@@ -574,7 +574,8 @@
         "queueType": "lekérdezés típus",
         "queueType_default": "alapértelmezett",
         "queueType_priority": "prioritás",
-        "holdToShuffle": "tartsd lenyomva a keveréshez"
+        "holdToShuffle": "tartsd lenyomva a keveréshez",
+        "lyrics": "dalszöveg"
     },
     "releaseType": {
         "primary": {

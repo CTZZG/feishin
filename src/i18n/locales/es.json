@@ -36,7 +36,8 @@
         "queueType": "Tipo de cola",
         "queueType_default": "Predeterminado",
         "queueType_priority": "Prioridad",
-        "holdToShuffle": "Mantener para mezclar"
+        "holdToShuffle": "Mantener para mezclar",
+        "lyrics": "Letras"
     },
     "setting": {
         "crossfadeStyle_description": "selecciona el estilo de crossfade a usar por el reproductor de audio",

@@ -37,7 +37,7 @@ import { useThrottledCallback } from '/@/shared/hooks/use-throttled-callback';
 import { LibraryItem, QueueSong, ServerType } from '/@/shared/types/domain-types';
 
 const calculateVolumeUp = (volume: number, volumeWheelStep: number) => {
-    let volumeToSet;
+    let volumeToSet: number;
     const newVolumeGreaterThanHundred = volume + volumeWheelStep > 100;
     if (newVolumeGreaterThanHundred) {
         volumeToSet = 100;
@@ -49,7 +49,7 @@ const calculateVolumeUp = (volume: number, volumeWheelStep: number) => {
 };
 
 const calculateVolumeDown = (volume: number, volumeWheelStep: number) => {
-    let volumeToSet;
+    let volumeToSet: number;
     const newVolumeLessThanZero = volume - volumeWheelStep < 0;
     if (newVolumeLessThanZero) {
         volumeToSet = 0;

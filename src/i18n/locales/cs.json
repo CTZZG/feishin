@@ -36,7 +36,8 @@
         "queueType": "typ fronty",
         "queueType_default": "výchozí",
         "queueType_priority": "priorita",
-        "holdToShuffle": "podržte pro zamíchání"
+        "holdToShuffle": "podržte pro zamíchání",
+        "lyrics": "texty"
     },
     "setting": {
         "crossfadeStyle_description": "vyberte způsob prolnutí u přehrávače zvuku",

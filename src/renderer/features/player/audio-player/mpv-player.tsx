@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { MpvPlayerEngine, MpvPlayerEngineHandle } from './engine/mpv-player-engine';
 
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
     usePlaybackSettings,
     usePlayerActions,
@@ -97,6 +98,8 @@ export function MpvPlayer() {
         return playerData;
     }, [mediaAutoNext, volume, setIsTransitioning]);
 
+    const player = usePlayer();
+
     usePlayerEvents(
         {
             onPlayerSeekToTimestamp: (properties) => {
@@ -124,6 +127,9 @@ export function MpvPlayer() {
             onPlayerVolume: (properties) => {
                 const volume = properties.volume;
                 playerRef.current?.setVolume(volume);
+            },
+            onQueueCleared: () => {
+                player.mediaStop();
             },
         },
         [volume, fadeAndSetStatus, audioFadeOnStatusChange],

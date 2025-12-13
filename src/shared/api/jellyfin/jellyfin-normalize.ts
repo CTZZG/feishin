@@ -14,6 +14,8 @@ import {
 } from '/@/shared/types/domain-types';
 import { ServerListItem, ServerType } from '/@/shared/types/types';
 
+const TICKS_PER_MS = 10000;
+
 const getAlbumArtistCoverArtUrl = (args: {
     baseUrl: string;
     item: z.infer<typeof jfType._response.albumArtist>;
@@ -221,7 +223,7 @@ const normalizeSong = (
         createdAt: item.DateCreated,
         discNumber: (item.ParentIndexNumber && item.ParentIndexNumber) || 1,
         discSubtitle: null,
-        duration: item.RunTimeTicks / 10000,
+        duration: item.RunTimeTicks / TICKS_PER_MS,
         explicitStatus: null,
         gain:
             item.NormalizationGain !== undefined
@@ -294,7 +296,7 @@ const normalizeAlbum = (
         backdropImageUrl: null,
         comment: null,
         createdAt: item.DateCreated,
-        duration: item.RunTimeTicks / 10000,
+        duration: item.RunTimeTicks / TICKS_PER_MS,
         explicitStatus: null,
         genres:
             item.GenreItems?.map((entry) => ({
@@ -363,7 +365,7 @@ const normalizeAlbumArtist = (
         albumCount: item.AlbumCount ?? null,
         backgroundImageUrl: null,
         biography: item.Overview || null,
-        duration: item.RunTimeTicks / 10000,
+        duration: item.RunTimeTicks / TICKS_PER_MS,
         genres: item.GenreItems?.map((entry) => ({
             _itemType: LibraryItem.GENRE,
             _serverId: server?.id || '',
@@ -409,7 +411,7 @@ const normalizePlaylist = (
         _serverId: server?.id || '',
         _serverType: ServerType.JELLYFIN,
         description: item.Overview || null,
-        duration: item.RunTimeTicks / 10000,
+        duration: item.RunTimeTicks / TICKS_PER_MS,
         genres: item.GenreItems?.map((entry) => ({
             _itemType: LibraryItem.GENRE,
             _serverId: server?.id || '',

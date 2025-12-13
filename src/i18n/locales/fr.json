@@ -36,7 +36,8 @@
         "queueType": "type de file d'attente",
         "queueType_default": "défaut",
         "queueType_priority": "priorité",
-        "holdToShuffle": "maintenir pour mélanger"
+        "holdToShuffle": "maintenir pour mélanger",
+        "lyrics": "paroles"
     },
     "action": {
         "editPlaylist": "éditer $t(entity.playlist_one)",

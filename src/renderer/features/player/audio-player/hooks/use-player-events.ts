@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { eventEmitter } from '/@/renderer/events/event-emitter';
 import {
     subscribeCurrentTrack,
+    subscribeNextSongInsertion,
     subscribePlayerMute,
     subscribePlayerProgress,
     subscribePlayerQueue,
@@ -12,8 +13,9 @@ import {
     subscribePlayerSpeed,
     subscribePlayerStatus,
     subscribePlayerVolume,
+    subscribeQueueCleared,
 } from '/@/renderer/store';
-import { LibraryItem, QueueData, QueueSong } from '/@/shared/types/domain-types';
+import { LibraryItem, QueueData, QueueSong, Song } from '/@/shared/types/domain-types';
 import { PlayerRepeat, PlayerShuffle, PlayerStatus } from '/@/shared/types/types';
 
 interface PlayerEvents {
@@ -27,6 +29,7 @@ interface PlayerEventsCallbacks {
     ) => void;
     onMediaNext?: (properties: { currentIndex: number; nextIndex: number }) => void;
     onMediaPrev?: (properties: { currentIndex: number; prevIndex: number }) => void;
+    onNextSongInsertion?: (song: QueueSong | undefined) => void;
     onPlayerMute?: (properties: { muted: boolean }, prev: { muted: boolean }) => void;
     onPlayerPlay?: (properties: { id: string; index: number }) => void;
     onPlayerProgress?: (properties: { timestamp: number }, prev: { timestamp: number }) => void;
@@ -44,6 +47,8 @@ interface PlayerEventsCallbacks {
     onPlayerSpeed?: (properties: { speed: number }, prev: { speed: number }) => void;
     onPlayerStatus?: (properties: { status: PlayerStatus }, prev: { status: PlayerStatus }) => void;
     onPlayerVolume?: (properties: { volume: number }, prev: { volume: number }) => void;
+    onQueueCleared?: () => void;
+    onQueueRestored?: (properties: { data: Song[]; index: number; position: number }) => void;
     onUserFavorite?: (properties: {
         favorite: boolean;
         id: string[];
@@ -78,6 +83,12 @@ function createPlayerEvents(callbacks: PlayerEventsCallbacks): PlayerEvents {
         unsubscribers.push(unsubscribe);
     }
 
+    // Subscribe to next song insertions (when a song is added at next position)
+    if (callbacks.onNextSongInsertion) {
+        const unsubscribe = subscribeNextSongInsertion(callbacks.onNextSongInsertion);
+        unsubscribers.push(unsubscribe);
+    }
+
     // Subscribe to player progress
     if (callbacks.onPlayerProgress) {
         const unsubscribe = subscribePlayerProgress(callbacks.onPlayerProgress);
@@ -87,6 +98,12 @@ function createPlayerEvents(callbacks: PlayerEventsCallbacks): PlayerEvents {
     // Subscribe to queue changes
     if (callbacks.onPlayerQueueChange) {
         const unsubscribe = subscribePlayerQueue(callbacks.onPlayerQueueChange);
+        unsubscribers.push(unsubscribe);
+    }
+
+    // Subscribe to queue cleared events
+    if (callbacks.onQueueCleared) {
+        const unsubscribe = subscribeQueueCleared(callbacks.onQueueCleared);
         unsubscribers.push(unsubscribe);
     }
 
@@ -144,6 +161,10 @@ function createPlayerEvents(callbacks: PlayerEventsCallbacks): PlayerEvents {
         eventEmitter.on('PLAYER_PLAY', callbacks.onPlayerPlay);
     }
 
+    if (callbacks.onQueueRestored) {
+        eventEmitter.on('QUEUE_RESTORED', callbacks.onQueueRestored);
+    }
+
     if (callbacks.onUserFavorite) {
         eventEmitter.on('USER_FAVORITE', callbacks.onUserFavorite);
     }
@@ -163,6 +184,9 @@ function createPlayerEvents(callbacks: PlayerEventsCallbacks): PlayerEvents {
             }
             if (callbacks.onPlayerPlay) {
                 eventEmitter.off('PLAYER_PLAY', callbacks.onPlayerPlay);
+            }
+            if (callbacks.onQueueRestored) {
+                eventEmitter.off('QUEUE_RESTORED', callbacks.onQueueRestored);
             }
             if (callbacks.onUserFavorite) {
                 eventEmitter.off('USER_FAVORITE', callbacks.onUserFavorite);

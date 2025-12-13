@@ -431,6 +431,20 @@ export const controller: GeneralController = {
             server.type,
         )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
     },
+    getPlayQueue(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            throw new Error(
+                `${i18n.t('error.apiRouteError', { postProcess: 'sentenceCase' })}: getPlayQueue`,
+            );
+        }
+
+        return apiController(
+            'getPlayQueue',
+            server.type,
+        )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
+    },
     getRandomSongList(args) {
         const server = getServerById(args.apiClientProps.serverId);
 
@@ -664,6 +678,20 @@ export const controller: GeneralController = {
 
         return apiController(
             'replacePlaylist',
+            server.type,
+        )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
+    },
+    savePlayQueue(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            throw new Error(
+                `${i18n.t('error.apiRouteError', { postProcess: 'sentenceCase' })}: savePlayQueue`,
+            );
+        }
+
+        return apiController(
+            'savePlayQueue',
             server.type,
         )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
     },

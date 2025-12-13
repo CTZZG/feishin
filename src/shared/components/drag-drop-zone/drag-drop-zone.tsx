@@ -12,7 +12,7 @@ interface DragDropZoneProps {
 }
 
 export const DragDropZone = ({ icon, onItemSelected, validateItem }: DragDropZoneProps) => {
-    const zoneFileInput = useRef<HTMLInputElement>(null);
+    const zoneFileInput = useRef<HTMLInputElement | null>(null);
     const [error, setError] = useState<string>('');
 
     const processItem = useCallback(

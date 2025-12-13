@@ -1393,6 +1393,7 @@ export type ControllerEndpoint = {
     getPlaylistList: (args: PlaylistListArgs) => Promise<PlaylistListResponse>;
     getPlaylistListCount: (args: PlaylistListCountArgs) => Promise<number>;
     getPlaylistSongList: (args: PlaylistSongListArgs) => Promise<SongListResponse>;
+    getPlayQueue: (args: GetQueueArgs) => Promise<GetQueueResponse>;
     getRandomSongList: (args: RandomSongListArgs) => Promise<SongListResponse>;
     getRecentlyPlayedAlbums?: (args: AlbumListArgs) => Promise<AlbumListResponse>;
     getRoles: (args: BaseEndpointArgs) => Promise<Array<string | { label: string; value: string }>>;
@@ -1412,6 +1413,7 @@ export type ControllerEndpoint = {
     removeFromPlaylist: (args: RemoveFromPlaylistArgs) => Promise<RemoveFromPlaylistResponse>;
     removeTags?: (args: RemoveTagsArgs) => Promise<RemoveTagsResponse>;
     replacePlaylist: (args: ReplacePlaylistArgs) => Promise<ReplacePlaylistResponse>;
+    savePlayQueue: (args: SaveQueueArgs) => Promise<void>;
     scrobble: (args: ScrobbleArgs) => Promise<ScrobbleResponse>;
     search: (args: SearchArgs) => Promise<SearchResponse>;
     setRating?: (args: SetRatingArgs) => Promise<RatingResponse>;
@@ -1434,6 +1436,19 @@ export type FontData = {
     fullName: string;
     postscriptName: string;
     style: string;
+};
+
+export type GetQueueArgs = BaseEndpointArgs;
+
+export interface GetQueueQuery {}
+
+export type GetQueueResponse = {
+    changed: string;
+    changedBy: string;
+    currentIndex: number;
+    entry: Song[];
+    positionMs: number;
+    username: string;
 };
 
 export type InternalControllerEndpoint = {
@@ -1485,6 +1500,7 @@ export type InternalControllerEndpoint = {
     getPlaylistSongList: (
         args: ReplaceApiClientProps<PlaylistSongListArgs>,
     ) => Promise<SongListResponse>;
+    getPlayQueue: (args: ReplaceApiClientProps<GetQueueArgs>) => Promise<GetQueueResponse>;
     getRandomSongList: (
         args: ReplaceApiClientProps<RandomSongListArgs>,
     ) => Promise<SongListResponse>;
@@ -1511,6 +1527,7 @@ export type InternalControllerEndpoint = {
     replacePlaylist: (
         args: ReplaceApiClientProps<ReplacePlaylistArgs>,
     ) => Promise<ReplacePlaylistResponse>;
+    savePlayQueue: (args: ReplaceApiClientProps<SaveQueueArgs>) => Promise<void>;
     scrobble: (args: ReplaceApiClientProps<ScrobbleArgs>) => Promise<ScrobbleResponse>;
     search: (args: ReplaceApiClientProps<SearchArgs>) => Promise<SearchResponse>;
     setRating?: (args: ReplaceApiClientProps<SetRatingArgs>) => Promise<RatingResponse>;
@@ -1562,6 +1579,16 @@ export type RemoveTagsQuery = {
 export type RemoveTagsResponse = null | undefined;
 
 export type ReplaceApiClientProps<T> = BaseEndpointArgsWithServer & Omit<T, 'apiClientProps'>;
+
+export type SaveQueueArgs = BaseEndpointArgs & {
+    query: SaveQueueQuery;
+};
+
+export type SaveQueueQuery = {
+    currentIndex?: number;
+    positionMs?: number;
+    songs: string[];
+};
 
 export type ServerInfo = {
     features: ServerFeatures;
@@ -1638,6 +1665,7 @@ export type UserInfoArgs = BaseEndpointArgs & { query: UserInfoQuery };
 
 export type UserInfoQuery = {
     id: string;
+    username: string;
 };
 
 export type UserInfoResponse = {

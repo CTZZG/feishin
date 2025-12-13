@@ -68,6 +68,7 @@ interface Actions {
     moveSelectedToTop: (items: QueueSong[]) => void;
     setCrossfadeDuration: (duration: number) => void;
     setCrossfadeStyle: (style: CrossfadeStyle) => void;
+    setQueue: (data: Song[], index?: number, position?: number) => void;
     setQueueType: (queueType: PlayerQueueType) => void;
     setRepeat: (repeat: PlayerRepeat) => void;
     setShuffle: (shuffle: PlayerShuffle) => void;
@@ -1943,6 +1944,27 @@ export const usePlayerStoreBase = createWithEqualityFn<PlayerState>()(
                         }
                     });
                 },
+                setQueue: (items, index, position) => {
+                    const newItems = items.map(toQueueSong);
+                    const newUniqueIds = newItems.map((item) => item._uniqueId);
+
+                    set((state) => {
+                        newItems.forEach((item) => {
+                            state.queue.songs[item._uniqueId] = item;
+                        });
+
+                        state.player.index = index ?? 0;
+                        state.player.status = PlayerStatus.PLAYING;
+                        state.player.playerNum = 1;
+                        state.queue.default = newUniqueIds;
+                    });
+
+                    eventEmitter.emit('QUEUE_RESTORED', {
+                        data: items,
+                        index: index ?? 0,
+                        position: position ?? 0,
+                    });
+                },
                 ...initialState,
                 setCrossfadeDuration: (duration: number) => {
                     set((state) => {
@@ -2304,6 +2326,7 @@ export const usePlayerActions = () => {
             moveSelectedToTop: state.moveSelectedToTop,
             setCrossfadeDuration: state.setCrossfadeDuration,
             setCrossfadeStyle: state.setCrossfadeStyle,
+            setQueue: state.setQueue,
             setQueueType: state.setQueueType,
             setRepeat: state.setRepeat,
             setShuffle: state.setShuffle,
@@ -2379,6 +2402,58 @@ export const subscribeCurrentTrack = (
             equalityFn: (a, b) => {
                 return a.song?._uniqueId === b.song?._uniqueId;
             },
+        },
+    );
+};
+
+export const subscribeNextSongInsertion = (onChange: (song: QueueSong | undefined) => void) => {
+    return usePlayerStoreBase.subscribe(
+        (state) => {
+            const queue = state.getQueue();
+            let queueIndex = state.player.index;
+            const repeat = state.player.repeat;
+
+            // If shuffle is enabled and not in priority mode, map shuffled position to actual queue position
+            if (isShuffleEnabled(state)) {
+                queueIndex = mapShuffledToQueueIndex(queueIndex, state.queue.shuffled);
+            }
+
+            // Calculate next song based on shuffle and repeat settings
+            let nextSong: QueueSong | undefined;
+            if (isShuffleEnabled(state)) {
+                // Calculate next in shuffled order
+                const nextShuffledIndex = state.player.index + 1;
+                if (nextShuffledIndex < state.queue.shuffled.length) {
+                    const nextQueueIndex = state.queue.shuffled[nextShuffledIndex];
+                    nextSong = queue.items[nextQueueIndex];
+                } else if (repeat === PlayerRepeat.ALL) {
+                    // Wrap to first in shuffled order
+                    const firstQueueIndex = state.queue.shuffled[0];
+                    nextSong = queue.items[firstQueueIndex];
+                }
+            } else {
+                nextSong = calculateNextSong(queueIndex, queue.items, repeat);
+            }
+
+            return { index: queueIndex, song: nextSong };
+        },
+        (current, prev) => {
+            // Only trigger if:
+            // 1. We have a previous value (not the first call)
+            // 2. Index hasn't changed (not a natural advance)
+            // 3. Next song has changed (song was inserted)
+            if (
+                prev &&
+                current.index === prev.index &&
+                current.song?._uniqueId !== prev.song?._uniqueId
+            ) {
+                // Index stayed the same but next song changed = insertion at next position
+                onChange(current.song);
+            }
+        },
+        {
+            // Always allow the subscription to fire so we can check conditions in the callback
+            equalityFn: () => false,
         },
     );
 };
@@ -2459,6 +2534,21 @@ export const subscribePlayerShuffle = (
         (state) => state.player.shuffle,
         (shuffle, prevShuffle) => {
             onChange({ shuffle }, { shuffle: prevShuffle });
+        },
+    );
+};
+
+export const subscribeQueueCleared = (onChange: () => void) => {
+    return usePlayerStoreBase.subscribe(
+        (state) => state.queue,
+        (queue, prevQueue) => {
+            // Detect if queue became empty
+            const wasNotEmpty = prevQueue.default.length > 0 || prevQueue.priority.length > 0;
+            const isEmpty = queue.default.length === 0 && queue.priority.length === 0;
+
+            if (wasNotEmpty && isEmpty) {
+                onChange();
+            }
         },
     );
 };

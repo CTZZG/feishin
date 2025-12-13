@@ -10,6 +10,7 @@ import {
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
 import { useSongUrl } from '/@/renderer/features/player/audio-player/hooks/use-stream-url';
 import { PlayerOnProgressProps } from '/@/renderer/features/player/audio-player/types';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { useWebAudio } from '/@/renderer/features/player/hooks/use-webaudio';
 import {
     useMpvSettings,
@@ -193,6 +194,8 @@ export function WebPlayer() {
         });
     }, [mediaAutoNext, volume]);
 
+    const player = usePlayer();
+
     usePlayerEvents(
         {
             onCurrentSongChange: () => {
@@ -265,6 +268,9 @@ export function WebPlayer() {
             onPlayerVolume: (properties) => {
                 const volume = properties.volume;
                 playerRef.current?.setVolume(volume);
+            },
+            onQueueCleared: () => {
+                player.mediaStop();
             },
         },
         [volume, num, isTransitioning, transitionType, audioFadeOnStatusChange],
