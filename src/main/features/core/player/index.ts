@@ -10,6 +10,8 @@ import { getMainWindow, sendToastToRenderer } from '../../../index';
 import { createLog, isWindows } from '../../../utils';
 import { store } from '../settings';
 
+import { PlayerData } from '/@/shared/types/domain-types';
+
 declare module 'node-mpv';
 
 // function wait(timeout: number) {
@@ -21,6 +23,7 @@ declare module 'node-mpv';
 // }
 
 let mpvInstance: MpvAPI | null = null;
+let currentPlayerData: null | PlayerData = null;
 const socketPath = isWindows() ? `\\\\.\\pipe\\mpvserver-${pid}` : `/tmp/node-mpv-${pid}.sock`;
 
 const NodeMpvErrorCode = {
@@ -436,6 +439,91 @@ ipcMain.handle('player-get-time', async (): Promise<number | undefined> => {
         return 0;
     }
 });
+
+// Updates the current player metadata (song data)
+ipcMain.on('player-update-metadata', (_event, data: PlayerData) => {
+    currentPlayerData = data;
+});
+
+// Returns the current player metadata (song data)
+ipcMain.handle('player-metadata', async (): Promise<null | PlayerData> => {
+    return currentPlayerData;
+});
+
+// Returns the stream metadata from mpv (for radio streams)
+ipcMain.handle(
+    'player-stream-metadata',
+    async (): Promise<null | { artist: null | string; title: null | string }> => {
+        try {
+            const metadata = await getMpvInstance()?.getProperty('metadata');
+            if (metadata && typeof metadata === 'object') {
+                // Try to get separate title and artist fields first
+                let artist: null | string =
+                    (metadata['artist'] as string) ||
+                    (metadata['ARTIST'] as string) ||
+                    (metadata['icy-artist'] as string) ||
+                    null;
+                let title: null | string =
+                    (metadata['title'] as string) || (metadata['TITLE'] as string) || null;
+
+                // If we don't have separate fields, try to parse from combined formats
+                if (!title && !artist) {
+                    const combinedTitle =
+                        (metadata['icy-title'] as string) ||
+                        (metadata['StreamTitle'] as string) ||
+                        (metadata['stream-title'] as string) ||
+                        null;
+
+                    if (combinedTitle && typeof combinedTitle === 'string') {
+                        // Try to parse "Artist - Title" format
+                        const match = combinedTitle.match(/^(.*?)\s*[-–—]\s*(.+)$/);
+                        if (match) {
+                            artist = match[1].trim() || null;
+                            title = match[2].trim() || null;
+                        } else {
+                            // If no separator found, treat the whole thing as title
+                            title = combinedTitle;
+                        }
+                    }
+                } else if (!title) {
+                    // If we have artist but no title, try to get from combined format
+                    const combinedTitle =
+                        (metadata['icy-title'] as string) ||
+                        (metadata['StreamTitle'] as string) ||
+                        (metadata['stream-title'] as string) ||
+                        null;
+                    if (combinedTitle && typeof combinedTitle === 'string') {
+                        title = combinedTitle;
+                    }
+                } else if (!artist) {
+                    // If we have title but no artist, try to get from combined format
+                    const combinedTitle =
+                        (metadata['icy-title'] as string) ||
+                        (metadata['StreamTitle'] as string) ||
+                        (metadata['stream-title'] as string) ||
+                        null;
+                    if (
+                        combinedTitle &&
+                        typeof combinedTitle === 'string' &&
+                        combinedTitle !== title
+                    ) {
+                        // Try to parse artist from combined format
+                        const match = combinedTitle.match(/^(.*?)\s*[-–—]\s*(.+)$/);
+                        if (match && match[2].trim() === title) {
+                            artist = match[1].trim() || null;
+                        }
+                    }
+                }
+
+                return { artist, title };
+            }
+            return null;
+        } catch (err: any | NodeMpvError) {
+            mpvLog({ action: `Failed to get stream metadata` }, err);
+            return null;
+        }
+    },
+);
 
 enum MpvState {
     STARTED,

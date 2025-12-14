@@ -16,6 +16,11 @@ import { useQueueRestoreTimestamp } from '/@/renderer/features/player/hooks/use-
 import { useScrobble } from '/@/renderer/features/player/hooks/use-scrobble';
 import { useWebAudio } from '/@/renderer/features/player/hooks/use-webaudio';
 import {
+    useIsRadioActive,
+    useRadioAudioInstance,
+    useRadioMetadata,
+} from '/@/renderer/features/radio/hooks/use-radio-player';
+import {
     updateQueueFavorites,
     updateQueueRatings,
     useCurrentServerId,
@@ -48,6 +53,9 @@ export const AudioPlayers = () => {
     usePlaybackHotkeys();
     useAutoDJ();
     useQueueRestoreTimestamp();
+
+    useRadioAudioInstance();
+    useRadioMetadata();
 
     useEffect(() => {
         if (webAudio && 'AudioContext' in window) {
@@ -123,6 +131,16 @@ export const AudioPlayers = () => {
             eventEmitter.off('USER_RATING', handleRating);
         };
     }, [serverId]);
+
+    const isRadioActive = useIsRadioActive();
+
+    if (isRadioActive && playbackType === PlayerType.LOCAL) {
+        return <MpvPlayer />;
+    }
+
+    if (isRadioActive && playbackType === PlayerType.WEB) {
+        return null;
+    }
 
     return (
         <>

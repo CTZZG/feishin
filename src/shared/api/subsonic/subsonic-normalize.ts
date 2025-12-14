@@ -7,6 +7,7 @@ import {
     ExplicitStatus,
     Folder,
     Genre,
+    InternetRadioStation,
     LibraryItem,
     Playlist,
     RelatedArtist,
@@ -280,13 +281,17 @@ const normalizeAlbum = (
         participants: getParticipants(item),
         playCount: null,
         recordLabels: item.recordLabels?.map((item) => item.name) || [],
-        releaseDate: item.releaseDate
-            ? new Date(
-                  item.releaseDate.year,
-                  item.releaseDate.month - 1,
-                  item.releaseDate.day,
-              ).toISOString()
-            : null,
+        releaseDate:
+            item.releaseDate &&
+            typeof item.releaseDate.year === 'number' &&
+            typeof item.releaseDate.month === 'number' &&
+            typeof item.releaseDate.day === 'number'
+                ? new Date(
+                      item.releaseDate.year,
+                      item.releaseDate.month - 1,
+                      item.releaseDate.day,
+                  ).toISOString()
+                : null,
         releaseTypes: item.releaseTypes || [],
         releaseYear: item.year || null,
         size: null,
@@ -387,11 +392,23 @@ const normalizeFolder = (
     };
 };
 
+const normalizeInternetRadioStation = (
+    item: z.infer<typeof ssType._response.internetRadioStation>,
+): InternetRadioStation => {
+    return {
+        homepageUrl: item.homepageUrl || null,
+        id: item.id,
+        name: item.name,
+        streamUrl: item.streamUrl,
+    };
+};
+
 export const ssNormalize = {
     album: normalizeAlbum,
     albumArtist: normalizeAlbumArtist,
     folder: normalizeFolder,
     genre: normalizeGenre,
+    internetRadioStation: normalizeInternetRadioStation,
     playlist: normalizePlaylist,
     song: normalizeSong,
 };

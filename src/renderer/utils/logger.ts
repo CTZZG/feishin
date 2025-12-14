@@ -7,6 +7,7 @@ export enum LogCategory {
     GENERAL = 'general',
     OTHER = 'other',
     PLAYER = 'player',
+    REMOTE = 'remote',
     SCROBBLE = 'scrobble',
     SYSTEM = 'system',
 }
