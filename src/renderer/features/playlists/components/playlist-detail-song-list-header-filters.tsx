@@ -131,7 +131,7 @@ export const PlaylistDetailSongListHeaderFilters = ({
 export const openSaveAndReplaceModal = (playlistId: string, listData: unknown[]) => {
     openContextModal({
         innerProps: { listData, playlistId },
-        modalKey: 'playlist-song-filter',
+        modalKey: 'saveAndReplace',
         size: 'sm',
         title: i18n.t('common.saveAndReplace', { postProcess: 'titleCase' }) as string,
     });

@@ -139,7 +139,7 @@ const PlaylistRowButton = memo(({ item, name, onContextMenu, to }: PlaylistRowBu
 
                 openContextModal({
                     innerProps: modalProps,
-                    modalKey: 'createPlaylist',
+                    modalKey: 'addToPlaylist',
                     size: 'lg',
                     title: t('form.addToPlaylist.title', { postProcess: 'titleCase' }),
                 });
