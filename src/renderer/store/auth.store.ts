@@ -161,6 +161,7 @@ export const usePermissions = () => {
 
     return {
         playlists: {
+            editOwner: isAdmin,
             editPublic: isAdmin,
         },
         radio: {

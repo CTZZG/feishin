@@ -91,7 +91,7 @@ export const PlaylistDetailSongListHeader = ({
                     title={detailQuery?.data?.name}
                 >
                     <LibraryHeaderMenu
-                        onPlay={() => handlePlay(Play.NOW)}
+                        onPlay={(type) => handlePlay(type)}
                         onShuffle={() => handlePlay(Play.SHUFFLE)}
                     />
                 </LibraryHeader>

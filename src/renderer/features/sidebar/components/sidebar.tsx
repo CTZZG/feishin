@@ -118,7 +118,7 @@ export const Sidebar = () => {
                             {sidebarItemsWithRoute.map((item) => {
                                 return (
                                     <SidebarItem key={`sidebar-${item.route}`} to={item.route}>
-                                        <Group gap="sm">
+                                        <Group gap="md">
                                             <SidebarIcon route={item.route} />
                                             {item.label}
                                         </Group>

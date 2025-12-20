@@ -14,7 +14,7 @@
         "shuffle": "Reproducir (mezclado)",
         "playbackFetchNoResults": "ninguna canción encontrada",
         "playbackFetchInProgress": "cargando canciones…",
-        "addNext": "añadir siguiente",
+        "addNext": "Siguiente",
         "playbackSpeed": "velocidad de reproducción",
         "playbackFetchCancel": "esto está tomando un tiempo... cierra la notificación para cancelar",
         "play": "reproducir",
@@ -25,19 +25,21 @@
         "queue_moveToTop": "mover seleccionado al final",
         "queue_moveToBottom": "mover seleccionado al principio",
         "shuffle_off": "mezclar desactivado",
-        "addLast": "añadir último",
+        "addLast": "Al final",
         "mute": "silencio",
         "skip_forward": "saltar hacia delante",
         "pause": "pausa",
         "playSimilarSongs": "Reproducir canciones similares",
         "viewQueue": "ver cola",
-        "addLastShuffled": "Añadir al final (mezclado)",
-        "addNextShuffled": "Añadir al siguiente (mezclado)",
+        "addLastShuffled": "Al final (mezclado)",
+        "addNextShuffled": "Al siguiente (mezclado)",
         "queueType": "Tipo de cola",
         "queueType_default": "Predeterminado",
         "queueType_priority": "Prioridad",
         "holdToShuffle": "Mantener para mezclar",
-        "lyrics": "Letras"
+        "lyrics": "Letras",
+        "restoreQueueFromServer": "Restaurar cola del servidor",
+        "saveQueueToServer": "Guardar cola en el servidor"
     },
     "setting": {
         "crossfadeStyle_description": "selecciona el estilo de crossfade a usar por el reproductor de audio",
@@ -345,7 +347,9 @@
         "logLevel_optionDebug": "Depuración",
         "logLevel_optionError": "Error",
         "logLevel_optionInfo": "Información",
-        "logLevel_optionWarn": "Advertencia"
+        "logLevel_optionWarn": "Advertencia",
+        "useThemeAccentColor": "Usar color de acentuación de tema",
+        "useThemeAccentColor_description": "Usa el color principal definido en el tema seleccionado en lugar del color de acentuación personalizado"
     },
     "action": {
         "editPlaylist": "editar $t(entity.playlist_one)",
@@ -379,7 +383,9 @@
         "holdToMoveToBottom": "Mantener pulsado para desplazar hacia abajo",
         "holdToMoveToTop": "Mantener pulsado para desplazar hacia arriba",
         "moveUp": "Desplazar hacia arriba",
-        "moveDown": "Desplazar hacia abajo"
+        "moveDown": "Desplazar hacia abajo",
+        "createRadioStation": "Crear $t(entity.radioStation_one)",
+        "deleteRadioStation": "Borrar $t(entity.radioStation_one)"
     },
     "common": {
         "backward": "hacia atrás",
@@ -522,7 +528,9 @@
         "networkError": "Ocurrió un error de red",
         "openError": "No se pudo abrir el archivo",
         "badValue": "Opción inválida \"{{value}}\". Este valor ya no existe",
-        "notificationDenied": "Se denegaron los permisos para notificaciones. Esta configuración no tiene efecto"
+        "notificationDenied": "Se denegaron los permisos para notificaciones. Esta configuración no tiene efecto",
+        "saveQueueFailed": "Error al guardar la cola",
+        "multipleServerSaveQueueError": "La cola de reproducción tiene una o más canciones que no son del servidor actual. Esto no está soportado"
     },
     "filter": {
         "mostPlayed": "más reproducido",
@@ -584,7 +592,8 @@
             "albumArtists": "$t(entity.albumArtist_other)",
             "shared": "compartido $t(entity.playlist_other)",
             "myLibrary": "Mi biblioteca",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "appMenu": {
             "selectServer": "seleccionar servidor",
@@ -754,6 +763,9 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "Estaciones de radio"
         }
     },
     "form": {
@@ -844,6 +856,16 @@
             "input_played_optionAll": "Todas las pistas",
             "input_played_optionUnplayed": "Solo las pistas sin reproducir",
             "input_played_optionPlayed": "Solo las pistas reproducidas"
+        },
+        "saveQueue": {
+            "success": "Cola de reproducción guardada en el servidor"
+        },
+        "createRadioStation": {
+            "success": "Estación de radio creada con éxito",
+            "title": "Crear estación de radio",
+            "input_homepageUrl": "URL de la página de inicio",
+            "input_name": "Nombre",
+            "input_streamUrl": "URL de la transmisión"
         }
     },
     "table": {
@@ -1002,7 +1024,13 @@
         "play_other": "{{count}} reproducciones",
         "song_one": "canción",
         "song_many": "canciones",
-        "song_other": "canciones"
+        "song_other": "canciones",
+        "radioStation_one": "Estación de radio",
+        "radioStation_many": "Estaciones de radio",
+        "radioStation_other": "Estaciones de radio",
+        "radioStationWithCount_one": "{{count}} estación de radio",
+        "radioStationWithCount_many": "{{count}} estaciones de radio",
+        "radioStationWithCount_other": "{{count}} estaciones de radio"
     },
     "dragDropZone": {
         "error_oneFileOnly": "Por favor selecciona un solo archivo",

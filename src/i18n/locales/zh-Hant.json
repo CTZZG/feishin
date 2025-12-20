@@ -132,7 +132,9 @@
         "badValue": "無效選項“{{value}}”。該值不再存在",
         "networkError": "發生網路錯誤",
         "notificationDenied": "通知權限被拒絕。此設定無效",
-        "openError": "無法開啟檔案"
+        "openError": "無法開啟檔案",
+        "multipleServerSaveQueueError": "播放佇列中包含不是來自目前伺服器的歌曲，此操作不受支援",
+        "saveQueueFailed": "儲存播放佇列失敗"
     },
     "page": {
         "contextMenu": {
@@ -280,7 +282,8 @@
             "playlists": "$t(entity.playlist_other)",
             "myLibrary": "我的資料庫",
             "shared": "已分享 $t(entity.playlist_other)",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "trackList": {
             "title": "$t(entity.track_other)",
@@ -319,12 +322,15 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "電台"
         }
     },
     "player": {
         "playbackFetchInProgress": "正在載入歌曲…",
-        "addLast": "新增到尾端",
-        "addNext": "新增到下一首",
+        "addLast": "新增至尾端",
+        "addNext": "新增至下一首",
         "favorite": "收藏",
         "mute": "靜音",
         "muted": "已靜音",
@@ -353,13 +359,15 @@
         "queue_moveToTop": "使所選置底",
         "playSimilarSongs": "播放相似歌曲",
         "viewQueue": "檢視佇列",
-        "addLastShuffled": "新增到尾端 (隨機)",
-        "addNextShuffled": "新增到下一首 (隨機)",
+        "addLastShuffled": "新增至尾端 (隨機)",
+        "addNextShuffled": "新增至下一首 (隨機)",
         "queueType": "佇列類型",
         "queueType_default": "預設",
         "queueType_priority": "優先",
         "holdToShuffle": "按住以隨機",
-        "lyrics": "歌詞"
+        "lyrics": "歌詞",
+        "restoreQueueFromServer": "從伺服器還原播放佇列",
+        "saveQueueToServer": "將播放佇列儲存至伺服器"
     },
     "setting": {
         "audioPlayer_description": "選擇用於播放的音訊播放器",
@@ -476,10 +484,10 @@
         "sidebarConfiguration": "側邊欄設定",
         "sidebarConfiguration_description": "選擇側邊欄包含的項目與順序",
         "sidebarPlaylistList_description": "顯示或隱藏側邊欄歌單清單",
-        "sidePlayQueueStyle": "側邊播放清單樣式",
-        "sidePlayQueueStyle_description": "設置側邊播放清單樣式",
+        "sidePlayQueueStyle": "側邊播放佇列樣式",
+        "sidePlayQueueStyle_description": "設置側邊播放佇列樣式",
         "sidePlayQueueStyle_optionAttached": "吸附",
-        "sidePlayQueueStyle_optionDetached": "不吸附",
+        "sidePlayQueueStyle_optionDetached": "分離",
         "skipDuration": "跳過時長",
         "skipDuration_description": "設置每次按下跳過按鈕將會跳過的時長",
         "skipPlaylistPage": "跳過播放清單頁面",
@@ -667,7 +675,9 @@
         "logLevel_optionDebug": "Debug",
         "logLevel_optionError": "Error",
         "logLevel_optionInfo": "Info",
-        "logLevel_optionWarn": "Warn"
+        "logLevel_optionWarn": "Warn",
+        "useThemeAccentColor": "使用主題強調色",
+        "useThemeAccentColor_description": "使用所選主題中定義的主要顏色，而非自訂的強調色"
     },
     "table": {
         "config": {
@@ -805,7 +815,9 @@
         "moveUp": "向上移動",
         "moveDown": "向下移動",
         "holdToMoveToTop": "按住以移動至頂部",
-        "holdToMoveToBottom": "按住以移動至底部"
+        "holdToMoveToBottom": "按住以移動至底部",
+        "createRadioStation": "創建 $t(entity.radioStation_one)",
+        "deleteRadioStation": "刪除 $t(entity.radioStation_one)"
     },
     "entity": {
         "album_other": "專輯",
@@ -825,7 +837,9 @@
         "trackWithCount_other": "{{count}} 首曲目",
         "albumWithCount_other": "{{count}} 張專輯",
         "play_other": "{{count}}次播放",
-        "song_other": "歌曲"
+        "song_other": "歌曲",
+        "radioStation_other": "電台",
+        "radioStationWithCount_other": "{{count}} 個電台"
     },
     "filter": {
         "albumCount": "$t(entity.album_other)數",
@@ -947,7 +961,7 @@
             "title": "私人模式"
         },
         "largeFetchConfirmation": {
-            "title": "將項目加入佇列",
+            "title": "將項目加入播放佇列",
             "description": "此操作將新增目前篩選檢視中的所有項目"
         },
         "shuffleAll": {
@@ -960,6 +974,16 @@
             "input_played_optionAll": "所有曲目",
             "input_played_optionUnplayed": "僅未播放的曲目",
             "input_played_optionPlayed": "僅播放過的曲目"
+        },
+        "createRadioStation": {
+            "success": "電台創建成功",
+            "title": "創建電台",
+            "input_homepageUrl": "首頁連結",
+            "input_name": "名稱",
+            "input_streamUrl": "串流網址"
+        },
+        "saveQueue": {
+            "success": "已將播放佇列儲存至伺服器"
         }
     },
     "releaseType": {

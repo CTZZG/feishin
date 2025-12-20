@@ -94,11 +94,7 @@ const formatArtists = (artists: null | RelatedArtist[] | undefined) =>
     ));
 
 const formatComment = (item: Album | Song) =>
-    item.comment ? (
-        <Spoiler hideLabel="Show less" maxHeight={50} showLabel="Show more">
-            {replaceURLWithHTMLLinks(item.comment)}
-        </Spoiler>
-    ) : null;
+    item.comment ? <Spoiler maxHeight={50}>{replaceURLWithHTMLLinks(item.comment)}</Spoiler> : null;
 
 const FormatGenre = (item: Album | AlbumArtist | Playlist | Song) => {
     if (!item.genres?.length) {
@@ -229,8 +225,8 @@ const AlbumArtistPropertyMapping: ItemDetailRow<AlbumArtist>[] = [
         label: 'common.biography',
         render: (artist) =>
             artist.biography ? (
-                <Spoiler hideLabel="Show less" maxHeight={50} showLabel="Show more">
-                    <div dangerouslySetInnerHTML={{ __html: sanitize(artist.biography) }} />
+                <Spoiler maxHeight={50}>
+                    <Text dangerouslySetInnerHTML={{ __html: sanitize(artist.biography) }} />
                 </Spoiler>
             ) : null,
     },

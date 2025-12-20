@@ -1,8 +1,13 @@
+import { isAxiosError } from 'axios';
 import isElectron from 'is-electron';
 import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import { api } from '/@/renderer/api';
+import { controller } from '/@/renderer/api/controller';
+import { AppRoute } from '/@/renderer/router/routes';
 import { getServerById, useAuthStoreActions, useCurrentServer } from '/@/renderer/store';
 import { LogCategory, logFn } from '/@/renderer/utils/logger';
 import { logMsg } from '/@/renderer/utils/logger-message';
@@ -11,15 +16,35 @@ import { AuthState } from '/@/shared/types/types';
 
 const localSettings = isElectron() ? window.api.localSettings : null;
 
+const MIN_AUTH_DELAY_MS = 1000;
+const MAX_NETWORK_RETRIES = 3;
+const NETWORK_RETRY_DELAY_MS = 2000;
+
+const isNetworkError = (error: any): boolean => {
+    return (
+        isAxiosError(error) &&
+        (error.code === 'ERR_NETWORK' ||
+            error.code === 'ECONNABORTED' ||
+            error.code === 'ETIMEDOUT' ||
+            error.message?.toLowerCase().includes('network') ||
+            error.message?.toLowerCase().includes('timeout') ||
+            !navigator.onLine)
+    );
+};
+
 export const useServerAuthenticated = () => {
     const priorServerId = useRef<string | undefined>(undefined);
     const server = useCurrentServer();
-    const [ready, setReady] = useState(AuthState.VALID);
+    const [ready, setReady] = useState(AuthState.LOADING);
+    const navigate = useNavigate();
+    const retryCountRef = useRef<number>(0);
 
     const { setCurrentServer, updateServer } = useAuthStoreActions();
 
     const authenticateServer = useCallback(
-        async (serverWithAuth: NonNullable<ReturnType<typeof getServerById>>) => {
+        async (serverWithAuth: NonNullable<ReturnType<typeof getServerById>>, retryAttempt = 0) => {
+            const authStartTime = Date.now();
+
             try {
                 setReady(AuthState.LOADING);
 
@@ -61,6 +86,42 @@ export const useServerAuthenticated = () => {
                         isAdmin: userInfo.isAdmin,
                     });
 
+                    // Fetch and update server version and features
+                    try {
+                        const serverInfo = await controller.getServerInfo({
+                            apiClientProps: {
+                                serverId: serverWithAuth.id,
+                            },
+                        });
+
+                        if (serverInfo && serverInfo.id === serverWithAuth.id) {
+                            const { features, version } = serverInfo;
+                            const currentServer = getServerById(serverWithAuth.id);
+
+                            if (
+                                currentServer &&
+                                (version !== currentServer.version ||
+                                    !isEqual(features, currentServer.features))
+                            ) {
+                                updateServer(serverWithAuth.id, {
+                                    features,
+                                    version,
+                                });
+                            }
+                        }
+                    } catch (serverInfoError) {
+                        // Log but don't fail authentication if server info fetch fails
+                        logFn.warn(logMsg[LogCategory.SYSTEM].serverAuthenticationSuccess, {
+                            category: LogCategory.SYSTEM,
+                            meta: {
+                                action: 'server_info_fetch_failed',
+                                error: (serverInfoError as Error).message,
+                                serverId: serverWithAuth.id,
+                                serverName: serverWithAuth.name,
+                            },
+                        });
+                    }
+
                     logFn.info(logMsg[LogCategory.SYSTEM].serverAuthenticationSuccess, {
                         category: LogCategory.SYSTEM,
                         meta: {
@@ -72,6 +133,13 @@ export const useServerAuthenticated = () => {
                             userId: userInfo.id,
                         },
                     });
+
+                    const elapsedTime = Date.now() - authStartTime;
+                    const remainingDelay = Math.max(0, MIN_AUTH_DELAY_MS - elapsedTime);
+
+                    if (remainingDelay > 0) {
+                        await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+                    }
 
                     setReady(AuthState.VALID);
                     return;
@@ -128,6 +196,42 @@ export const useServerAuthenticated = () => {
 
                             updateServer(serverWithAuth.id, updatedServer);
 
+                            // Fetch and update server version and features
+                            try {
+                                const serverInfo = await controller.getServerInfo({
+                                    apiClientProps: {
+                                        serverId: serverWithAuth.id,
+                                    },
+                                });
+
+                                if (serverInfo && serverInfo.id === serverWithAuth.id) {
+                                    const { features, version } = serverInfo;
+                                    const currentServer = getServerById(serverWithAuth.id);
+
+                                    if (
+                                        currentServer &&
+                                        (version !== currentServer.version ||
+                                            !isEqual(features, currentServer.features))
+                                    ) {
+                                        updateServer(serverWithAuth.id, {
+                                            features,
+                                            version,
+                                        });
+                                    }
+                                }
+                            } catch (serverInfoError) {
+                                // Log but don't fail authentication if server info fetch fails
+                                logFn.warn(logMsg[LogCategory.SYSTEM].serverAuthenticationSuccess, {
+                                    category: LogCategory.SYSTEM,
+                                    meta: {
+                                        action: 'server_info_fetch_failed',
+                                        error: (serverInfoError as Error).message,
+                                        serverId: serverWithAuth.id,
+                                        serverName: serverWithAuth.name,
+                                    },
+                                });
+                            }
+
                             logFn.info(logMsg[LogCategory.SYSTEM].serverAuthenticationSuccess, {
                                 category: LogCategory.SYSTEM,
                                 meta: {
@@ -141,6 +245,14 @@ export const useServerAuthenticated = () => {
                                 },
                             });
 
+                            // Ensure minimum delay before completing authentication
+                            const elapsedTime = Date.now() - authStartTime;
+                            const remainingDelay = Math.max(0, MIN_AUTH_DELAY_MS - elapsedTime);
+
+                            if (remainingDelay > 0) {
+                                await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+                            }
+
                             setReady(AuthState.VALID);
                             return;
                         }
@@ -151,7 +263,54 @@ export const useServerAuthenticated = () => {
                 }
             } catch (error) {
                 const errorMessage = (error as Error).message || 'Authentication failed';
+                const isNetwork = isNetworkError(error);
 
+                // If it's a network error and we haven't exhausted retries, retry
+                if (isNetwork && retryAttempt < MAX_NETWORK_RETRIES) {
+                    const nextRetry = retryAttempt + 1;
+
+                    logFn.warn(logMsg[LogCategory.SYSTEM].serverAuthenticationFailed, {
+                        category: LogCategory.SYSTEM,
+                        meta: {
+                            action: 'network_error_retry',
+                            attempt: nextRetry,
+                            error: errorMessage,
+                            maxRetries: MAX_NETWORK_RETRIES,
+                            retryDelayMs: NETWORK_RETRY_DELAY_MS,
+                            serverId: serverWithAuth.id,
+                            serverName: serverWithAuth.name,
+                            serverType: serverWithAuth.type,
+                        },
+                    });
+
+                    // Wait before retrying
+                    await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAY_MS));
+
+                    // Retry authentication
+                    return authenticateServer(serverWithAuth, nextRetry);
+                }
+
+                // If network error and retries exhausted, redirect to no-network page
+                if (isNetwork && retryAttempt >= MAX_NETWORK_RETRIES) {
+                    logFn.error(logMsg[LogCategory.SYSTEM].serverAuthenticationFailed, {
+                        category: LogCategory.SYSTEM,
+                        meta: {
+                            action: 'network_error_max_retries_exceeded',
+                            attempts: retryAttempt + 1,
+                            error: errorMessage,
+                            serverId: serverWithAuth.id,
+                            serverName: serverWithAuth.name,
+                            serverType: serverWithAuth.type,
+                        },
+                    });
+
+                    // Don't clear credentials on network failure - preserve them for when network returns
+                    setReady(AuthState.INVALID);
+                    navigate(AppRoute.NO_NETWORK, { replace: true });
+                    return;
+                }
+
+                // For non-network errors, handle normally
                 logFn.error(logMsg[LogCategory.SYSTEM].serverAuthenticationFailed, {
                     category: LogCategory.SYSTEM,
                     meta: {
@@ -176,7 +335,7 @@ export const useServerAuthenticated = () => {
                 setReady(AuthState.INVALID);
             }
         },
-        [updateServer, setCurrentServer],
+        [updateServer, setCurrentServer, navigate],
     );
 
     const debouncedAuth = debounce(
@@ -201,6 +360,7 @@ export const useServerAuthenticated = () => {
         if (priorServerId.current !== server.id) {
             const serverWithAuth = getServerById(server.id);
             priorServerId.current = server.id;
+            retryCountRef.current = 0; // Reset retry count when server changes
 
             if (!serverWithAuth) {
                 logFn.error(logMsg[LogCategory.SYSTEM].serverAuthenticationError, {

@@ -89,16 +89,13 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
             const properties: Record<string, any> = {
                 ...getMpvProperties(mpvProperties),
                 speed: speed,
+                volume: volume,
             };
 
             await mpvPlayer?.initialize({
                 extraParameters: mpvExtraParameters,
                 properties,
             });
-
-            // Set volume from the current app volume
-            mpvPlayer?.volume(volume);
-            isInitializedRef.current = true;
 
             // After initialization, populate the queue if currentSrc is available
             // Don't override queue if radio is active
@@ -118,6 +115,8 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
                     hasPopulatedQueueRef.current = true;
                 }
             }
+
+            isInitializedRef.current = true;
         };
 
         initializeMpv();

@@ -306,7 +306,11 @@ export const sortSongsByFetchedOrder = (
     }
 
     // Sort each group by discNumber and trackNumber
+    // Skip sorting for ALBUM_ARTIST as songs are already sorted by the API
     for (const [fetchedId, groupSongs] of songsByFetchedId.entries()) {
+        if (itemType === LibraryItem.ALBUM_ARTIST) {
+            continue;
+        }
         const sortedGroup = orderBy(groupSongs, ['discNumber', 'trackNumber'], ['asc', 'asc']);
         songsByFetchedId.set(fetchedId, sortedGroup);
     }
@@ -324,12 +328,17 @@ export const sortSongsByFetchedOrder = (
     const matchedIds = new Set(result.map((s) => s.id));
     const unmatchedSongs = songs.filter((s) => !matchedIds.has(s.id));
     if (unmatchedSongs.length > 0) {
-        const sortedUnmatched = orderBy(
-            unmatchedSongs,
-            ['discNumber', 'trackNumber'],
-            ['asc', 'asc'],
-        );
-        result.push(...sortedUnmatched);
+        // Skip sorting for ALBUM_ARTIST as songs are already sorted by the API
+        if (itemType === LibraryItem.ALBUM_ARTIST) {
+            result.push(...unmatchedSongs);
+        } else {
+            const sortedUnmatched = orderBy(
+                unmatchedSongs,
+                ['discNumber', 'trackNumber'],
+                ['asc', 'asc'],
+            );
+            result.push(...sortedUnmatched);
+        }
     }
 
     return result;

@@ -7,11 +7,11 @@ export const openSettingsModal = () => {
         overlayProps: {
             opacity: 1,
         },
-        size: '2xl',
+        size: '60rem',
         styles: {
             content: {
                 height: '100%',
-                maxWidth: 'var(--theme-content-max-width)',
+                maxWidth: '90%',
                 width: '100%',
             },
         },

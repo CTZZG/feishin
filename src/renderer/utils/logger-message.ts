@@ -2,7 +2,7 @@ import { LogCategory } from '/@/renderer/utils/logger';
 
 export const logMsg = {
     [LogCategory.ANALYTICS]: {
-        appTracked: 'App tracked',
+        appTracked: 'Analytics sent',
         pageViewTracked: 'Page view tracked',
     },
     [LogCategory.API]: {},
@@ -118,5 +118,6 @@ export const logMsg = {
         serverAuthenticationFailed: 'Server authentication failed',
         serverAuthenticationInvalid: 'Server authentication invalid',
         serverAuthenticationSuccess: 'Server authentication successful',
+        settingsSynchronized: 'Differences found between renderer and main process settings',
     },
 };

@@ -11,10 +11,11 @@ import { CommandPalette } from '/@/renderer/features/search/components/command-p
 import { MobileSidebar } from '/@/renderer/features/sidebar/components/mobile-sidebar';
 import { PlayerBar } from '/@/renderer/layouts/default-layout/player-bar';
 import { useFullScreenPlayerStore } from '/@/renderer/store';
-import { useCommandPalette } from '/@/renderer/store';
+import { useCommandPalette, useWindowSettings } from '/@/renderer/store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Drawer } from '/@/shared/components/drawer/drawer';
 import { useDisclosure } from '/@/shared/hooks/use-disclosure';
+import { Platform } from '/@/shared/types/types';
 
 const WindowBar = lazy(() =>
     import('/@/renderer/layouts/window-bar').then((module) => ({
@@ -30,10 +31,17 @@ export const MobileLayout = ({ shell }: MobileLayoutProps) => {
     const { opened, ...handlers } = useCommandPalette();
     const [sidebarOpened, { close: closeSidebar, open: openSidebar }] = useDisclosure(false);
     const { expanded: isFullScreenPlayerExpanded } = useFullScreenPlayerStore();
+    const { windowBarStyle } = useWindowSettings();
 
     return (
         <>
-            <div className={clsx(styles.layout)} id="mobile-layout">
+            <div
+                className={clsx(styles.layout, {
+                    [styles.macos]: windowBarStyle === Platform.MACOS,
+                    [styles.windows]: windowBarStyle === Platform.WINDOWS,
+                })}
+                id="mobile-layout"
+            >
                 {!shell && <WindowBar />}
                 <ActionIcon
                     className={styles.drawerButton}

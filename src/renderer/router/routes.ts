@@ -21,6 +21,7 @@ export enum AppRoute {
     LIBRARY_GENRES_DETAIL = '/library/genres/:genreId',
     LIBRARY_SONGS = '/library/songs',
     LOGIN = '/login',
+    NO_NETWORK = '/no-network',
     NOW_PLAYING = '/now-playing',
     PLAYING = '/playing',
     PLAYLISTS = '/playlists',

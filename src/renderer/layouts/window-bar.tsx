@@ -40,8 +40,10 @@ const WindowsControls = ({ controls, title }: WindowBarControlsProps) => {
     return (
         <div className={styles.windowsContainer}>
             <div className={styles.playerStatusContainer}>
-                <img alt="" height={18} src={appIcon} width={18} />
-                <Text>{title}</Text>
+                <img alt="" height={16} src={appIcon} style={{ flexShrink: 0 }} width={16} />
+                <Text className={styles.playerStatusText} overflow="hidden" size="sm">
+                    {title}
+                </Text>
             </div>
             <div className={styles.windowsButtonGroup}>
                 <div className={styles.windowsButton} onClick={handleMinimize} role="button">
@@ -116,7 +118,9 @@ const MacOsControls = ({ controls, title }: WindowBarControlsProps) => {
                 </div>
             </div>
             <div className={styles.playerStatusContainer}>
-                <Text>{title}</Text>
+                <Text className={styles.playerStatusText} overflow="hidden" size="sm">
+                    {title}
+                </Text>
             </div>
         </div>
     );
@@ -198,7 +202,7 @@ export const WindowBar = () => {
     }
 
     return (
-        <>
+        <div className={styles.windowBar}>
             {windowBarStyle === Platform.WINDOWS && (
                 <WindowsControls
                     controls={{ handleClose, handleMaximize, handleMinimize }}
@@ -211,6 +215,6 @@ export const WindowBar = () => {
                     title={title}
                 />
             )}
-        </>
+        </div>
     );
 };

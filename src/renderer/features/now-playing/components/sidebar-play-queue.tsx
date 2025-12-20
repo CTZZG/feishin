@@ -93,7 +93,7 @@ const BottomPanel = () => {
             <Divider />
             {showLyricsInSidebar ? (
                 <div className={styles.lyricsSection}>
-                    <Lyrics />
+                    <Lyrics fadeOutNoLyricsMessage={showVisualizer} />
                     {showVisualizer && (
                         <div
                             className={styles.visualizerOverlay}

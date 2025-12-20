@@ -87,8 +87,9 @@ export const AlbumListView = ({
     table,
 }: ItemListSettings & { overrideQuery?: OverrideAlbumListQuery }) => {
     const server = useCurrentServer();
+    const { pageKey } = useListContext();
 
-    const { query } = useAlbumListFilters();
+    const { query } = useAlbumListFilters(pageKey as ItemListKey);
 
     const mergedQuery = useMemo(() => {
         if (!overrideQuery) {

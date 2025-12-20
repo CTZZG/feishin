@@ -2,11 +2,14 @@
     "action": {
         "addToFavorites": "add to $t(entity.favorite_other)",
         "addToPlaylist": "add to $t(entity.playlist_one)",
+        "addOrRemoveFromSelection": "add or remove from selection",
+        "selectRangeOfItems": "select a range of items",
         "clearQueue": "clear queue",
         "createPlaylist": "create $t(entity.playlist_one)",
         "createRadioStation": "create $t(entity.radioStation_one)",
         "deletePlaylist": "delete $t(entity.playlist_one)",
         "deleteRadioStation": "delete $t(entity.radioStation_one)",
+        "selectAll": "select all",
         "deselectAll": "deselect all",
         "downloadStarted": "started download of {{count}} items",
         "editPlaylist": "edit $t(entity.playlist_one)",
@@ -30,12 +33,14 @@
         "toggleSmartPlaylistEditor": "toggle $t(entity.smartPlaylist) editor",
         "viewPlaylists": "view $t(entity.playlist_other)",
         "viewMore": "view more",
+        "openApplicationDirectory": "open application directory",
         "openIn": {
             "lastfm": "Open in Last.fm",
             "musicbrainz": "Open in MusicBrainz"
         }
     },
     "common": {
+        "countSelected": "{{count}} selected",
         "explicitStatus": "explicit status",
         "action_one": "action",
         "action_other": "actions",
@@ -218,7 +223,8 @@
         "serverNotSelectedError": "no server selected",
         "serverRequired": "server required",
         "sessionExpiredError": "your session has expired",
-        "systemFontError": "an error occurred when trying to get system fonts"
+        "systemFontError": "an error occurred when trying to get system fonts",
+        "settingsSyncError": "discrepancies were found between the settings in the renderer and the main process. restart the application to apply the changes"
     },
     "filter": {
         "album": "$t(entity.album_one)",
@@ -264,6 +270,12 @@
         "toYear": "to year",
         "trackNumber": "track",
         "explicitStatus": "$t(common.explicitStatus)"
+    },
+    "datetime": {
+        "minuteShort": "min",
+        "secondShort": "sec",
+        "hourShort": "hr",
+        "dayShort": "day"
     },
     "filterOperator": {
         "after": "is after",
@@ -578,10 +590,10 @@
         }
     },
     "player": {
-        "addLast": "add last",
-        "addNext": "add next",
-        "addLastShuffled": "add last (shuffled)",
-        "addNextShuffled": "add next (shuffled)",
+        "addLast": "last",
+        "addNext": "next",
+        "addLastShuffled": "last (shuffled)",
+        "addNextShuffled": "next (shuffled)",
         "holdToShuffle": "hold to shuffle",
         "favorite": "favorite",
         "lyrics": "lyrics",
@@ -657,6 +669,8 @@
         "autoDJ_timing_description": "the number of songs remaining in the queue before auto DJ is triggered",
         "accentColor_description": "sets the accent color for the application",
         "accentColor": "accent color",
+        "useThemeAccentColor": "use theme accent color",
+        "useThemeAccentColor_description": "use the primary color defined in the selected theme instead of the custom accent color",
         "albumBackground_description": "adds a background image for album pages containing the album art",
         "albumBackground": "album background image",
         "albumBackgroundBlur_description": "adjusts the amount of blur applied to the album background image",

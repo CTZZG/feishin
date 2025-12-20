@@ -110,7 +110,7 @@ export const ListFiltersTitle = () => {
     const canUnpin = Boolean(setIsSidebarOpen);
 
     return (
-        <Group justify="space-between" p="md" pb={0}>
+        <Group justify="space-between" pb={0} pl="md" pr="md" pt="md">
             <Text fw={500} size="xl">
                 {t('common.filters', { postProcess: 'sentenceCase' })}
             </Text>

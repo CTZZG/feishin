@@ -207,8 +207,12 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
                 }
 
                 if (allSongIds.length === 0) {
-                    toast.warn({
-                        message: t('common.noResultsFromQuery', { postProcess: 'sentenceCase' }),
+                    toast.success({
+                        message: t('form.addToPlaylist.success', {
+                            message: 0,
+                            numOfPlaylists: 1,
+                            postProcess: 'sentenceCase',
+                        }),
                     });
                     return;
                 }
@@ -249,8 +253,12 @@ export const AddToPlaylistAction = ({ items, itemType }: AddToPlaylistActionProp
                 }
 
                 if (songsToAdd.length === 0) {
-                    toast.warn({
-                        message: t('common.noResultsFromQuery', { postProcess: 'sentenceCase' }),
+                    toast.success({
+                        message: t('form.addToPlaylist.success', {
+                            message: 0,
+                            numOfPlaylists: 1,
+                            postProcess: 'sentenceCase',
+                        }),
                     });
                     return;
                 }

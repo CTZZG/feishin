@@ -127,6 +127,7 @@ const AlbumArtistDetailTopSongsListRoute = () => {
                         enableHorizontalBorders={tableConfig.enableHorizontalBorders}
                         enableRowHoverHighlight={tableConfig.enableRowHoverHighlight}
                         enableSelection
+                        enableSelectionDialog={false}
                         enableVerticalBorders={tableConfig.enableVerticalBorders}
                         itemType={LibraryItem.SONG}
                         onColumnReordered={handleColumnReordered}

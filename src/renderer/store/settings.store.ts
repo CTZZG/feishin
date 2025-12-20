@@ -35,6 +35,8 @@ import {
     TableColumn,
 } from '/@/shared/types/types';
 
+const utils = isElectron() ? window.api.utils : null;
+
 type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
@@ -257,6 +259,7 @@ const GeneralSettingsSchema = z.object({
     theme: z.nativeEnum(AppTheme),
     themeDark: z.nativeEnum(AppTheme),
     themeLight: z.nativeEnum(AppTheme),
+    useThemeAccentColor: z.boolean(),
     volumeWheelStep: z.number(),
     volumeWidth: z.number(),
     zoomFactor: z.number(),
@@ -665,8 +668,19 @@ const artistItems = Object.values(ArtistItem).map((item) => ({
 
 // Determines the default/initial windowBarStyle value based on the current platform.
 const getPlatformDefaultWindowBarStyle = (): Platform => {
-    // Prefer native window bar
-    return Platform.LINUX;
+    if (utils?.isWindows()) {
+        return Platform.WINDOWS;
+    }
+
+    if (utils?.isMacOS()) {
+        return Platform.MACOS;
+    }
+
+    if (utils?.isLinux()) {
+        return Platform.WINDOWS;
+    }
+
+    return Platform.WEB;
 };
 
 const platformDefaultWindowBarStyle: Platform = getPlatformDefaultWindowBarStyle();
@@ -743,6 +757,7 @@ const initialState: SettingsState = {
         theme: AppTheme.DEFAULT_DARK,
         themeDark: AppTheme.DEFAULT_DARK,
         themeLight: AppTheme.DEFAULT_LIGHT,
+        useThemeAccentColor: false,
         volumeWheelStep: 5,
         volumeWidth: 70,
         zoomFactor: 100,
@@ -1515,10 +1530,16 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     });
                 }
 
+                // Version 16 introduced a bug where the release channel may have been reset
+                // to the latest channel. This is to revert it.
+                if (version === 16) {
+                    state.window.releaseChannel = 'beta';
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 16,
+            version: 17,
         },
     ),
 );

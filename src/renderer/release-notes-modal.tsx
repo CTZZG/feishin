@@ -164,6 +164,13 @@ export const ReleaseNotesModal = () => {
     }, [setValue, version]);
 
     useEffect(() => {
+        // If value is undefined, set it to current version but don't show modal
+        if (value === undefined) {
+            setValue(version);
+            return;
+        }
+
+        // Only show modal if the stored version is different from current version
         if (value !== version) {
             openModal({
                 children: <ReleaseNotesContent onDismiss={handleDismiss} version={version} />,
@@ -175,7 +182,7 @@ export const ReleaseNotesModal = () => {
                 }) as string,
             });
         }
-    }, [handleDismiss, value, version, t]);
+    }, [handleDismiss, value, version, t, setValue]);
 
     return null;
 };

@@ -58,12 +58,42 @@
     flex-wrap: nowrap;
     gap: var(--theme-spacing-md);
     align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .metadata-group-item {
     display: flex;
+    flex-shrink: 1;
+    flex-wrap: nowrap;
     gap: var(--theme-spacing-xs);
     align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.metadata-group-item-no-shrink {
+    flex-shrink: 0;
+}
+
+.metadata-group-item > * {
+    flex-shrink: 0;
+}
+
+.metadata-group-item > *:last-child {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.metadata-group-item-no-shrink > *:last-child {
+    flex-shrink: 0;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .name {

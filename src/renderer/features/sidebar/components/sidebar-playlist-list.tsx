@@ -19,8 +19,8 @@ import {
 import { usePlayButtonClick } from '/@/renderer/features/shared/hooks/use-play-button-click';
 import { useDragDrop } from '/@/renderer/hooks/use-drag-drop';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useCurrentServer, useCurrentServerId } from '/@/renderer/store';
-import { formatDurationStringShort } from '/@/renderer/utils';
+import { useCurrentServer, useCurrentServerId, usePermissions } from '/@/renderer/store';
+import { formatDurationString } from '/@/renderer/utils';
 import { Accordion } from '/@/shared/components/accordion/accordion';
 import { ActionIcon, ActionIconGroup } from '/@/shared/components/action-icon/action-icon';
 import { ButtonProps } from '/@/shared/components/button/button';
@@ -151,6 +151,8 @@ const PlaylistRowButton = memo(({ item, name, onContextMenu, to }: PlaylistRowBu
     const player = usePlayer();
     const serverId = useCurrentServerId();
 
+    const permissions = usePermissions();
+
     const handlePlay = useCallback(
         (id: string, type: Play) => {
             player.addToQueueByFetch(serverId, [id], LibraryItem.PLAYLIST, type);
@@ -183,8 +185,13 @@ const PlaylistRowButton = memo(({ item, name, onContextMenu, to }: PlaylistRowBu
                         {name}
                     </Text>
                     <div className={styles.metadataGroup}>
-                        <div className={styles.metadataGroupItem}>
-                            <Icon color="muted" icon="track" size="sm" />
+                        <div
+                            className={clsx(
+                                styles.metadataGroupItem,
+                                styles.metadataGroupItemNoShrink,
+                            )}
+                        >
+                            <Icon color="muted" icon="itemSong" size="sm" />
                             <Text isMuted size="sm">
                                 {item.songCount || 0}
                             </Text>
@@ -192,9 +199,24 @@ const PlaylistRowButton = memo(({ item, name, onContextMenu, to }: PlaylistRowBu
                         <div className={styles.metadataGroupItem}>
                             <Icon color="muted" icon="duration" size="sm" />
                             <Text isMuted size="sm">
-                                {formatDurationStringShort(item.duration ?? 0)}
+                                {formatDurationString(item.duration ?? 0)}
                             </Text>
                         </div>
+                        {item.ownerId === permissions.userId && Boolean(item.public) && (
+                            <div className={styles.metadataGroupItem}>
+                                <Text isMuted size="sm">
+                                    {t('common.public', { postProcess: 'titleCase' })}
+                                </Text>
+                            </div>
+                        )}
+                        {item.ownerId !== permissions.userId && (
+                            <div className={styles.metadataGroupItem}>
+                                <Icon color="muted" icon="user" size="sm" />
+                                <Text isMuted size="sm">
+                                    {item.owner}
+                                </Text>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

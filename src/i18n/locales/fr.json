@@ -37,7 +37,9 @@
         "queueType_default": "défaut",
         "queueType_priority": "priorité",
         "holdToShuffle": "maintenir pour mélanger",
-        "lyrics": "paroles"
+        "lyrics": "paroles",
+        "restoreQueueFromServer": "restaurer la file d'attente depuis le serveur",
+        "saveQueueToServer": "enregistrer la file d'attente sur le serveur"
     },
     "action": {
         "editPlaylist": "éditer $t(entity.playlist_one)",
@@ -71,7 +73,9 @@
         "moveUp": "monter",
         "moveDown": "descendre",
         "holdToMoveToTop": "Maintenir pour déplacer en haut",
-        "holdToMoveToBottom": "Maintenir pour déplacer en bas"
+        "holdToMoveToBottom": "Maintenir pour déplacer en bas",
+        "createRadioStation": "créer $t(entity.radioStation_one)",
+        "deleteRadioStation": "supprimer $t(entity.radioStation_one)"
     },
     "common": {
         "backward": "en arrière",
@@ -217,7 +221,9 @@
         "networkError": "une erreur de réseau est survenue",
         "badAlbum": "vous voyez cette page parce que cette chanson ne fait pas parti d'un album. vous rencontrez probablement cette erreur si vous avez une chanson qui n'est pas dans votre répertoire de musique. Jellyfin gère les chansons uniquement si elles sont dans un sous-dossier, qui est lui-même dans un dossier \"Musique(s)\"",
         "badValue": "option {{value}} invalide. Cette valeur n'existe plus",
-        "notificationDenied": "les autorisations pour les notifications ont été refusées. ce paramètre n'a aucun effet"
+        "notificationDenied": "les autorisations pour les notifications ont été refusées. ce paramètre n'a aucun effet",
+        "multipleServerSaveQueueError": "la file d'attente de lecture contient un ou plusieurs morceaux qui ne proviennent pas du serveur actuel. Ceci n'est pas prise en charge",
+        "saveQueueFailed": "échec de l'enregistrement de la file d'attente"
     },
     "filter": {
         "mostPlayed": "plus joués",
@@ -279,7 +285,8 @@
             "albumArtists": "$t(entity.albumArtist_other)",
             "shared": "partagé $t(entity.playlist_other)",
             "myLibrary": "Bibliothèque",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "fullscreenPlayer": {
             "config": {
@@ -449,6 +456,9 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "stations radio"
         }
     },
     "setting": {
@@ -757,7 +767,9 @@
         "logLevel_optionWarn": "avertissement",
         "playerFilters": "filtrer les tires de la file d'attente",
         "playerFilters_description": "exclure les titres de la file d'attente selon les critères suivants",
-        "playerbarSlider_description": "la forme d'onde n'est pas recommandée sur une connexion lente ou limitée"
+        "playerbarSlider_description": "la forme d'onde n'est pas recommandée sur une connexion lente ou limitée",
+        "useThemeAccentColor": "utiliser la couleur d'accent du thème",
+        "useThemeAccentColor_description": "utiliser la couleur principale définie dans le thème sélectionné au lieu de la couleur d'accent personnalisée"
     },
     "form": {
         "deletePlaylist": {
@@ -847,6 +859,16 @@
             "input_played_optionAll": "toutes les pistes",
             "input_played_optionUnplayed": "seulement les pistes non jouées",
             "input_played_optionPlayed": "seulement les pistes jouées"
+        },
+        "createRadioStation": {
+            "success": "station radio créée avec succès",
+            "title": "créer une station radio",
+            "input_homepageUrl": "lien de la page d'accueil",
+            "input_name": "nom",
+            "input_streamUrl": "lien du flux en direct"
+        },
+        "saveQueue": {
+            "success": "file d'attente de lecture enregistrée sur le serveur"
         }
     },
     "entity": {
@@ -901,7 +923,13 @@
         "play_other": "{{count}} écoutes",
         "song_one": "titre",
         "song_many": "titres",
-        "song_other": "titres"
+        "song_other": "titres",
+        "radioStation_one": "station radio",
+        "radioStation_many": "stations radios",
+        "radioStation_other": "",
+        "radioStationWithCount_one": "{{count}} station radio",
+        "radioStationWithCount_many": "{{count}} stations radios",
+        "radioStationWithCount_other": ""
     },
     "table": {
         "config": {

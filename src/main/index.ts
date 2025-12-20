@@ -708,3 +708,11 @@ if (!ipcMain.eventNames().includes('open-item')) {
         });
     });
 }
+
+// Register 'open-application-directory' handler globally, ensuring it is only registered once
+if (!ipcMain.eventNames().includes('open-application-directory')) {
+    ipcMain.handle('open-application-directory', async () => {
+        const userDataPath = app.getPath('userData');
+        shell.openPath(userDataPath);
+    });
+}

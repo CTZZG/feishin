@@ -155,7 +155,10 @@ export const SubsonicController: InternalControllerEndpoint = {
         const res = await ssApiClient(apiClientProps).createFavorite({
             query: {
                 albumId: query.type === LibraryItem.ALBUM ? query.id : undefined,
-                artistId: query.type === LibraryItem.ALBUM_ARTIST ? query.id : undefined,
+                artistId:
+                    query.type === LibraryItem.ALBUM_ARTIST || query.type === LibraryItem.ARTIST
+                        ? query.id
+                        : undefined,
                 id: query.type === LibraryItem.SONG ? query.id : undefined,
             },
         });
@@ -205,7 +208,10 @@ export const SubsonicController: InternalControllerEndpoint = {
         const res = await ssApiClient(apiClientProps).removeFavorite({
             query: {
                 albumId: query.type === LibraryItem.ALBUM ? query.id : undefined,
-                artistId: query.type === LibraryItem.ALBUM_ARTIST ? query.id : undefined,
+                artistId:
+                    query.type === LibraryItem.ALBUM_ARTIST || query.type === LibraryItem.ARTIST
+                        ? query.id
+                        : undefined,
                 id: query.type === LibraryItem.SONG ? query.id : undefined,
             },
         });

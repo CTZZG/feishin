@@ -1,8 +1,10 @@
+import { useIsFetching } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { queryKeys } from '/@/renderer/api/query-keys';
 import { SONG_TABLE_COLUMNS } from '/@/renderer/components/item-list/item-table-list/default-columns';
-import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import { useRestoreQueue, useSaveQueue } from '/@/renderer/features/player/hooks/use-queue-restore';
 import { ListConfigMenu } from '/@/renderer/features/shared/components/list-config-menu';
 import { SearchInput } from '/@/renderer/features/shared/components/search-input';
@@ -85,7 +87,7 @@ const QueueRestoreActions = () => {
     const server = useCurrentServer();
     const supportsQueue = hasFeature(server, ServerFeature.SERVER_PLAY_QUEUE);
 
-    const isFetching = useIsPlayerFetching();
+    const isFetching = useIsFetching({ queryKey: queryKeys.player.fetch({ type: 'queue' }) });
 
     const { isPending: isSavingQueue, mutate: handleSaveQueue } = useSaveQueue();
 
@@ -98,7 +100,7 @@ const QueueRestoreActions = () => {
     return (
         <>
             <ActionIcon
-                disabled={isFetching}
+                disabled={Boolean(isFetching)}
                 icon="upload"
                 iconProps={{ size: 'lg' }}
                 loading={isSavingQueue}
@@ -111,10 +113,10 @@ const QueueRestoreActions = () => {
                 variant="subtle"
             />
             <ActionIcon
-                disabled={isSavingQueue}
+                disabled={isSavingQueue || Boolean(isFetching)}
                 icon="download"
                 iconProps={{ size: 'lg' }}
-                loading={isFetching}
+                loading={Boolean(isFetching)}
                 onClick={handleRestoreQueue}
                 tooltip={{
                     label: t('player.restoreQueueFromServer', {

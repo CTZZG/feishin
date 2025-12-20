@@ -169,6 +169,7 @@ export const PlayQueue = forwardRef<ItemListHandle, QueueProps>(({ listKey, sear
                 enableHorizontalBorders={table.enableHorizontalBorders}
                 enableRowHoverHighlight={table.enableRowHoverHighlight}
                 enableSelection
+                enableSelectionDialog={false}
                 enableVerticalBorders={table.enableVerticalBorders}
                 getRowId="_uniqueId"
                 groups={groups.length > 0 ? groups : undefined}

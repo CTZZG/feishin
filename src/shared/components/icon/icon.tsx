@@ -109,9 +109,12 @@ import {
     LuVolume1,
     LuVolume2,
     LuVolumeX,
+    LuWifi,
+    LuWifiOff,
     LuX,
 } from 'react-icons/lu';
 import { MdOutlineVisibility, MdOutlineVisibilityOff } from 'react-icons/md';
+import { PiMouseLeftClickFill, PiMouseRightClickFill } from 'react-icons/pi';
 import { RiPlayListAddLine, RiRepeat2Line, RiRepeatOneLine } from 'react-icons/ri';
 import { SiMusicbrainz } from 'react-icons/si';
 
@@ -200,6 +203,8 @@ export const AppIcon = {
     metadata: LuBookOpen,
     microphone: LuMicVocal,
     minus: LuMinus,
+    mouseLeftClick: PiMouseLeftClickFill,
+    mouseRightClick: PiMouseRightClickFill,
     panelRightClose: LuPanelRightClose,
     panelRightOpen: LuPanelRightOpen,
     pin: LuPin,
@@ -241,6 +246,8 @@ export const AppIcon = {
     volumeMute: LuVolumeX,
     volumeNormal: LuVolume1,
     warn: LuTriangleAlert,
+    wifiOff: LuWifiOff,
+    wifiOn: LuWifi,
     x: LuX,
     xCircle: LuCircleX,
 } as const;

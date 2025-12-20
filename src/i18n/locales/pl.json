@@ -31,7 +31,9 @@
         "moveUp": "przenieś wyżej",
         "moveDown": "przenieś niżej",
         "holdToMoveToTop": "przytrzymaj aby, przesunąć na górę",
-        "holdToMoveToBottom": "przytrzymaj aby, przesunąć na dół"
+        "holdToMoveToBottom": "przytrzymaj aby, przesunąć na dół",
+        "createRadioStation": "utwórz $t(entity.radioStation_one)",
+        "deleteRadioStation": "usuń $t(entity.radioStation_one)"
     },
     "common": {
         "increase": "zwiększ",
@@ -202,7 +204,13 @@
         "play_many": "{{count}} odtworzeń",
         "song_one": "piosenka",
         "song_few": "piosenki",
-        "song_many": "piosenek"
+        "song_many": "piosenek",
+        "radioStation_one": "stacja radiowa",
+        "radioStation_few": "stacje radiowe",
+        "radioStation_many": "stacji radiowych",
+        "radioStationWithCount_one": "{{count}} stacja radiowa",
+        "radioStationWithCount_few": "{{count}} stacje radiowe",
+        "radioStationWithCount_many": "{{count}} stacji radiowych"
     },
     "error": {
         "remotePortWarning": "uruchom ponownie serwer aby używać nowego portu",
@@ -368,6 +376,13 @@
         },
         "saveQueue": {
             "success": "zapisano kolejkę odtwarzania na serwerze"
+        },
+        "createRadioStation": {
+            "success": "stacja radiowa utworzona pomyślnie",
+            "title": "utwórz stację radiową",
+            "input_homepageUrl": "url strony głównej",
+            "input_name": "nazwa",
+            "input_streamUrl": "url strumienia"
         }
     },
     "page": {
@@ -472,7 +487,8 @@
             "albumArtists": "$t(entity.albumArtist_other)",
             "shared": "udostępnione $t(entity.playlist_other)",
             "myLibrary": "Moja biblioteka",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "home": {
             "mostPlayed": "najczęściej odtwarzane",
@@ -555,6 +571,9 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "stacje radiowe"
         }
     },
     "player": {
@@ -572,7 +591,7 @@
         "shuffle": "odtwarzaj (losowo)",
         "playbackFetchNoResults": "nie znaleziono utworów",
         "playbackFetchInProgress": "wczytywanie utworów…",
-        "addNext": "dodaj następny",
+        "addNext": "następne",
         "playbackSpeed": "prędkość odtwarzania",
         "playbackFetchCancel": "to potrwa chwilę... zamknij powiadomienie aby anulować",
         "play": "odtwarzaj",
@@ -584,13 +603,13 @@
         "queue_moveToTop": "przesuń zaznaczone na dół",
         "queue_moveToBottom": "przesuń zaznaczone na górę",
         "shuffle_off": "losowa kolejność wyłączona",
-        "addLast": "dodaj na końcu",
+        "addLast": "ostatnie",
         "mute": "wycisz",
         "skip_forward": "przeskocz do przodu",
         "viewQueue": "zobacz kolejkę",
         "playSimilarSongs": "odtwarzaj podobne",
-        "addLastShuffled": "dodaj ostatnie (wylosowane)",
-        "addNextShuffled": "dodaj następne (wylosowane)",
+        "addLastShuffled": "ostatnie (wylosowane)",
+        "addNextShuffled": "następne (wylosowane)",
         "queueType": "typ kolejki",
         "queueType_default": "domyślna",
         "queueType_priority": "priorytetowa",
@@ -905,7 +924,9 @@
         "logLevel_optionDebug": "debugowanie",
         "logLevel_optionError": "błędy",
         "logLevel_optionInfo": "info",
-        "logLevel_optionWarn": "ostrzeżenia"
+        "logLevel_optionWarn": "ostrzeżenia",
+        "useThemeAccentColor": "używaj koloru akcentu motywu",
+        "useThemeAccentColor_description": "używaj głównego koloru ustawionego w wybranym motywie zamiast niestandardowego koloru akcentu"
     },
     "table": {
         "config": {

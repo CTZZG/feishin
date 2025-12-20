@@ -152,7 +152,7 @@ export const NavidromeAlbumFilters = ({ disableArtistFilter }: NavidromeAlbumFil
     const debouncedHandleYearFilter = useDebouncedCallback(handleYearFilter, 300);
 
     return (
-        <Stack p="md">
+        <Stack px="md" py="md">
             {yesNoUndefinedFilters.map((filter) => (
                 <YesNoSelect
                     clearable

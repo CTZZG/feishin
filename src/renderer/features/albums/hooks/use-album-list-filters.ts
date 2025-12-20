@@ -15,13 +15,15 @@ import {
 import { AlbumListSort, SortOrder } from '/@/shared/types/domain-types';
 import { ItemListKey } from '/@/shared/types/types';
 
-export const useAlbumListFilters = () => {
+export const useAlbumListFilters = (listKey?: ItemListKey) => {
+    const resolvedListKey = listKey ?? ItemListKey.ALBUM;
+
     const { setSortBy, sortBy } = useSortByFilter<AlbumListSort>(
         AlbumListSort.NAME,
-        ItemListKey.ALBUM,
+        resolvedListKey,
     );
 
-    const { setSortOrder, sortOrder } = useSortOrderFilter(SortOrder.ASC, ItemListKey.ALBUM);
+    const { setSortOrder, sortOrder } = useSortOrderFilter(SortOrder.ASC, resolvedListKey);
 
     const { searchTerm, setSearchTerm } = useSearchTermFilter('');
 

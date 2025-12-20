@@ -182,7 +182,9 @@
         "play_one": "{{count}} lejátszás",
         "play_other": "{{count}} lejátszások",
         "trackWithCount_one": "{{count}} sáv",
-        "trackWithCount_other": "{{count}} sávok"
+        "trackWithCount_other": "{{count}} sávok",
+        "radioStation_one": "rádió állomás",
+        "radioStation_other": "rádió állomások"
     },
     "error": {
         "apiRouteError": "a kérést nem sikerült célba juttatni",

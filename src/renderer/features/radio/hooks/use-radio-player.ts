@@ -10,6 +10,7 @@ import {
     usePlayerMuted,
     usePlayerStoreBase,
     usePlayerVolume,
+    useSettingsStore,
 } from '/@/renderer/store';
 import { toast } from '/@/shared/components/toast/toast';
 import { PlayerStatus, PlayerType } from '/@/shared/types/types';
@@ -68,13 +69,22 @@ export const useRadioStore = createWithEqualityFn<RadioStore>((set) => ({
         setMetadata: (metadata) => set({ metadata }),
         setStationName: (stationName) => set({ stationName }),
         stop: () => {
+            const playbackType = useSettingsStore.getState().playback.type;
+
             set({
                 currentStreamUrl: null,
                 isPlaying: false,
                 metadata: null,
                 stationName: null,
             });
-            usePlayerStoreBase.getState().mediaStop();
+
+            // When stopping radio with mpv, just pause instead of calling mediaStop
+            // This prevents mpv from quitting
+            if (playbackType === PlayerType.LOCAL && mpvPlayer) {
+                mpvPlayer.pause();
+            } else {
+                usePlayerStoreBase.getState().mediaStop();
+            }
         },
     },
     currentStreamUrl: null,
@@ -135,7 +145,7 @@ export const useRadioAudioInstance = () => {
         if (currentStreamUrl) {
             mpvPlayer.setQueue(currentStreamUrl, undefined, !isPlaying);
         } else {
-            mpvPlayer.setQueue(undefined, undefined, true);
+            mpvPlayer.pause();
         }
     }, [
         currentStreamUrl,
