@@ -24,32 +24,6 @@ const getImageUrl = (args: { url: null | string }) => {
     return url;
 };
 
-const getCoverArtUrl = (args: {
-    baseUrl: string | undefined;
-    coverArtId: string;
-    credential: string | undefined;
-    size: number;
-    updated: string;
-}) => {
-    const size = args.size ? args.size : 250;
-
-    if (!args.coverArtId || args.coverArtId.match('2a96cbd8b46e442fc41c2b86b821562f')) {
-        return null;
-    }
-
-    return (
-        `${args.baseUrl}/rest/getCoverArt.view` +
-        `?id=${args.coverArtId}` +
-        `&${args.credential}` +
-        '&v=1.13.0' +
-        '&c=Feishin' +
-        `&size=${size}` +
-        // A dummy variable to invalidate the cached image if the item is updated
-        // This is adapted from how Navidrome web does it
-        `&_=${args.updated}`
-    );
-};
-
 interface WithDate {
     playDate?: string;
 }
@@ -74,8 +48,11 @@ const getArtists = (
             if (role === 'albumartist' || role === 'artist') {
                 const roleList = list.map((item) => ({
                     id: item.id,
+                    imageId: null,
                     imageUrl: null,
                     name: item.name,
+                    userFavorite: false,
+                    userRating: null,
                 }));
 
                 if (role === 'albumartist') {
@@ -89,8 +66,11 @@ const getArtists = (
                 for (const artist of list) {
                     const item: RelatedArtist = {
                         id: artist.id,
+                        imageId: null,
                         imageUrl: null,
                         name: artist.name,
+                        userFavorite: false,
+                        userRating: null,
                     };
 
                     if (subRoles.has(artist.subRole)) {
@@ -112,11 +92,29 @@ const getArtists = (
     }
 
     if (albumArtists === undefined) {
-        albumArtists = [{ id: item.albumArtistId, imageUrl: null, name: item.albumArtist }];
+        albumArtists = [
+            {
+                id: item.albumArtistId,
+                imageId: null,
+                imageUrl: null,
+                name: item.albumArtist,
+                userFavorite: false,
+                userRating: null,
+            },
+        ];
     }
 
     if (artists === undefined) {
-        artists = [{ id: item.artistId, imageUrl: null, name: item.artist }];
+        artists = [
+            {
+                id: item.artistId,
+                imageId: null,
+                imageUrl: null,
+                name: item.artist,
+                userFavorite: false,
+                userRating: null,
+            },
+        ];
     }
 
     return { albumArtists, artists, participants };
@@ -125,7 +123,6 @@ const getArtists = (
 const normalizeSong = (
     item: z.infer<typeof ndType._response.playlistSong> | z.infer<typeof ndType._response.song>,
     server?: null | ServerListItem,
-    imageSize?: number,
 ): Song => {
     let id;
     let playlistItemId;
@@ -138,15 +135,6 @@ const normalizeSong = (
         id = item.id;
     }
 
-    const imageUrl = getCoverArtUrl({
-        baseUrl: server?.url,
-        coverArtId: id,
-        credential: server?.credential,
-        size: imageSize || 100,
-        updated: item.updatedAt,
-    });
-
-    const imagePlaceholderUrl = null;
     return {
         album: item.album,
         albumId: item.albumId,
@@ -182,13 +170,14 @@ const normalizeSong = (
             _serverType: ServerType.NAVIDROME,
             albumCount: null,
             id: genre.id,
+            imageId: null,
             imageUrl: null,
             name: genre.name,
             songCount: null,
         })),
         id,
-        imagePlaceholderUrl,
-        imageUrl,
+        imageId: id,
+        imageUrl: null,
         lastPlayedAt: normalizePlayDate(item),
         lyrics: item.lyrics ? item.lyrics : null,
         mbzRecordingId: item.mbzReleaseTrackId || null,
@@ -203,10 +192,7 @@ const normalizeSong = (
                 : null,
         playCount: item.playCount || 0,
         playlistItemId,
-        releaseDate: (item.releaseDate
-            ? new Date(item.releaseDate)
-            : new Date(Date.UTC(item.year, 0, 1))
-        ).toISOString(),
+        releaseDate: item.releaseDate ? new Date(item.releaseDate).toISOString() : null,
         releaseYear: item.year || null,
         sampleRate: item.sampleRate || null,
         size: item.size,
@@ -264,20 +250,7 @@ const normalizeAlbum = (
         songs?: z.infer<typeof ndType._response.songList>;
     },
     server?: null | ServerListItem,
-    imageSize?: number,
 ): Album => {
-    const imageUrl = getCoverArtUrl({
-        baseUrl: server?.url,
-        coverArtId: item.coverArtId || item.id,
-        credential: server?.credential,
-        size: imageSize || 300,
-        updated: item.updatedAt,
-    });
-
-    const imagePlaceholderUrl = null;
-
-    const imageBackdropUrl = imageUrl?.replace(/size=\d+/, 'size=1000') || null;
-
     return {
         ...parseAlbumTags(item),
         ...getArtists(item),
@@ -285,7 +258,6 @@ const normalizeAlbum = (
         _serverId: server?.id || 'unknown',
         _serverType: ServerType.NAVIDROME,
         albumArtist: item.albumArtist,
-        backdropImageUrl: imageBackdropUrl,
         comment: item.comment || null,
         createdAt: item.createdAt,
         duration: item.duration !== undefined ? item.duration * 1000 : null,
@@ -301,13 +273,14 @@ const normalizeAlbum = (
             _serverType: ServerType.NAVIDROME,
             albumCount: null,
             id: genre.id,
+            imageId: null,
             imageUrl: null,
             name: genre.name,
             songCount: null,
         })),
         id: item.id,
-        imagePlaceholderUrl,
-        imageUrl,
+        imageId: item.coverArtId || item.id,
+        imageUrl: null,
         isCompilation: item.compilation,
         lastPlayedAt: normalizePlayDate(item),
         mbzId: item.mbzAlbumId || null,
@@ -315,7 +288,7 @@ const normalizeAlbum = (
         originalDate: item.originalDate ? new Date(item.originalDate).toISOString() : null,
         playCount: item.playCount || 0,
         releaseDate: item.releaseDate ? new Date(item.releaseDate).toISOString() : null,
-        releaseYear: item.minYear || null,
+        releaseYear: item.maxYear || null,
         size: item.size,
         songCount: item.songCount,
         songs: item.songs ? item.songs.map((song) => normalizeSong(song, server)) : undefined,
@@ -332,17 +305,7 @@ const normalizeAlbumArtist = (
     },
     server?: null | ServerListItem,
 ): AlbumArtist => {
-    let imageUrl = getImageUrl({ url: item?.largeImageUrl || null });
-
-    if (!imageUrl) {
-        imageUrl = getCoverArtUrl({
-            baseUrl: server?.url,
-            coverArtId: `ar-${item.id}`,
-            credential: server?.credential,
-            size: 300,
-            updated: item.updatedAt || '',
-        });
-    }
+    const imageUrl = getImageUrl({ url: item?.largeImageUrl?.replace(/\?size=\d+/, '') || null });
 
     let albumCount: number;
     let songCount: number;
@@ -366,7 +329,6 @@ const normalizeAlbumArtist = (
         _serverId: server?.id || 'unknown',
         _serverType: ServerType.NAVIDROME,
         albumCount,
-        backgroundImageUrl: null,
         biography: item.biography || null,
         duration: null,
         genres: (item.genres || []).map((genre) => ({
@@ -375,11 +337,13 @@ const normalizeAlbumArtist = (
             _serverType: ServerType.NAVIDROME,
             albumCount: null,
             id: genre.id,
+            imageId: null,
             imageUrl: null,
             name: genre.name,
             songCount: null,
         })),
         id: item.id,
+        imageId: item.id,
         imageUrl: imageUrl || null,
         lastPlayedAt: normalizePlayDate(item),
         mbz: item.mbzArtistId || null,
@@ -388,9 +352,12 @@ const normalizeAlbumArtist = (
         similarArtists:
             item.similarArtists?.map((artist) => ({
                 id: artist.id,
-                imageUrl: artist?.artistImageUrl || null,
+                imageId: null,
+                imageUrl: artist?.artistImageUrl?.replace(/\?size=\d+/, '') || null,
                 name: artist.name,
-            })) || null,
+                userFavorite: Boolean(artist.starred) || false,
+                userRating: artist.userRating || null,
+            })) || [],
         songCount,
         userFavorite: item.starred || false,
         userRating: item.rating || null,
@@ -400,18 +367,7 @@ const normalizeAlbumArtist = (
 const normalizePlaylist = (
     item: z.infer<typeof ndType._response.playlist>,
     server?: null | ServerListItem,
-    imageSize?: number,
 ): Playlist => {
-    const imageUrl = getCoverArtUrl({
-        baseUrl: server?.url,
-        coverArtId: item.id,
-        credential: server?.credential,
-        size: imageSize || 300,
-        updated: item.updatedAt,
-    });
-
-    const imagePlaceholderUrl = null;
-
     return {
         _itemType: LibraryItem.PLAYLIST,
         _serverId: server?.id || 'unknown',
@@ -420,8 +376,8 @@ const normalizePlaylist = (
         duration: item.duration * 1000,
         genres: [],
         id: item.id,
-        imagePlaceholderUrl,
-        imageUrl,
+        imageId: item.id,
+        imageUrl: null,
         name: item.name,
         owner: item.ownerName,
         ownerId: item.ownerId,
@@ -443,6 +399,7 @@ const normalizeGenre = (
         _serverType: ServerType.NAVIDROME,
         albumCount: item.albumCount ?? null,
         id: item.id,
+        imageId: null,
         imageUrl: null,
         name: item.name,
         songCount: item.songCount ?? null,

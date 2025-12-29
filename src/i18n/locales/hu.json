@@ -31,7 +31,13 @@
         "moveUp": "ugrás fel",
         "moveDown": "ugrás le",
         "holdToMoveToTop": "hosszan nyomva felülre mozgat",
-        "holdToMoveToBottom": "hosszan nyomva lejjebb mozgat"
+        "holdToMoveToBottom": "hosszan nyomva lejjebb mozgat",
+        "selectAll": "összes kijelölése",
+        "deleteRadioStation": "$t(entity.radioStation_one) törlése",
+        "createRadioStation": "$t(entity.radioStation_one) létrehozása",
+        "openApplicationDirectory": "app könyvtár megnyitása",
+        "addOrRemoveFromSelection": "hozzáadás vagy eltávolítás a kiválasztásból",
+        "selectRangeOfItems": "válaszd ki a tartományt"
     },
     "common": {
         "collapse": "összecsukás",
@@ -145,7 +151,9 @@
         "tableColumns": "táblázat oszlopok",
         "itemsMore": "{{count}} még több",
         "view": "nézet",
-        "noFilters": "nincs konfigurált szűrő"
+        "noFilters": "nincs konfigurált szűrő",
+        "countSelected": "{{count}} kiválasztott",
+        "retry": "újra"
     },
     "entity": {
         "albumArtist_one": "Zenész",
@@ -184,7 +192,9 @@
         "trackWithCount_one": "{{count}} sáv",
         "trackWithCount_other": "{{count}} sávok",
         "radioStation_one": "rádió állomás",
-        "radioStation_other": "rádió állomások"
+        "radioStation_other": "rádió állomások",
+        "radioStationWithCount_one": "{{count}} rádióállomás",
+        "radioStationWithCount_other": "{{count}} rádióállomások"
     },
     "error": {
         "apiRouteError": "a kérést nem sikerült célba juttatni",
@@ -210,7 +220,12 @@
         "serverRequired": "szerver szükséges",
         "serverNotSelectedError": "nincs szerver kiválasztva",
         "notificationDenied": "Az értesítések engedélyezése megtagadva. Ez a beállítás hatástalan",
-        "badValue": "érvénytelen opció \"{{value}}\". ez az érték már nem létezik"
+        "badValue": "érvénytelen opció \"{{value}}\". ez az érték már nem létezik",
+        "noNetwork": "Szerver nem elérhető",
+        "noNetworkDescription": "Nem tudok csatlakozni a szerverhez",
+        "saveQueueFailed": "műsorlista mentése sikertelen",
+        "settingsSyncError": "Eltéréseket találtam a leképző és a fő folyamat beállításai között. Indítsd újra az alkalmazást",
+        "multipleServerSaveQueueError": "a műsorlistában egy vagy több olyan dal található, amely nem az aktuális szerverről származik. Ez nem támogatott"
     },
     "filter": {
         "albumCount": "$t(entity.album_other) darab",
@@ -345,6 +360,16 @@
             "input_played": "csak szűrt zenék",
             "input_played_optionUnplayed": "Csak a még nem lejátszottak",
             "input_played_optionPlayed": "Csak a játszottak számok"
+        },
+        "createRadioStation": {
+            "success": "rádió állomás sikeresen létrehozva",
+            "title": "rádió állomás létrehozása",
+            "input_homepageUrl": "oldal url",
+            "input_name": "név",
+            "input_streamUrl": "stream url"
+        },
+        "saveQueue": {
+            "success": "mentett lejátszási műsorlista a szerverre"
         }
     },
     "dragDropZone": {
@@ -525,7 +550,8 @@
             "settings": "$t(common.setting_other)",
             "shared": "megosztott $t(entity.playlist_other)",
             "tracks": "$t(entity.track_other)",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "trackList": {
             "artistTracks": "dalok tőle {{artist}}",
@@ -537,11 +563,14 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "rádió állomások"
         }
     },
     "player": {
-        "addLast": "utoljára hozzáadva",
-        "addNext": "következő hozzáadása",
+        "addLast": "utolsónak",
+        "addNext": "következő",
         "favorite": "kedvenc",
         "mute": "némítás",
         "muted": "némítva",
@@ -571,13 +600,15 @@
         "pause": "szünet",
         "viewQueue": "műsorlista megtekintése",
         "shuffle_off": "kevert lejátszás ki",
-        "addLastShuffled": "Hozzáadás a végére (keverve)",
-        "addNextShuffled": "Hozzáadás következőnek (keverve)",
+        "addLastShuffled": "végére (keverve)",
+        "addNextShuffled": "következő (keverve)",
         "queueType": "lekérdezés típus",
         "queueType_default": "alapértelmezett",
         "queueType_priority": "prioritás",
         "holdToShuffle": "tartsd lenyomva a keveréshez",
-        "lyrics": "dalszöveg"
+        "lyrics": "dalszöveg",
+        "saveQueueToServer": "műsorlista mentése a szerverre",
+        "restoreQueueFromServer": "műsorlista visszaállítása a szerverről"
     },
     "releaseType": {
         "primary": {
@@ -766,7 +797,6 @@
         "playButtonBehavior_optionPlay": "$t(player.play)",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
         "playButtonBehavior": "lejátszás gomb viselkedése",
-        "playerAlbumArtResolution_description": "A nagy lejátszó albumborító-előnézetének felbontása. A nagyobb érték élesebb képet ad, de lassíthatja a betöltést. Alapértelmezés: 0, ami az automatikus módot jelenti",
         "minimumScrobblePercentage_description": "a szám lejátszásának minimális százaléka, amelynek el kell hangzania, mielőtt Scrobble-nak számít",
         "minimumScrobblePercentage": "Minimális Scrobble arány (százalék)",
         "minimumScrobbleSeconds": "Minimum Scrobble arány (mp)",
@@ -780,7 +810,6 @@
         "notify": "bekapcsolja a dal értesítéseket",
         "notify_description": "értesítések megjelenítése az aktuális dal megváltoztatásakor",
         "playbackStyle_description": "válaszd ki az lejátszóhoz használni kívánt lejátszási stílust",
-        "playerAlbumArtResolution": "lejátszó albumborító felbontás",
         "playerbarOpenDrawer_description": "lehetővé teszi a lejátszósávra kattintással a teljes képernyős lejátszó megnyitását",
         "playerbarOpenDrawer": "lejátszósáv teljes képernyőre váltás",
         "preferLocalLyrics_description": "ha elérhető, akkor a távoli dalszövegek helyett a helyi dalszövegeket részesítse előnyben",
@@ -908,7 +937,9 @@
         "playerFilters_description": "a következő kritériumok alapján kihagyja a dalokat a műsorlistából",
         "playerbarSlider_description": "a hullámforma nem ajánlott lassú vagy korlátozott internetkapcsolat esetén",
         "audioFadeOnStatusChange": "audio behúzás állapotváltozáskor",
-        "audioFadeOnStatusChange_description": "lehetővé teszi a lehúzást és a behúzást, amikor a lejátszás/szünet állapot megváltozik"
+        "audioFadeOnStatusChange_description": "lehetővé teszi a lehúzást és a behúzást, amikor a lejátszás/szünet állapot megváltozik",
+        "useThemeAccentColor": "használd a téma kiemelő színét",
+        "useThemeAccentColor_description": "a kiválasztott témában meghatározott alapszínt használja az egyéni kiemelő szín helyett"
     },
     "table": {
         "config": {
@@ -1038,5 +1069,11 @@
         "matchesRegex": "illeszkedik a regexre",
         "is": "van",
         "isNot": "nincs"
+    },
+    "datetime": {
+        "minuteShort": "perc",
+        "secondShort": "mp",
+        "hourShort": "óra",
+        "dayShort": "nap"
     }
 }

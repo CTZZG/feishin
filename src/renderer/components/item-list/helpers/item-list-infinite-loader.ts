@@ -13,7 +13,7 @@ import { eventEmitter } from '/@/renderer/events/event-emitter';
 import { UserFavoriteEventPayload, UserRatingEventPayload } from '/@/renderer/events/events';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
-const getQueryKeyName = (itemType: LibraryItem): string => {
+export const getListQueryKeyName = (itemType: LibraryItem): string => {
     switch (itemType) {
         case LibraryItem.ALBUM:
             return 'albums';
@@ -115,7 +115,7 @@ export const useItemListInfiniteLoader = ({
 
                     return result;
                 },
-                queryKey: queryKeys[getQueryKeyName(itemType)].list(serverId, queryParams),
+                queryKey: queryKeys[getListQueryKeyName(itemType)].list(serverId, queryParams),
             });
 
             const endIndex = startIndex + itemsPerPage;
@@ -192,10 +192,9 @@ export const useItemListInfiniteLoader = ({
                 lastFetchedPageRef.current = -1;
                 currentVisibleRangeRef.current = null;
 
-                // Invalidate and wait for count query to refetch (this will suspend via useSuspenseQuery)
-                await queryClient.refetchQueries({
+                // Invalidate and wait for count query to refetch
+                await queryClient.ensureQueryData({
                     queryKey: countQueryKey,
-                    type: 'active',
                 });
 
                 // Fetch the first page after count is refetched

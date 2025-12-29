@@ -106,7 +106,9 @@
         "explicitStatus": "Explicit狀態",
         "explicit": "Explicit",
         "gridRows": "網格行",
-        "noFilters": "未設定任何過濾器"
+        "noFilters": "未設定任何過濾器",
+        "countSelected": "{{count}}個已選取",
+        "retry": "重試"
     },
     "error": {
         "endpointNotImplementedError": "{{serverType}} 尚未實現端點 {{endpoint}}",
@@ -134,7 +136,10 @@
         "notificationDenied": "通知權限被拒絕。此設定無效",
         "openError": "無法開啟檔案",
         "multipleServerSaveQueueError": "播放佇列中包含不是來自目前伺服器的歌曲，此操作不受支援",
-        "saveQueueFailed": "儲存播放佇列失敗"
+        "saveQueueFailed": "儲存播放佇列失敗",
+        "settingsSyncError": "偵測到渲染器與主程序之間的設定不一致，請重新啟動應用程式以套用變更",
+        "noNetwork": "伺服器無法連線",
+        "noNetworkDescription": "無法連接到此伺服器"
     },
     "page": {
         "contextMenu": {
@@ -248,7 +253,8 @@
             "discord": "Discord",
             "queryBuilder": "查詢建構器",
             "playerFilters": "播放過濾器",
-            "logger": "日誌記錄器"
+            "logger": "日誌記錄器",
+            "lyricsDisplay": "歌詞顯示"
         },
         "albumArtistList": {
             "title": "$t(entity.albumArtist_other)"
@@ -367,7 +373,9 @@
         "holdToShuffle": "按住以隨機",
         "lyrics": "歌詞",
         "restoreQueueFromServer": "從伺服器還原播放佇列",
-        "saveQueueToServer": "將播放佇列儲存至伺服器"
+        "saveQueueToServer": "將播放佇列儲存至伺服器",
+        "artistRadio": "藝人電台",
+        "trackRadio": "曲目電台"
     },
     "setting": {
         "audioPlayer_description": "選擇用於播放的音訊播放器",
@@ -403,7 +411,7 @@
         "discordUpdateInterval_description": "更新間隔秒數（至少 15 秒）",
         "enableRemote": "啟用遠端控制伺服器",
         "enableRemote_description": "啟用遠端控制伺服器，以允許其他設備控制此應用程式",
-        "exitToTray": "退出時最小化到系統匣",
+        "exitToTray": "關閉時到將視窗最小化",
         "followLyric": "跟隨目前歌詞",
         "font_description": "設定應用程式使用的字體",
         "fontType": "字體類型",
@@ -448,7 +456,7 @@
         "lyricOffset": "歌詞偏移（毫秒）",
         "lyricOffset_description": "將歌詞偏移指定的毫秒數",
         "lyricFetchProvider_description": "選擇歌詞來源。 來源順序即為搜尋的順序",
-        "minimizeToTray": "最小化到匣",
+        "minimizeToTray": "最小化到系統匣",
         "minimizeToTray_description": "將應用程式最小化到系統匣",
         "minimumScrobbleSeconds": "最小紀錄時間（秒）",
         "minimumScrobbleSeconds_description": "歌曲被記錄為已播放（scrobble）所需的最小播放時間",
@@ -572,11 +580,9 @@
         "passwordStore": "密碼/secret儲存",
         "passwordStore_description": "使用什麼密碼/secret儲存。如果您在儲存密碼時遇到問題，請變更此項目",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
-        "playerAlbumArtResolution": "播放器專輯封面解析度",
-        "playerAlbumArtResolution_description": "大型播放器專輯封面預覽的解析度。較大的解析度使其看起來更清晰，但可能會減慢載入速度。預設為 0，表示自動",
         "playerbarOpenDrawer": "播放器列全螢幕切換",
         "playerbarOpenDrawer_description": "允許點擊播放器列以開啟全螢幕播放器",
-        "startMinimized": "最小化啟動",
+        "startMinimized": "啟動時最小化",
         "startMinimized_description": "在系統匣中啟動應用程式",
         "transcode_description": "啟用轉碼到不同格式",
         "transcodeBitrate": "要轉碼的比特率",
@@ -677,7 +683,17 @@
         "logLevel_optionInfo": "Info",
         "logLevel_optionWarn": "Warn",
         "useThemeAccentColor": "使用主題強調色",
-        "useThemeAccentColor_description": "使用所選主題中定義的主要顏色，而非自訂的強調色"
+        "useThemeAccentColor_description": "使用所選主題中定義的主要顏色，而非自訂的強調色",
+        "artistRadioCount_description": "設定為藝人電台與曲目電台擷取的歌曲數量",
+        "imageResolution": "圖片解析度",
+        "imageResolution_description": "應用程式中所使用圖片的解析度。設定為 0 時，將使用圖片的原始解析度",
+        "imageResolution_optionTable": "表格",
+        "imageResolution_optionItemCard": "項目卡片",
+        "imageResolution_optionSidebar": "側邊欄",
+        "imageResolution_optionHeader": "頁首",
+        "imageResolution_optionFullScreenPlayer": "全螢幕播放器",
+        "combinedLyricsAndVisualizer_description": "將歌詞與視覺化效果整合至同一個面板",
+        "combinedLyricsAndVisualizer": "在播放器側邊欄整合歌詞與視覺化效果"
     },
     "table": {
         "config": {
@@ -817,7 +833,10 @@
         "holdToMoveToTop": "按住以移動至頂部",
         "holdToMoveToBottom": "按住以移動至底部",
         "createRadioStation": "創建 $t(entity.radioStation_one)",
-        "deleteRadioStation": "刪除 $t(entity.radioStation_one)"
+        "deleteRadioStation": "刪除 $t(entity.radioStation_one)",
+        "openApplicationDirectory": "開啟應用程式目錄",
+        "addOrRemoveFromSelection": "新增或移除選取項目",
+        "selectAll": "全選"
     },
     "entity": {
         "album_other": "專輯",
@@ -984,6 +1003,11 @@
         },
         "saveQueue": {
             "success": "已將播放佇列儲存至伺服器"
+        },
+        "lyricsExport": {
+            "export": "匯出歌詞",
+            "input_synced": "匯出同步歌詞",
+            "input_offset": "$t(setting.lyricOffset)"
         }
     },
     "releaseType": {
@@ -1035,5 +1059,14 @@
         "notContains": "不包含",
         "notInPlaylist": "不在…之中",
         "startsWith": "以…開頭"
+    },
+    "datetime": {
+        "minuteShort": "分",
+        "secondShort": "秒",
+        "hourShort": "小時",
+        "dayShort": "天"
+    },
+    "visualizer": {
+        "visualizerType": "視覺化效果類型"
     }
 }

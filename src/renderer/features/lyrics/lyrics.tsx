@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import styles from './lyrics.module.css';
@@ -8,6 +8,7 @@ import styles from './lyrics.module.css';
 import { queryKeys } from '/@/renderer/api/query-keys';
 import { translateLyrics } from '/@/renderer/features/lyrics/api/lyric-translate';
 import { lyricsQueries } from '/@/renderer/features/lyrics/api/lyrics-api';
+import { openLyricsExportModal } from '/@/renderer/features/lyrics/components/lyrics-export-form';
 import { LyricsActions } from '/@/renderer/features/lyrics/lyrics-actions';
 import {
     SynchronizedLyrics,
@@ -17,10 +18,12 @@ import {
     UnsynchronizedLyrics,
     UnsynchronizedLyricsProps,
 } from '/@/renderer/features/lyrics/unsynchronized-lyrics';
+import { openLyricsSettingsModal } from '/@/renderer/features/lyrics/utils/open-lyrics-settings-modal';
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
 import { ComponentErrorBoundary } from '/@/renderer/features/shared/components/component-error-boundary';
 import { queryClient } from '/@/renderer/lib/react-query';
 import { useLyricsSettings, usePlayerSong } from '/@/renderer/store';
+import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Center } from '/@/shared/components/center/center';
 import { Group } from '/@/shared/components/group/group';
 import { Spinner } from '/@/shared/components/spinner/spinner';
@@ -34,9 +37,10 @@ import {
 
 type LyricsProps = {
     fadeOutNoLyricsMessage?: boolean;
+    settingsKey?: string;
 };
 
-export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
+export const Lyrics = ({ fadeOutNoLyricsMessage = true, settingsKey = 'default' }: LyricsProps) => {
     const currentSong = usePlayerSong();
     const {
         enableAutoTranslation,
@@ -48,10 +52,44 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
     const [index, setIndex] = useState(0);
     const [translatedLyrics, setTranslatedLyrics] = useState<null | string>(null);
     const [showTranslation, setShowTranslation] = useState(false);
+    const [pendingSongId, setPendingSongId] = useState<string | undefined>(currentSong?.id);
+    const lyricsFetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const previousSongIdRef = useRef<string | undefined>(currentSong?.id);
+
+    // Use a timeout to prevent fetching lyrics when switching songs quickly
+    useEffect(() => {
+        const currentSongId = currentSong?.id;
+        const previousSongId = previousSongIdRef.current;
+
+        if (currentSongId === previousSongId) {
+            return;
+        }
+
+        previousSongIdRef.current = currentSongId;
+
+        setPendingSongId(undefined);
+
+        if (!currentSongId) {
+            return;
+        }
+
+        clearTimeout(lyricsFetchTimeoutRef.current);
+
+        lyricsFetchTimeoutRef.current = setTimeout(() => {
+            setPendingSongId(currentSongId);
+        }, 500);
+
+        return () => {
+            clearTimeout(lyricsFetchTimeoutRef.current);
+        };
+    }, [currentSong?.id]);
 
     const { data, isInitialLoading } = useQuery(
         lyricsQueries.songLyrics(
             {
+                options: {
+                    enabled: !!pendingSongId && pendingSongId === currentSong?.id,
+                },
                 query: { songId: currentSong?.id || '' },
                 serverId: currentSong?._serverId || '',
             },
@@ -258,6 +296,10 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
     const languages = useMemo(() => {
         if (Array.isArray(data)) {
             return data.map((lyric, idx) => ({ label: lyric.lang, value: idx.toString() }));
+        } else if (data?.lyrics) {
+            // xxx denotes undefined lyrics language. If it's a single lyric (from a remote source)
+            // the language is most likely not available, so leave it undefined
+            return [{ label: 'xxx', value: '0' }];
         }
         return [];
     }, [data]);
@@ -290,9 +332,29 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
         return undefined;
     }, [isLoadingLyrics, hasNoLyrics, fadeOutNoLyricsMessage]);
 
+    const handleExportLyrics = useCallback(() => {
+        if (lyrics) {
+            openLyricsExportModal({ lyrics, offsetMs: currentOffsetMs, synced });
+        }
+    }, [currentOffsetMs, lyrics, synced]);
+
+    const handleOpenSettings = () => {
+        openLyricsSettingsModal(settingsKey);
+    };
+
     return (
         <ComponentErrorBoundary>
             <div className={styles.lyricsContainer}>
+                <ActionIcon
+                    className={styles.settingsIcon}
+                    icon="settings2"
+                    iconProps={{ size: 'lg' }}
+                    onClick={handleOpenSettings}
+                    pos="absolute"
+                    right={0}
+                    top={0}
+                    variant="subtle"
+                />
                 {isLoadingLyrics ? (
                     <Spinner container />
                 ) : (
@@ -324,11 +386,13 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
                                     <SynchronizedLyrics
                                         {...(lyrics as SynchronizedLyricsProps)}
                                         offsetMs={currentOffsetMs}
+                                        settingsKey={settingsKey}
                                         translatedLyrics={showTranslation ? translatedLyrics : null}
                                     />
                                 ) : (
                                     <UnsynchronizedLyrics
                                         {...(lyrics as UnsynchronizedLyricsProps)}
+                                        settingsKey={settingsKey}
                                         translatedLyrics={showTranslation ? translatedLyrics : null}
                                     />
                                 )}
@@ -341,6 +405,7 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
                         index={index}
                         languages={languages}
                         offsetMs={currentOffsetMs}
+                        onExportLyrics={handleExportLyrics}
                         onRemoveLyric={handleOnRemoveLyric}
                         onSearchOverride={handleOnSearchOverride}
                         onTranslateLyric={
@@ -350,6 +415,7 @@ export const Lyrics = ({ fadeOutNoLyricsMessage = true }: LyricsProps) => {
                         }
                         onUpdateOffset={handleUpdateOffset}
                         setIndex={setIndex}
+                        settingsKey={settingsKey}
                     />
                 </div>
             </div>

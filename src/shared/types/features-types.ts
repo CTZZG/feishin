@@ -10,6 +10,7 @@ export enum ServerFeature {
     PUBLIC_PLAYLIST = 'publicPlaylist',
     SERVER_PLAY_QUEUE = 'serverPlayQueue',
     SHARING_ALBUM_SONG = 'sharingAlbumSong',
+    SIMILAR_SONGS_MUSIC_FOLDER = 'similarSongsMusicFolder',
     TAGS = 'tags',
     TRACK_ALBUM_ARTIST_SEARCH = 'trackAlbumArtistSearch',
 }

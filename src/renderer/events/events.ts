@@ -1,6 +1,11 @@
 import { LibraryItem, Song } from '/@/shared/types/domain-types';
 
+export type AutoDJQueueAddedEventPayload = {
+    songCount: number;
+};
+
 export type EventMap = {
+    AUTODJ_QUEUE_ADDED: AutoDJQueueAddedEventPayload;
     ITEM_LIST_REFRESH: ItemListRefreshEventPayload;
     ITEM_LIST_UPDATE_ITEM: ItemListUpdateItemEventPayload;
     MEDIA_NEXT: MediaNextEventPayload;

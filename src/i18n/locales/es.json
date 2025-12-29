@@ -39,7 +39,9 @@
         "holdToShuffle": "Mantener para mezclar",
         "lyrics": "Letras",
         "restoreQueueFromServer": "Restaurar cola del servidor",
-        "saveQueueToServer": "Guardar cola en el servidor"
+        "saveQueueToServer": "Guardar cola en el servidor",
+        "artistRadio": "Radio de artista",
+        "trackRadio": "Radio de pista"
     },
     "setting": {
         "crossfadeStyle_description": "selecciona el estilo de crossfade a usar por el reproductor de audio",
@@ -206,8 +208,6 @@
         "startMinimized_description": "inicia la aplicación en la bandeja del sistema",
         "startMinimized": "iniciar minimizado",
         "passwordStore": "contraseñas/almacenamiento secreto",
-        "playerAlbumArtResolution_description": "la resolución para la vista previa de la carátula del álbum del reproductor grande. más grande hace que parezca más nítido, pero puede ralentizar la carga. El valor predeterminado es 0, lo que significa automático",
-        "playerAlbumArtResolution": "resolución de la carátula del álbum del reproductor",
         "homeConfiguration": "Configuración de la página de inicio",
         "mpvExtraParameters_help": "Uno por línea",
         "externalLinks_description": "Permite mostrar enlaces externos (Last.fm, MusicBrainz) en las páginas del artista/álbum",
@@ -349,7 +349,11 @@
         "logLevel_optionInfo": "Información",
         "logLevel_optionWarn": "Advertencia",
         "useThemeAccentColor": "Usar color de acentuación de tema",
-        "useThemeAccentColor_description": "Usa el color principal definido en el tema seleccionado en lugar del color de acentuación personalizado"
+        "useThemeAccentColor_description": "Usa el color principal definido en el tema seleccionado en lugar del color de acentuación personalizado",
+        "artistRadioCount_description": "Establece el número de canciones a buscar para la radio de artista y de pista",
+        "artistRadioCount": "Recuento de radio de artista/pista",
+        "imageResolution": "Resolución de imagen",
+        "imageResolution_description": "La resolución de las imágenes usadas en la aplicación. Usar un valor de 0 lo dejará de forma predeterminada a la resolución nativa de la imagen"
     },
     "action": {
         "editPlaylist": "editar $t(entity.playlist_one)",
@@ -385,7 +389,11 @@
         "moveUp": "Desplazar hacia arriba",
         "moveDown": "Desplazar hacia abajo",
         "createRadioStation": "Crear $t(entity.radioStation_one)",
-        "deleteRadioStation": "Borrar $t(entity.radioStation_one)"
+        "deleteRadioStation": "Borrar $t(entity.radioStation_one)",
+        "openApplicationDirectory": "Abrir directorio de la aplicación",
+        "addOrRemoveFromSelection": "Añadir o quitar de la selección",
+        "selectRangeOfItems": "Seleccionar un intervalo de elementos",
+        "selectAll": "Seleccionar todo"
     },
     "common": {
         "backward": "hacia atrás",
@@ -502,7 +510,9 @@
         "tableColumns": "Columnas de la tabla",
         "itemsMore": "{{count}} más",
         "noFilters": "Ningún filtro configurado",
-        "view": "Vista"
+        "view": "Vista",
+        "countSelected": "{{count}} seleccionados",
+        "retry": "Reintentar"
     },
     "error": {
         "remotePortWarning": "reiniciar el servidor para aplicar el nuevo puerto",
@@ -530,7 +540,10 @@
         "badValue": "Opción inválida \"{{value}}\". Este valor ya no existe",
         "notificationDenied": "Se denegaron los permisos para notificaciones. Esta configuración no tiene efecto",
         "saveQueueFailed": "Error al guardar la cola",
-        "multipleServerSaveQueueError": "La cola de reproducción tiene una o más canciones que no son del servidor actual. Esto no está soportado"
+        "multipleServerSaveQueueError": "La cola de reproducción tiene una o más canciones que no son del servidor actual. Esto no está soportado",
+        "settingsSyncError": "Se encontraron discrepancias entre las opciones del renderizador y el proceso principal. Reinicia la aplicación para aplicar los cambios",
+        "noNetwork": "Servidor no disponible",
+        "noNetworkDescription": "No se pudo conectar a este servidor"
     },
     "filter": {
         "mostPlayed": "más reproducido",
@@ -700,7 +713,8 @@
             "discord": "Discord",
             "sidebar": "Barra lateral",
             "playerFilters": "Filtros del reproductor",
-            "logger": "Registrador"
+            "logger": "Registrador",
+            "lyricsDisplay": "Mostrar letras"
         },
         "albumArtistList": {
             "title": "$t(entity.albumArtist_other)"
@@ -866,6 +880,11 @@
             "input_homepageUrl": "URL de la página de inicio",
             "input_name": "Nombre",
             "input_streamUrl": "URL de la transmisión"
+        },
+        "lyricsExport": {
+            "export": "Exportar letras",
+            "input_synced": "Exportar letras sincronizadas",
+            "input_offset": "$t(setting.lyricOffset)"
         }
     },
     "table": {
@@ -1084,5 +1103,11 @@
         "notInTheLast": "no está en el último",
         "startsWith": "empieza con",
         "matchesRegex": "coincide con expresión regular"
+    },
+    "datetime": {
+        "minuteShort": "min",
+        "secondShort": "seg",
+        "hourShort": "h",
+        "dayShort": "día"
     }
 }

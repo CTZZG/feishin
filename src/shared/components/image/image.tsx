@@ -11,9 +11,20 @@ import { Img } from 'react-image';
 
 import styles from './image.module.css';
 
-import { Icon } from '/@/shared/components/icon/icon';
+import { AppIcon, Icon } from '/@/shared/components/icon/icon';
 import { Skeleton } from '/@/shared/components/skeleton/skeleton';
 import { useInViewport } from '/@/shared/hooks/use-in-viewport';
+
+export interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
+    containerClassName?: string;
+    enableAnimation?: boolean;
+    imageContainerProps?: Omit<ImageContainerProps, 'children'>;
+    includeLoader?: boolean;
+    includeUnloader?: boolean;
+    src: string | string[] | undefined;
+    thumbHash?: string;
+    unloaderIcon?: keyof typeof AppIcon;
+}
 
 interface ImageContainerProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode;
@@ -24,18 +35,9 @@ interface ImageLoaderProps {
     className?: string;
 }
 
-interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
-    containerClassName?: string;
-    enableAnimation?: boolean;
-    imageContainerProps?: Omit<ImageContainerProps, 'children'>;
-    includeLoader?: boolean;
-    includeUnloader?: boolean;
-    src: string | string[] | undefined;
-    thumbHash?: string;
-}
-
 interface ImageUnloaderProps {
     className?: string;
+    icon?: keyof typeof AppIcon;
 }
 
 export const FALLBACK_SVG =
@@ -49,52 +51,40 @@ export function BaseImage({
     includeLoader = true,
     includeUnloader = true,
     src,
+    unloaderIcon = 'emptyImage',
     ...props
 }: ImageProps) {
     const { inViewport, ref } = useInViewport();
 
-    if (src) {
-        return (
-            <Img
-                className={clsx(styles.image, className, {
-                    [styles.animated]: enableAnimation,
-                })}
-                container={(children) => (
-                    <ImageContainer
-                        className={containerClassName}
-                        enableAnimation={enableAnimation}
-                        ref={ref}
-                        {...imageContainerProps}
-                    >
-                        {children}
-                    </ImageContainer>
-                )}
-                decoding="async"
-                fetchPriority={inViewport ? 'high' : 'low'}
-                loader={
-                    includeLoader ? (
-                        <ImageContainer className={containerClassName}>
-                            <ImageLoader className={className} />
-                        </ImageContainer>
-                    ) : null
-                }
-                loading={inViewport ? 'eager' : 'lazy'}
-                src={inViewport ? src : FALLBACK_SVG}
-                unloader={
-                    includeUnloader ? (
-                        <ImageContainer className={containerClassName}>
-                            <ImageUnloader className={className} />
-                        </ImageContainer>
-                    ) : null
-                }
-                {...props}
-            />
-        );
-    }
-
     return (
-        <ImageContainer className={containerClassName}>
-            <ImageUnloader />
+        <ImageContainer
+            className={containerClassName}
+            enableAnimation={enableAnimation}
+            ref={ref}
+            {...imageContainerProps}
+        >
+            {inViewport && src ? (
+                <Img
+                    className={clsx(styles.image, className, {
+                        [styles.animated]: enableAnimation,
+                    })}
+                    decoding="async"
+                    fetchPriority="high"
+                    loader={includeLoader ? <ImageLoader className={className} /> : null}
+                    loading="eager"
+                    src={src}
+                    unloader={
+                        includeUnloader ? (
+                            <ImageUnloader className={className} icon={unloaderIcon} />
+                        ) : null
+                    }
+                    {...props}
+                />
+            ) : !src ? (
+                <ImageUnloader className={className} icon={unloaderIcon} />
+            ) : (
+                <ImageLoader className={className} />
+            )}
         </ImageContainer>
     );
 }
@@ -131,10 +121,10 @@ export function ImageLoader({ className }: ImageLoaderProps) {
     );
 }
 
-export function ImageUnloader({ className }: ImageUnloaderProps) {
+export function ImageUnloader({ className, icon = 'emptyImage' }: ImageUnloaderProps) {
     return (
         <div className={clsx(styles.unloader, className)}>
-            <Icon color="default" icon="emptyImage" size="25%" />
+            <Icon color="default" icon={icon} size="25%" />
         </div>
     );
 }

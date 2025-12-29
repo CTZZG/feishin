@@ -177,6 +177,7 @@
 }
 
 .artist {
+    width: 100%;
     color: white;
     text-shadow: 0 0 8px rgb(0 0 0 / 50%);
 }

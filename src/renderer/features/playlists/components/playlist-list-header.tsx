@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { useIsFetchingItemListCount } from '/@/renderer/components/item-list/helpers/use-is-fetching-item-list';
 import { PageHeader } from '/@/renderer/components/page-header/page-header';
 import { useListContext } from '/@/renderer/context/list-context';
 import { PlaylistListHeaderFilters } from '/@/renderer/features/playlists/components/playlist-list-header-filters';
@@ -18,7 +19,6 @@ interface PlaylistListHeaderProps {
 export const PlaylistListHeader = ({ title }: PlaylistListHeaderProps) => {
     const { t } = useTranslation();
 
-    const { itemCount } = useListContext();
     const pageTitle = title || t('page.playlistList.title', { postProcess: 'titleCase' });
 
     return (
@@ -27,9 +27,7 @@ export const PlaylistListHeader = ({ title }: PlaylistListHeaderProps) => {
                 <LibraryHeaderBar ignoreMaxWidth>
                     <PlayButton />
                     <LibraryHeaderBar.Title>{pageTitle}</LibraryHeaderBar.Title>
-                    <LibraryHeaderBar.Badge isLoading={!itemCount}>
-                        {itemCount}
-                    </LibraryHeaderBar.Badge>
+                    <PlaylistListHeaderBadge />
                 </LibraryHeaderBar>
                 <Group>
                     <ListSearchInput />
@@ -40,6 +38,16 @@ export const PlaylistListHeader = ({ title }: PlaylistListHeaderProps) => {
             </FilterBar>
         </Stack>
     );
+};
+
+const PlaylistListHeaderBadge = () => {
+    const { itemCount } = useListContext();
+
+    const isFetching = useIsFetchingItemListCount({
+        itemType: LibraryItem.PLAYLIST,
+    });
+
+    return <LibraryHeaderBar.Badge isLoading={isFetching}>{itemCount}</LibraryHeaderBar.Badge>;
 };
 
 const PlayButton = () => {

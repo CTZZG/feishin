@@ -14,7 +14,7 @@
         "shuffle": "lecture (mélangé)",
         "playbackFetchNoResults": "aucun titre trouvé",
         "playbackFetchInProgress": "chargement des titres…",
-        "addNext": "ajouter ensuite",
+        "addNext": "prochain",
         "playbackSpeed": "vitesse de lecture",
         "playbackFetchCancel": "cela prend du temps… fermez la notification pour annuler",
         "play": "lecture",
@@ -24,15 +24,15 @@
         "queue_moveToTop": "déplacer la sélection vers le bas",
         "queue_moveToBottom": "déplacer la sélection vers le haut",
         "shuffle_off": "aléatoire désactivée",
-        "addLast": "ajouter en dernier",
+        "addLast": "dernier",
         "mute": "muet",
         "skip_forward": "avancer",
         "pause": "pause",
         "unfavorite": "retirer des favoris",
         "playSimilarSongs": "jouer des titres similaires",
         "viewQueue": "voir la file d'attente",
-        "addLastShuffled": "ajouter en dernier (mélangé)",
-        "addNextShuffled": "ajouter ensuite (mélangé)",
+        "addLastShuffled": "dernier (mélangé)",
+        "addNextShuffled": "prochain (mélangé)",
         "queueType": "type de file d'attente",
         "queueType_default": "défaut",
         "queueType_priority": "priorité",
@@ -223,7 +223,8 @@
         "badValue": "option {{value}} invalide. Cette valeur n'existe plus",
         "notificationDenied": "les autorisations pour les notifications ont été refusées. ce paramètre n'a aucun effet",
         "multipleServerSaveQueueError": "la file d'attente de lecture contient un ou plusieurs morceaux qui ne proviennent pas du serveur actuel. Ceci n'est pas prise en charge",
-        "saveQueueFailed": "échec de l'enregistrement de la file d'attente"
+        "saveQueueFailed": "échec de l'enregistrement de la file d'attente",
+        "settingsSyncError": "des incohérences ont été détectées entre les paramètres du moteur de rendu et ceux du processus principal. redémarrez l'application pour appliquer les modifications"
     },
     "filter": {
         "mostPlayed": "plus joués",
@@ -633,9 +634,7 @@
         "imageAspectRatio_description": "si cette option est activée, les pochettes d'album seront affichées en utilisant leur rapport hauteur/largeur natif. pour les pochettes qui n'ont pas un rapport 1:1 (carré), l'espace restant sera vide",
         "mpvExtraParameters_help": "un par ligne",
         "passwordStore_description": "quel mot de passe utiliser. changez cela si vous rencontrez des problèmes pour stocker les mots de passe",
-        "playerAlbumArtResolution": "résolution de la pochette d'album du lecteur",
         "passwordStore": "mots de passe",
-        "playerAlbumArtResolution_description": "résolution pour l'aperçu de la pochette d'album agrandie du lecteur. plus grand le rend plus net, mais peut ralentir le chargement. la valeur par défaut est 0 (automatique)",
         "homeConfiguration_description": "configurer quels éléments sont affichés sur la page d'accueil, et dans quel ordre",
         "startMinimized": "démarrer l'application en mode réduit",
         "transcode_description": "permet le transcodage vers différents formats",
@@ -925,11 +924,11 @@
         "song_many": "titres",
         "song_other": "titres",
         "radioStation_one": "station radio",
-        "radioStation_many": "stations radios",
-        "radioStation_other": "",
+        "radioStation_many": "stations radio",
+        "radioStation_other": "stations radio",
         "radioStationWithCount_one": "{{count}} station radio",
-        "radioStationWithCount_many": "{{count}} stations radios",
-        "radioStationWithCount_other": ""
+        "radioStationWithCount_many": "{{count}} stations radio",
+        "radioStationWithCount_other": "{{count}} stations radio"
     },
     "table": {
         "config": {

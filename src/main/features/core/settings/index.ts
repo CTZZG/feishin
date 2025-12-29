@@ -3,9 +3,38 @@ import type { TitleTheme } from '/@/shared/types/types';
 import { dialog, ipcMain, nativeTheme, OpenDialogOptions, safeStorage } from 'electron';
 import Store from 'electron-store';
 
-export const store = new Store({
+const getFrame = () => {
+    const isWindows = process.platform === 'win32';
+    const isMacOS = process.platform === 'darwin';
+
+    if (isWindows) {
+        return 'windows';
+    }
+
+    if (isMacOS) {
+        return 'macOS';
+    }
+
+    return 'linux';
+};
+
+export const store = new Store<any>({
     beforeEachMigration: (_store, context) => {
         console.log(`settings migrate from ${context.fromVersion} → ${context.toVersion}`);
+    },
+    defaults: {
+        disable_auto_updates: false,
+        enableNeteaseTranslation: false,
+        global_media_hotkeys: true,
+        mediaSession: false,
+        playbackType: 'web',
+        should_prompt_accessibility: true,
+        shown_accessibility_warning: false,
+        window_enable_tray: true,
+        window_exit_to_tray: false,
+        window_minimize_to_tray: false,
+        window_start_minimized: false,
+        window_window_bar_style: getFrame(),
     },
     migrations: {
         '>=0.21.2': (store) => {

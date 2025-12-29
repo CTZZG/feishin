@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { useIsFetchingItemListCount } from '/@/renderer/components/item-list/helpers/use-is-fetching-item-list';
 import { PageHeader } from '/@/renderer/components/page-header/page-header';
 import { useListContext } from '/@/renderer/context/list-context';
 import { AlbumArtistListHeaderFilters } from '/@/renderer/features/artists/components/album-artist-list-header-filters';
@@ -18,7 +19,6 @@ interface AlbumArtistListHeaderProps {
 export const AlbumArtistListHeader = ({ title }: AlbumArtistListHeaderProps) => {
     const { t } = useTranslation();
 
-    const { itemCount } = useListContext();
     const pageTitle = title || t('page.albumArtistList.title', { postProcess: 'titleCase' });
 
     return (
@@ -27,9 +27,7 @@ export const AlbumArtistListHeader = ({ title }: AlbumArtistListHeaderProps) => 
                 <LibraryHeaderBar ignoreMaxWidth>
                     <PlayButton />
                     <LibraryHeaderBar.Title>{pageTitle}</LibraryHeaderBar.Title>
-                    <LibraryHeaderBar.Badge isLoading={!itemCount}>
-                        {itemCount}
-                    </LibraryHeaderBar.Badge>
+                    <AlbumArtistListHeaderBadge />
                 </LibraryHeaderBar>
                 <Group>
                     <ListSearchInput />
@@ -40,6 +38,16 @@ export const AlbumArtistListHeader = ({ title }: AlbumArtistListHeaderProps) => 
             </FilterBar>
         </Stack>
     );
+};
+
+const AlbumArtistListHeaderBadge = () => {
+    const { itemCount } = useListContext();
+
+    const isFetching = useIsFetchingItemListCount({
+        itemType: LibraryItem.ALBUM_ARTIST,
+    });
+
+    return <LibraryHeaderBar.Badge isLoading={isFetching}>{itemCount}</LibraryHeaderBar.Badge>;
 };
 
 const PlayButton = () => {

@@ -18,34 +18,34 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
         autoSize: false,
         isEnabled: true,
         label: i18n.t('table.config.label.rowIndex', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.ROW_INDEX,
-        width: 80,
+        width: 60,
     },
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.image', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.IMAGE,
         width: 70,
     },
     {
         align: 'start',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.title', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.TITLE,
         width: 300,
     },
     {
         align: 'start',
         autoSize: false,
-        isEnabled: false,
+        isEnabled: true,
         label: i18n.t('table.config.label.titleCombined', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.TITLE_COMBINED,
         width: 300,
     },
@@ -61,7 +61,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'start',
         autoSize: false,
-        isEnabled: false,
+        isEnabled: true,
         label: i18n.t('table.config.label.album', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ALBUM,
@@ -70,7 +70,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'start',
         autoSize: true,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.albumArtist', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ALBUM_ARTIST,
@@ -115,7 +115,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.releaseDate', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.RELEASE_DATE,
@@ -178,7 +178,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.lastPlayed', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.LAST_PLAYED,
@@ -214,7 +214,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.dateAdded', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.DATE_ADDED,
@@ -232,7 +232,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.playCount', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.PLAY_COUNT,
@@ -252,7 +252,7 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
         autoSize: false,
         isEnabled: true,
         label: i18n.t('table.config.label.favorite', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.USER_FAVORITE,
         width: 60,
     },
@@ -268,9 +268,9 @@ export const SONG_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.actions', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.ACTIONS,
         width: 60,
     },
@@ -284,34 +284,34 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
         autoSize: false,
         isEnabled: true,
         label: i18n.t('table.config.label.rowIndex', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.ROW_INDEX,
-        width: 80,
+        width: 60,
     },
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.image', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.IMAGE,
         width: 70,
     },
     {
         align: 'start',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.title', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.TITLE,
         width: 300,
     },
     {
         align: 'start',
         autoSize: false,
-        isEnabled: false,
+        isEnabled: true,
         label: i18n.t('table.config.label.titleCombined', { postProcess: 'titleCase' }),
-        pinned: 'left',
+        pinned: null,
         value: TableColumn.TITLE_COMBINED,
         width: 300,
     },
@@ -327,7 +327,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'start',
         autoSize: true,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.albumArtist', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ALBUM_ARTIST,
@@ -381,7 +381,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.releaseDate', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.RELEASE_DATE,
@@ -390,7 +390,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.lastPlayed', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.LAST_PLAYED,
@@ -399,7 +399,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.dateAdded', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.DATE_ADDED,
@@ -408,7 +408,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.playCount', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.PLAY_COUNT,
@@ -419,7 +419,7 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
         autoSize: false,
         isEnabled: true,
         label: i18n.t('table.config.label.favorite', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.USER_FAVORITE,
         width: 60,
     },
@@ -435,9 +435,9 @@ export const ALBUM_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.actions', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.ACTIONS,
         width: 60,
     },
@@ -451,7 +451,7 @@ export const ALBUM_ARTIST_TABLE_COLUMNS: DefaultTableColumn[] = [
         label: i18n.t('table.config.label.rowIndex', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ROW_INDEX,
-        width: 80,
+        width: 60,
     },
     {
         align: 'center',
@@ -539,7 +539,7 @@ export const ALBUM_ARTIST_TABLE_COLUMNS: DefaultTableColumn[] = [
         autoSize: false,
         isEnabled: true,
         label: i18n.t('table.config.label.favorite', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.USER_FAVORITE,
         width: 60,
     },
@@ -555,9 +555,9 @@ export const ALBUM_ARTIST_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.actions', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.ACTIONS,
         width: 60,
     },
@@ -571,7 +571,7 @@ export const PLAYLIST_TABLE_COLUMNS: DefaultTableColumn[] = [
         label: i18n.t('table.config.label.rowIndex', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ROW_INDEX,
-        width: 80,
+        width: 60,
     },
     {
         align: 'center',
@@ -630,9 +630,9 @@ export const PLAYLIST_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.actions', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.ACTIONS,
         width: 60,
     },
@@ -646,7 +646,7 @@ export const GENRE_TABLE_COLUMNS: DefaultTableColumn[] = [
         label: i18n.t('table.config.label.rowIndex', { postProcess: 'titleCase' }),
         pinned: null,
         value: TableColumn.ROW_INDEX,
-        width: 80,
+        width: 60,
     },
     {
         align: 'start',
@@ -678,9 +678,9 @@ export const GENRE_TABLE_COLUMNS: DefaultTableColumn[] = [
     {
         align: 'center',
         autoSize: false,
-        isEnabled: true,
+        isEnabled: false,
         label: i18n.t('table.config.label.actions', { postProcess: 'titleCase' }),
-        pinned: 'right',
+        pinned: null,
         value: TableColumn.ACTIONS,
         width: 60,
     },
@@ -728,6 +728,15 @@ export const pickTableColumns = (options: {
             const enabledSet = new Set(enabledColumns);
             const remaining = columns.filter((col) => !enabledSet.has(col.value));
             columnsToProcess = [...columnsToProcess, ...remaining];
+        } else {
+            // When pickColumns is provided, include pickColumns that aren't in enabledColumns
+            // so they can be added as disabled entries
+            const enabledSet = new Set(enabledColumns);
+            const pickColumnsNotEnabled = pickColumns
+                .filter((col) => !enabledSet.has(col))
+                .map((col) => columnMap.get(col))
+                .filter((col): col is DefaultTableColumn => col !== undefined);
+            columnsToProcess = [...columnsToProcess, ...pickColumnsNotEnabled];
         }
     } else {
         columnsToProcess = columns;

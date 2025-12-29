@@ -149,3 +149,5 @@ declare module 'string-to-color' {
     const stringToColor: (str: any) => string;
     export default stringToColor;
 }
+
+declare module 'react-split-pane';

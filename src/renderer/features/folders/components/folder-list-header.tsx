@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { useIsFetchingItemListCount } from '/@/renderer/components/item-list/helpers/use-is-fetching-item-list';
 import { PageHeader } from '/@/renderer/components/page-header/page-header';
 import { useListContext } from '/@/renderer/context/list-context';
 import { FolderListHeaderFilters } from '/@/renderer/features/folders/components/folder-list-header-filters';
@@ -8,6 +9,7 @@ import { LibraryHeaderBar } from '/@/renderer/features/shared/components/library
 import { ListSearchInput } from '/@/renderer/features/shared/components/list-search-input';
 import { Group } from '/@/shared/components/group/group';
 import { Stack } from '/@/shared/components/stack/stack';
+import { LibraryItem } from '/@/shared/types/domain-types';
 
 interface FolderListHeaderProps {
     title?: string;
@@ -16,7 +18,6 @@ interface FolderListHeaderProps {
 export const FolderListHeader = ({ title }: FolderListHeaderProps) => {
     const { t } = useTranslation();
 
-    const { itemCount } = useListContext();
     const pageTitle = title || t('page.folderList.title', { postProcess: 'titleCase' });
 
     return (
@@ -26,9 +27,7 @@ export const FolderListHeader = ({ title }: FolderListHeaderProps) => {
                     <Stack>
                         <LibraryHeaderBar.Title>{pageTitle}</LibraryHeaderBar.Title>
                     </Stack>
-                    <LibraryHeaderBar.Badge isLoading={itemCount === undefined}>
-                        {itemCount}
-                    </LibraryHeaderBar.Badge>
+                    <FolderListHeaderBadge />
                 </LibraryHeaderBar>
                 <Group>
                     <ListSearchInput />
@@ -39,4 +38,14 @@ export const FolderListHeader = ({ title }: FolderListHeaderProps) => {
             </FilterBar>
         </Stack>
     );
+};
+
+const FolderListHeaderBadge = () => {
+    const { itemCount } = useListContext();
+
+    const isFetching = useIsFetchingItemListCount({
+        itemType: LibraryItem.FOLDER,
+    });
+
+    return <LibraryHeaderBar.Badge isLoading={isFetching}>{itemCount}</LibraryHeaderBar.Badge>;
 };

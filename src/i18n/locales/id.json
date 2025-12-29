@@ -579,8 +579,6 @@
         "playButtonBehavior_optionAddLast": "$t(player.addLast)",
         "playButtonBehavior_optionAddNext": "$t(player.addNext)",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
-        "playerAlbumArtResolution": "resolusi sampul album pemutar",
-        "playerAlbumArtResolution_description": "resolusi untuk pratinjau sampul album pemutar besar. semakin besar akan membuatnya lebih tajam, tetapi dapat memperlambat pemuatan. Nilai default adalah 0, yang berarti otomatis",
         "playerbarOpenDrawer": "Buka pemutar ke layar penuh",
         "playerbarOpenDrawer_description": "Izinkan mengklik bilah pemutar untuk membuka pemutar di layar penuh",
         "remotePassword": "kata sandi kontrol jarak jauh server",

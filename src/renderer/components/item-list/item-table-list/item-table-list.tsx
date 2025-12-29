@@ -34,7 +34,6 @@ import {
 import { parseTableColumns } from '/@/renderer/components/item-list/helpers/parse-table-columns';
 import { useStickyTableGroupRows } from '/@/renderer/components/item-list/item-table-list/hooks/use-sticky-table-group-rows';
 import { useStickyTableHeader } from '/@/renderer/components/item-list/item-table-list/hooks/use-sticky-table-header';
-import { SelectionDialog } from '/@/renderer/components/item-list/selection-dialog';
 import {
     ItemControls,
     ItemListHandle,
@@ -683,7 +682,6 @@ const BaseItemTableList = ({
     enableHorizontalBorders = false,
     enableRowHoverHighlight = true,
     enableSelection = true,
-    enableSelectionDialog = true,
     enableStickyGroupRows = false,
     enableStickyHeader = false,
     enableVerticalBorders = false,
@@ -2289,7 +2287,7 @@ const BaseItemTableList = ({
                 totalRowCount={totalRowCount}
             />
             <ExpandedContainer internalState={internalState} itemType={itemType} />
-            {enableSelectionDialog && <SelectionDialog internalState={internalState} />}
+            {/* {enableSelectionDialog && <SelectionDialog internalState={internalState} />} */}
         </motion.div>
     );
 };

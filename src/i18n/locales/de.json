@@ -1,7 +1,7 @@
 {
     "action": {
         "editPlaylist": "$t(entity.playlist_one) bearbeiten",
-        "clearQueue": "Warteschlange leeren",
+        "clearQueue": "Wiedergabeliste leeren",
         "addToFavorites": "Zu $t(entity.favorite_other) hinzufügen",
         "addToPlaylist": "Zu $t(entity.playlist_one) hinzufügen",
         "createPlaylist": "$t(entity.playlist_one) erstellen",
@@ -13,7 +13,7 @@
         "removeFromPlaylist": "Aus $t(entity.playlist_one) entfernen",
         "viewPlaylists": "$t(entity.playlist_other) anzeigen",
         "refresh": "$t(common.refresh)",
-        "removeFromQueue": "Aus Warteschlange entfernen",
+        "removeFromQueue": "Aus Wiedergabeliste entfernen",
         "setRating": "Bewerten",
         "toggleSmartPlaylistEditor": "Editor für $t(entity.smartPlaylist) ein-/ausblenden",
         "removeFromFavorites": "Aus $t(entity.favorite_other) entfernen",
@@ -29,7 +29,11 @@
         "shuffleSelected": "Ausgewählte zufällig wiedergeben",
         "viewMore": "Mehr zeigen",
         "moveUp": "Nach oben bewegen",
-        "moveDown": "Nach unten bewegen"
+        "moveDown": "Nach unten bewegen",
+        "createRadioStation": "$t(entity.radioStation_one) erstellen",
+        "deleteRadioStation": "$t(entity.radioStation_one) löschen",
+        "selectAll": "alle auswählen",
+        "openApplicationDirectory": "Anwendungsverzeichnis öffnen"
     },
     "common": {
         "backward": "zurück",
@@ -118,11 +122,11 @@
         "close": "schließen",
         "share": "Teilen",
         "translation": "Übersetzung",
-        "trackGain": "Track-Pegelverstärkung",
-        "trackPeak": "Track-Spitzenpegel",
+        "trackGain": "Track Gain",
+        "trackPeak": "Track Peak",
         "codec": "Codec",
         "albumPeak": "Album-Spitzenpegel",
-        "albumGain": "Album-Pegelverstärkung",
+        "albumGain": "Album Gain",
         "tags": "tags",
         "viewReleaseNotes": "Veröffentlichungsnotizen anzeigen",
         "newVersion": "eine neue Version wurde installiert ({{version}})",
@@ -145,7 +149,8 @@
         "recordLabel": "Plattenlabel",
         "slower": "langsamer",
         "releaseType": "Veröffentlichungsformat",
-        "view": "Betrachten"
+        "view": "Betrachten",
+        "countSelected": "{{count}} ausgewählt"
     },
     "error": {
         "remotePortWarning": "Starten Sie den Server neu, um den neuen Port anzuwenden",
@@ -167,11 +172,13 @@
         "audioDeviceFetchError": "Beim Versuch, Audiogeräte abzurufen, ist ein Fehler aufgetreten",
         "invalidServer": "Ungültiger Server",
         "loginRateError": "Zu viele Anmeldeversuche, bitte versuche es in einigen Sekunden erneut",
-        "badAlbum": "sie sehen diese Seite, weil dieses Lied nicht Teil eines Albums ist. Wahrscheinlich sehen Sie dieses Problem, wenn Sie einen Song in Ihrem Musikordner auf oberster Ebene haben. Jellyfin gruppiert nur Songs, wenn sie sich in einem Ordner befinden",
+        "badAlbum": "sie sehen diese Seite, weil dieses Lied nicht Teil eines Albums ist. Dieses Problem tritt meist auf, wenn sich ein Lied im Überordner befindet. Jellyfin gruppiert Tracks nur, wenn diese sich innerhalb eines Ordners befinden",
         "networkError": "ein Netzwerkfehler ist aufgetreten",
         "openError": "datei kann nicht geöffnet werden",
         "badValue": "ungültige option \"{{value}}\". Dieser Wert existiert nicht mehr",
-        "notificationDenied": "Berechtigungen über Benachrichtigungen wurden verweigert. Diese Einstellung hat keinen Effekt"
+        "notificationDenied": "Berechtigungen über Benachrichtigungen wurden verweigert. Diese Einstellung hat keinen Effekt",
+        "saveQueueFailed": "Wiedergabeliste konnte nicht gespeichert werden",
+        "multipleServerSaveQueueError": "die Wiedergabeliste enthält einen oder mehrere Titel, die nicht vom aktuellen Server stammen. dies wird nicht unterstützt"
     },
     "filter": {
         "mostPlayed": "Meistgespielt",
@@ -284,7 +291,7 @@
             "setExpiration": "Ablaufdatum setzen",
             "expireInvalid": "Ablaufdatum muss in der Zukunft liegen",
             "allowDownloading": "Herunterladen zulassen",
-            "success": "Link in die Zwischenablage kopiert (oder hier klicken um zu öffnen)",
+            "success": "Link in die Zwischenablage kopiert (oder hier klicken, um zu öffnen)",
             "createFailed": "fehler beim Teilen (Ist Teilen aktiviert?)"
         },
         "privateMode": {
@@ -293,7 +300,7 @@
             "title": "Privatmodus"
         },
         "largeFetchConfirmation": {
-            "title": "Elemente der Warteschlange hinzufügen",
+            "title": "Elemente der Wiedergabeliste hinzufügen",
             "description": "Diese Aktion fügt alle Elemente in der aktuell gefilterten Ansicht hinzu"
         },
         "shuffleAll": {
@@ -303,9 +310,19 @@
             "input_minYear": "ab Jahr",
             "input_maxYear": "bis Jahr",
             "input_played_optionAll": "alle Tracks",
-            "input_played_optionUnplayed": "nur ungespielte Tracks",
+            "input_played_optionUnplayed": "nur nicht gespielte Tracks",
             "input_played_optionPlayed": "nur gespielte Tracks",
             "input_played": "Wiedergabefilter"
+        },
+        "saveQueue": {
+            "success": "Wiedergabeliste auf Server gespeichert"
+        },
+        "createRadioStation": {
+            "success": "Radiosender erfolgreich erstellt",
+            "title": "Radiosender erstellen",
+            "input_homepageUrl": "Homepage URL",
+            "input_name": "Name",
+            "input_streamUrl": "Stream URL"
         }
     },
     "entity": {
@@ -343,7 +360,11 @@
         "play_one": "{{count}} Wiedergabe",
         "play_other": "{{count}} Wiedergaben",
         "song_one": "Lied",
-        "song_other": "Lieder"
+        "song_other": "Lieder",
+        "radioStation_one": "Radiosender",
+        "radioStation_other": "Radiosender",
+        "radioStationWithCount_one": "{{count}} Radiosender",
+        "radioStationWithCount_other": "{{count}} Radiosender"
     },
     "table": {
         "config": {
@@ -359,7 +380,17 @@
                 "displayType": "Anzeigestil",
                 "autoFitColumns": "automatisch Spalten einpassen",
                 "size_default": "Standard",
-                "followCurrentSong": "aktuellem Titel folgen"
+                "followCurrentSong": "aktuellem Titel folgen",
+                "advancedSettings": "erweiterte Einstellungen",
+                "autosize": "automatische Größe",
+                "alignLeft": "linksbündig",
+                "alignCenter": "mittig",
+                "alignRight": "rechtsbündig",
+                "size_compact": "kompakt",
+                "size_large": "groß",
+                "pagination": "Seitenzahlen",
+                "pagination_itemsPerPage": "Elemente pro Seite",
+                "pagination_infinite": "unendlich"
             },
             "label": {
                 "dateAdded": "Hinzugefügt am",
@@ -387,7 +418,14 @@
                 "title": "$t(common.title)",
                 "year": "$t(common.year)",
                 "discNumber": "disk-Nummer",
-                "playCount": "Wiedergaben"
+                "playCount": "Wiedergaben",
+                "albumCount": "$t(entity.album_other)",
+                "bitDepth": "$t(common.bitDepth)",
+                "codec": "$t(common.codec)",
+                "image": "Bild",
+                "sampleRate": "$t(common.sampleRate)",
+                "songCount": "$t(entity.track_other)",
+                "genreBadge": "$t(entity.genre_one) (Abzeichen)"
             }
         },
         "column": {
@@ -413,7 +451,11 @@
             "genre": "$t(entity.genre_one)",
             "songCount": "$t(entity.track_other)",
             "trackNumber": "titel",
-            "size": "$t(common.size)"
+            "size": "$t(common.size)",
+            "bitDepth": "$t(common.bitDepth)",
+            "codec": "$t(common.codec)",
+            "sampleRate": "$t(common.sampleRate)",
+            "owner": "Besitzer"
         }
     },
     "page": {
@@ -522,7 +564,8 @@
             "albumArtists": "$t(entity.albumArtist_other)",
             "shared": "$t(entity.playlist_other) geteilt",
             "myLibrary": "meine bibliothek",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "setting": {
             "playbackTab": "Wiedergabe",
@@ -538,7 +581,7 @@
             "application": "App",
             "queryBuilder": "Abfrage-Editor",
             "theme": "Erscheinungsbild",
-            "controls": "Steuerung",
+            "controls": "Steuerelemente",
             "sidebar": "Seitenleiste",
             "scrobble": "Scrobbeln",
             "audio": "Audio",
@@ -601,14 +644,17 @@
         },
         "playlist": {
             "reorder": "Neuanordnung nur bei Sortierung nach ID möglich"
+        },
+        "radioList": {
+            "title": "Radiosender"
         }
     },
     "player": {
         "next": "nächster",
-        "addNext": "Als Nächstes spielen",
+        "addNext": "als Nächstes",
         "play": "Abspielen",
         "muted": "stummgeschaltet",
-        "addLast": "Als Letztes spielen",
+        "addLast": "als Letztes",
         "mute": "Stumm",
         "playRandom": "Zufällige Wiedergabe",
         "previous": "Vorheriger",
@@ -617,7 +663,7 @@
         "playbackFetchInProgress": "lieder werden geladen…",
         "playbackSpeed": "Wiedergabegeschwindigkeit",
         "playbackFetchCancel": "Das dauert eine Weile. Schließen Sie die Benachrichtigung, um den Vorgang abzubrechen",
-        "queue_clear": "Bereinige Warteschlange",
+        "queue_clear": "Wiedergabeliste bereinigen",
         "repeat_all": "Alle wiederholen",
         "repeat": "Wiederholen",
         "queue_remove": "Ausgewählte entfernen",
@@ -634,13 +680,15 @@
         "skip_forward": "vorspulen",
         "skip": "Überspringen",
         "playSimilarSongs": "Ähnliche Lieder abspielen",
-        "viewQueue": "Warteschlange anzeigen",
-        "addLastShuffled": "Als Letztes spielen (zufällige Wiedergabe)",
-        "addNextShuffled": "Als Nächstes spielen (zufällige Wiedergabe)",
+        "viewQueue": "Wiedergabeliste anzeigen",
+        "addLastShuffled": "als Letztes (zufällige Wiedergabe)",
+        "addNextShuffled": "als Nächstes (zufällige Wiedergabe)",
         "queueType_default": "Standard",
         "queueType_priority": "Priorität",
         "holdToShuffle": "Halten für Zufallswiedergabe",
-        "queueType": "Warteschlangentyp"
+        "queueType": "Wiedergabelistentyp",
+        "restoreQueueFromServer": "Wiedergabeliste von Server wiederherstellen",
+        "saveQueueToServer": "Wiedergabeliste auf Server speichern"
     },
     "setting": {
         "audioDevice_description": "wählen Sie das Audiogerät aus, das für die Wiedergabe verwendet werden soll (nur Webplayer)",
@@ -716,7 +764,7 @@
         "themeLight_description": "Legt das Erscheinungsbild für den hellen Modus fest",
         "hotkey_toggleFullScreenPlayer": "Vollbildmodus umschalten",
         "hotkey_localSearch": "Suche auf Seite",
-        "hotkey_toggleQueue": "Warteschlange umschalten",
+        "hotkey_toggleQueue": "Wiedergabeliste umschalten",
         "remotePassword_description": "Legt das Passwort für den Fernsteuerungsserver fest. Diese Anmeldeinformationen werden standardmäßig unsicher übertragen, daher sollten Sie ein Passwort verwenden, das Ihnen egal ist",
         "hotkey_rate5": "Bewertung 5 Sterne",
         "hotkey_playbackPrevious": "Vorheriger Track",
@@ -727,18 +775,18 @@
         "playbackStyle_description": "Wählen Sie den Wiedergabestil aus, der für den Audioplayer verwendet werden soll",
         "mpvExecutablePath": "Pfad der ausführbaren MPV-Datei",
         "hotkey_rate2": "Bewertung 2 Sterne",
-        "playButtonBehavior_description": "Legt das Standardverhalten des Wiedergabe-Buttons fest, wenn Songs zur Warteschlange hinzugefügt werden",
+        "playButtonBehavior_description": "legt das Standardverhalten des Wiedergabe-Buttons fest, wenn Lieder zur Wiedergabeliste hinzugefügt werden",
         "minimumScrobblePercentage_description": "die Mindestdauer in Prozent, welche das Lied gespielt werden muss, bevor dieses gescrobbelt wird",
         "hotkey_rate4": "Bewertung 4 Sterne",
         "showSkipButton_description": "Ein- oder Ausblenden der Überspringen-Schaltflächen in der Player-Leiste",
-        "savePlayQueue": "Wiedergabe-Warteschlange speichern",
+        "savePlayQueue": "Wiedergabeliste speichern",
         "minimumScrobbleSeconds_description": "die Mindestdauer in Sekunden, welche das Lied gespielt werden muss, bevor dieses gescrobbelt wird",
         "skipPlaylistPage_description": "Gehe beim Navigieren zu einer Wiedergabeliste zu deren Titelseite und nicht zur Standardseite",
         "fontType_description": "Die integrierte Schriftart wählt eine der von feishin bereitgestellten Schriftarten aus. Mit der Systemschriftart können Sie jede von Ihrem Betriebssystem bereitgestellte Schriftart auswählen. Benutzerdefiniert erlaubt es eine eigene Schriftart bereitzustellen",
         "playButtonBehavior": "Verhalten der Wiedergabetaste",
         "volumeWheelStep": "Lautstärkeänderung mit Mausrad",
         "sidebarPlaylistList_description": "Ein- oder Ausblenden der Playlisten-Liste in der Seitenleiste",
-        "sidePlayQueueStyle_description": "Legt den Stil der Wiedergabewarteliste in der Seitenleiste fest",
+        "sidePlayQueueStyle_description": "legt den Stil der Wiedergabeliste in der Seitenleiste fest",
         "replayGainMode": "{{ReplayGain}} Modus",
         "playbackStyle_optionNormal": "Normal",
         "windowBarStyle": "Fensterleistenstil",
@@ -769,7 +817,7 @@
         "gaplessAudio_optionWeak": "schwach (empfohlen)",
         "minimumScrobbleSeconds": "Minimum Scrobble-Dauer (Sekunden)",
         "hotkey_playbackStop": "Stoppen",
-        "savePlayQueue_description": "Speichert Wiedergabewarteschlange, wenn die Anwendung geschlossen wird, und stellt sie wieder her, wenn die Anwendung geöffnet wird",
+        "savePlayQueue_description": "speichert die Wiedergabeliste beim Schließen der Anwendung, und stellt diese wieder her, wenn die Anwendung geöffnet wird",
         "useSystemTheme": "Nach Erscheinungsbild des Systems richten",
         "enableRemote_description": "Aktiviert den Server für die Fernsteuerung, damit andere Geräte die Anwendung steuern können",
         "fontType_optionSystem": "System Schriftart",
@@ -795,33 +843,33 @@
         "clearCache": "Browser-Zwischenspeicher löschen",
         "clearQueryCache": "feishins Zwischenspeicher leeren",
         "clearCache_description": "Hartes Zurücksetzen. Neben feishins Zwischenspeicher wird auch der des Browsers gelöscht (Bilder und andere Daten). Zugangsinformationen und Einstellungen werden behalten",
-        "sidePlayQueueStyle": "Wiedergabelistenstil in der Seitenleiste",
+        "sidePlayQueueStyle": "Stil der Wiedergabeliste in der Seitenleiste",
         "zoom_description": "Setzt den Zoom (in %) für das Programm",
         "zoom": "Zoom",
         "albumBackground": "Album Hintergrund",
-        "customCss": "Benutzerdefiniert css",
+        "customCss": "Benutzerdefiniertes CSS",
         "homeConfiguration": "Startseite Konfiguration",
         "lastfmApiKey": "{{lastfm}} API-Schlüssel",
-        "lastfmApiKey_description": "Der API-Schlüssel für {{lastfm}}. wird für benötigt",
+        "lastfmApiKey_description": "Der API-Schlüssel für {{lastfm}}. wird für Albumcover benötigt",
         "discordListening": "Status als hört zu anzeigen",
         "discordListening_description": "Status als hört zu statt als spielt anzeigen",
         "lastfm": "zeige last.fm links",
         "lastfm_description": "zeige links zu Last.fm auf dem Künstler/Album-Seiten",
         "musicbrainz": "Zeig MusicBrainz links",
-        "customCssEnable": "aktiviere Benutzerdefinierte css",
+        "customCssEnable": "benutzerdefiniertes CSS aktivieren",
         "albumBackground_description": "fügt ein Hintergrundbild für die Albumseiten hinzu, welche das Albumcover zeigen",
         "albumBackgroundBlur": "Größe der Album-Bildunschärfe",
         "albumBackgroundBlur_description": "passt die Stärke der Unschärfe an, welche auf das Hintergrundbild des Albums angewandt wird",
         "clearCacheSuccess": "Cache erfolgreich geleert",
         "contextMenu": "Kontextmenü-Einstellungen (Rechtsklick)",
-        "customCssEnable_description": "ermöglicht das Schreiben benutzerdefinierten CSS",
+        "customCssEnable_description": "erlaubt das Hinzufügen von benutzerdefiniertem CSS",
         "artistBackground": "Künstler Hintergrundbild",
         "artistBackground_description": "fügt ein Hintergrundbild für die Künstlerseite hinzu",
         "artistConfiguration": "künstler Albumseite Konfiguration",
         "buttonSize": "spielerleisten-Knopfgröße",
         "buttonSize_description": "die Größe der Spieler-Knöpfe",
         "hotkey_togglePreviousSongFavorite": "wähle $t(common.previousSong) als Favorit aus",
-        "replayGainFallback": "{{ReplayGain}} Rückgriff",
+        "replayGainFallback": "{{ReplayGain}} Alternative",
         "replayGainClipping": "{{ReplayGain}} Clipping",
         "exportImportSettings_control_description": "Einstellungen mit JSON exportieren und importieren",
         "exportImportSettings_control_exportText": "Einstellungen exportieren",
@@ -833,9 +881,7 @@
         "exportImportSettings_notValidJSON": "Die Datei ist kein gültiges JSON",
         "exportImportSettings_offendingKeyError": "\"{{offendingKey}}\" ist falsch - {{reason}}",
         "language": "Sprache",
-        "playerAlbumArtResolution": "Auflösung des Albumcovers",
         "imageAspectRatio": "Original Seitenverhältnis des Albumcovers verwenden",
-        "playerAlbumArtResolution_description": "die Auflösung des Albumcovers im großen Player. Eine höhere Auflösung sorgt für ein schärferes Bild, kann jedoch das Laden verlangsamen. Standardwert: 0 (automatische Berechnung)",
         "analyticsDisable": "Keine nutzungsbasierte Analyse",
         "analyticsDisable_description": "Anonymisierte Nutzungsdaten werden an den Entwickler geschickt, um die Anwendung zu verbessern",
         "logLevel_optionDebug": "Debug",
@@ -844,11 +890,11 @@
         "logLevel_optionError": "Fehler",
         "logLevel_optionInfo": "Info",
         "logLevel_optionWarn": "Warnung",
-        "autoDJ_description": "Füge automatisch ähnliche Lieder der Warteschlange hinzu",
+        "autoDJ_description": "füge automatisch ähnliche Lieder der Wiedergabeliste hinzu",
         "autoDJ": "Auto DJ",
         "autoDJ_itemCount": "Anzahl",
-        "autoDJ_itemCount_description": "Die Anzahl der Lieder, die bei aktiviertem Auto DJ zur Warteschlange hinzugefügt werden sollen",
-        "autoDJ_timing_description": "Die Anzahl der Lieder, die sich noch in der Warteschlange befinden, bevor Auto DJ ausgelöst wird",
+        "autoDJ_itemCount_description": "die Anzahl der Lieder, die bei aktiviertem Auto DJ zur Wiedergabeliste hinzugefügt werden sollen",
+        "autoDJ_timing_description": "die Anzahl der Lieder, die sich noch in der Wiedergabeliste befinden, bevor Auto DJ ausgelöst wird",
         "autoDJ_timing": "Timing",
         "discordDisplayType": "{{discord}} Presence Darstellungsart",
         "discordLinkType_mbz_lastfm": "{{musicbrainz}} mit {{lastfm}} als Ersatz",
@@ -867,11 +913,11 @@
         "neteaseTranslation": "NetEase Übersetzungen aktivieren",
         "notify": "Benachrichtigungen aktivieren",
         "notify_description": "Zeigt Benachrichtigungen beim Titelwechsel",
-        "playerFilters": "Lieder in der Warteschlange filtern",
+        "playerFilters": "Lieder der Wiedergabeliste filtern",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
         "volumeWidth_description": "Die Breite des Lautstärkereglers",
         "volumeWidth": "Lautstärkereglerbreite",
-        "webAudio_description": "Web-Audio verwenden. Dies ermöglicht erweiterte Funktionen wie ReplayGain. Deaktiviere dies, wenn bei der Wiedergabe Probleme auftreten",
+        "webAudio_description": "Web-Audio verwenden. Dies ermöglicht erweiterte Funktionen wie ReplayGain. Deaktiviere die Option, falls bei der Wiedergabe Probleme auftreten",
         "webAudio": "Web-Audio verwenden",
         "trayEnabled": "Info-Symbol anzeigen",
         "transcode": "Transkodierung aktivieren",
@@ -889,7 +935,7 @@
         "artistConfiguration_description": "Legt fest, welche Elemente auf der Albumkünstlerseite angezeigt werden und in welcher Reihenfolge",
         "contextMenu_description": "Legt die Einträge fest, die im Rechtsklick-Menü angezeigt werden sollen. Abgewählte Einträge werden ausgeblendet",
         "crossfadeStyle": "Art der Überblende",
-        "customCss_description": "Benutzerdefinierter CSS-Inhalt. Hinweis: content und entfernte URLs sind unzulässig. Siehe Vorschau unten. Aufgrund von Bereinigung werden womöglich nicht gesetzte Felder angezeigt",
+        "customCss_description": "Benutzerdefinierter CSS-Inhalt. Hinweis: Inhalte und Remote-URLs sind nicht zulässige Eigenschaften. Unten siehst du eine Vorschau deines Inhalts. Aufgrund von Bereinigung werden womöglich zusätzliche, nicht von dir definierte Felder angezeigt",
         "customCssNotice": "Warnung: Obwohl eine gewisse Bereinigung erfolgt (url() und content: sind nicht zulässig), kann die Verwendung von benutzerdefiniertem CSS dennoch Risiken mit sich bringen, da dadurch die Benutzeroberfläche verändert wird",
         "releaseChannel_optionBeta": "Beta",
         "releaseChannel_optionLatest": "Stabil",
@@ -903,11 +949,25 @@
         "exportImportSettings_destructiveWarning": "Das Importieren von Einstellungen ist irreversibel. Bitte lies die Hinweise oben sorgfältig durch, bevor du auf \"Importieren\" klickst!",
         "followCurrentSong": "aktuellem Titel folgen",
         "followCurrentSong_description": "die Wiedergabeliste scrollt automatisch zum aktuellen Titel",
-        "playerFilters_description": "verhindert, dass Titel anhand der folgenden Kriterien zur Warteschlange hinzugefügt werden",
+        "playerFilters_description": "verhindert, dass Titel anhand der folgenden Kriterien zur Wiedergabeliste hinzugefügt werden",
         "preferLocalLyrics_description": "lokale Songtexte gegenüber externen Quellen bevorzugen (sofern verfügbar)",
         "preferLocalLyrics": "Priorisiere lokale Songtexte",
         "showLyricsInSidebar_description": "ein Bereich, in dem Songtexte angezeigt werden, wird der Wiedergabeliste hinzugefügt",
-        "showLyricsInSidebar": "zeige Songtexte in der Player-Seitenleiste"
+        "showLyricsInSidebar": "zeige Songtexte in der Player-Seitenleiste",
+        "homeFeature_description": "steuert, ob das große Featured-Karussell auf der Startseite angezeigt wird",
+        "homeFeature": "Feature-Karussell",
+        "playerbarWaveformAlign_optionTop": "Oben",
+        "playerbarWaveformAlign_optionCenter": "Mitte",
+        "playerbarWaveformAlign_optionBottom": "Unten",
+        "translationApiKey_description": "API-Schlüssel für Übersetzungen (nur globale Service-Endpunkte)",
+        "translationApiKey": "API-Schlüssel für Übersetzungen",
+        "translationApiProvider_description": "API-Anbieter für Übersetzungen",
+        "translationApiProvider": "API-Anbieter für Übersetzungen",
+        "hotkey_navigateHome": "zurück zur Startseite",
+        "translationTargetLanguage_description": "die gewünschte Sprache der Übersetzung",
+        "translationTargetLanguage": "Zielsprache der Übersetzung",
+        "queryBuilderCustomFields": "benutzerdefiniertes Feld",
+        "queryBuilderCustomFields_inputTag": "Tag"
     },
     "dragDropZone": {
         "error_oneFileOnly": "Bitte wähle nur 1 Datei",
@@ -961,5 +1021,11 @@
             "soundtrack": "Soundtrack",
             "spokenWord": "Gesprochenes Wort"
         }
+    },
+    "datetime": {
+        "minuteShort": "Min",
+        "secondShort": "Sek",
+        "hourShort": "Std",
+        "dayShort": "Tag"
     }
 }

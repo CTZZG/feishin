@@ -33,7 +33,11 @@
             "musicbrainz": "Öppna i MusicBrainz"
         },
         "createRadioStation": "skapa $t(entity.radioStation_one)",
-        "deleteRadioStation": "ta bort $t(entity.radioStation_one)"
+        "deleteRadioStation": "ta bort $t(entity.radioStation_one)",
+        "addOrRemoveFromSelection": "lägg till eller ta bort från markerade",
+        "selectRangeOfItems": "välj en mängd objekt",
+        "selectAll": "markera alla",
+        "openApplicationDirectory": "öppna applikationskatalog"
     },
     "common": {
         "backward": "bakåt",
@@ -143,7 +147,8 @@
         "clean": "städad",
         "gridRows": "rutnätsrader",
         "tableColumns": "tabellkolumner",
-        "itemsMore": "{{count}} fler"
+        "itemsMore": "{{count}} fler",
+        "countSelected": "{{count}} markerade"
     },
     "error": {
         "remotePortWarning": "starta om servern för att tillämpa den nya porten",
@@ -166,7 +171,12 @@
         "invalidServer": "ogiltig server",
         "loginRateError": "för många inloggningsförsök, försök igen om några sekunder",
         "badAlbum": "du ser denna sidan eftersom denna låten inte är en del av ett album. du ser troligtvis detta problemet för att du har en låt på toppnivån i din musikmapp. Jellyfin grupperar bara låtar om de finns i en mapp",
-        "badValue": "felaktigt alternativ \"{{value}}\". detta värde existerar inte längre"
+        "badValue": "felaktigt alternativ \"{{value}}\". detta värde existerar inte längre",
+        "multipleServerSaveQueueError": "spelningskön har en eller flera låtar som inte är från den nuvarande valda servern. detta är inte stöttat",
+        "networkError": "en nätverksfel uppstod",
+        "notificationDenied": "åtkomst till notifieringarna var nekad. inställningen har ingen verkan",
+        "openError": "kunde inte öppna filen",
+        "settingsSyncError": "diskrepans hittades mellan inställningarna för renderingsprocessen och huvudprocessen. starta om applikationen för att ändringarna ska tillämpas"
     },
     "filter": {
         "mostPlayed": "mest spelade",
@@ -209,7 +219,9 @@
         "album": "$t(entity.album_one)",
         "trackNumber": "spår",
         "songCount": "sångräkning",
-        "criticRating": "kritikerbetyg"
+        "criticRating": "kritikerbetyg",
+        "albumCount": "$t(entity.album_other) antal",
+        "explicitStatus": "$t(common.explicitStatus)"
     },
     "form": {
         "deletePlaylist": {
@@ -236,13 +248,17 @@
             "input_savePassword": "spara lösenord",
             "ignoreSsl": "ignorera ssl ($t(common.restartRequired))",
             "ignoreCors": "ignorera cors ($t(common.restartRequired))",
-            "error_savePassword": "ett fel uppstod när lösenordet skulle sparas"
+            "error_savePassword": "ett fel uppstod när lösenordet skulle sparas",
+            "input_preferInstantMix": "föredra instant mixning",
+            "input_preferInstantMixDescription": "använd bara instant mixning för att få liknande låtar. användbar om du har plugin för att förändra detta beteendet"
         },
         "addToPlaylist": {
-            "success": "tillade {{message}} $t(entity.track_other) til {{numOfPlaylists}} $t(entity.playlist_other)",
+            "success": "lade till $t(entity.trackWithCount, {\"count\": {{message}} }) till $t(entity.playlistWithCount, {\"count\": {{numOfPlaylists}} })",
             "title": "lägg till i $t(entity.playlist_one)",
             "input_skipDuplicates": "hoppa över dubbletter",
-            "input_playlists": "$t(entity.playlist_other)"
+            "input_playlists": "$t(entity.playlist_other)",
+            "create": "skapa $t(entity.playlist_one) {{playlist}}",
+            "searchOrCreate": "sök $t(entity.playlist_other) eller skriv för att skapa en ny"
         },
         "updateServer": {
             "title": "uppdatera server",
@@ -258,7 +274,19 @@
             "title": "sångtext sök"
         },
         "editPlaylist": {
-            "title": "redigera $t(entity.playlist_one)"
+            "title": "redigera $t(entity.playlist_one)",
+            "publicJellyfinNote": "Jellyfin visar av någon anledning inte om en spellista är publik eller inte. Om du önskar att denna ska förbli publik, så får du ha följande indata markerade"
+        },
+        "largeFetchConfirmation": {
+            "title": "lägg till objekt till kön",
+            "description": "Åtgärden kommer att lägga till alla objekt till den nuvarande filtrerade vyn"
+        },
+        "createRadioStation": {
+            "success": "radiostation skapades",
+            "title": "skapa radiostation",
+            "input_homepageUrl": "hemside-URL",
+            "input_name": "namn",
+            "input_streamUrl": "stream url"
         }
     },
     "page": {
@@ -306,7 +334,17 @@
             "addFavorite": "$t(action.addToFavorites)",
             "play": "$t(player.play)",
             "numberSelected": "{{count}} vald",
-            "removeFromQueue": "$t(action.removeFromQueue)"
+            "removeFromQueue": "$t(action.removeFromQueue)",
+            "download": "ladda ner",
+            "moveItems": "$t(action.moveItems)",
+            "moveToNext": "$t(action.moveToNext)",
+            "playSimilarSongs": "$t(player.playSimilarSongs)",
+            "playShuffled": "$t(player.shuffle)",
+            "shareItem": "dela objekt",
+            "goTo": "gå till",
+            "goToAlbum": "gå till $t(entity.album_one)",
+            "goToAlbumArtist": "gå till $t(entity.albumArtist_one)",
+            "showDetails": "hämta information"
         },
         "albumDetail": {
             "moreFromArtist": "mer från $t(entity.artist_one)",
@@ -340,6 +378,12 @@
                 "searchFor": "sök efter {{query}}"
             },
             "title": "kommandon"
+        },
+        "manageServers": {
+            "url": "URL",
+            "username": "användarnamn",
+            "editServerDetailsTooltip": "redigera serverinställningar",
+            "removeServer": "ta bort server"
         }
     },
     "entity": {
@@ -405,5 +449,32 @@
         "queue_moveToBottom": "flytta markerad till toppen",
         "addLast": "lägg till sist",
         "mute": "muta"
+    },
+    "datetime": {
+        "minuteShort": "min",
+        "secondShort": "sek",
+        "hourShort": "h",
+        "dayShort": "dag"
+    },
+    "filterOperator": {
+        "after": "är efter",
+        "afterDate": "är efter (datum)",
+        "before": "är före",
+        "beforeDate": "är före (datum)",
+        "contains": "innehåller",
+        "endsWith": "slutar med",
+        "inPlaylist": "är inom",
+        "inTheLast": "är i den sista",
+        "inTheRange": "är i spannet",
+        "inTheRangeDate": "är i spannet (datum)",
+        "is": "är",
+        "isNot": "är inte",
+        "isGreaterThan": "är större än",
+        "isLessThan": "är mindre än",
+        "matchesRegex": "matchar regex",
+        "notContains": "innehåller inte",
+        "notInPlaylist": "är inte inom",
+        "notInTheLast": "är inte inom den sista",
+        "startsWith": "startar med"
     }
 }

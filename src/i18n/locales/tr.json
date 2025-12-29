@@ -21,7 +21,15 @@
         "goToPage": "sayfaya git",
         "moveToNext": "sonrakine geç",
         "refresh": "$t(common.refresh)",
-        "toggleSmartPlaylistEditor": "$t(entity.smartPlaylist) düzenleyiciye geç"
+        "toggleSmartPlaylistEditor": "$t(entity.smartPlaylist) düzenleyiciye geç",
+        "addOrRemoveFromSelection": "seçime ekle veya seçimi kaldır",
+        "selectRangeOfItems": "bir dizi öğe seçin",
+        "createRadioStation": "$t(entity.radioStation_one) oluştur",
+        "deleteRadioStation": "$t(entity.radioStation_one) istasyonunu sil",
+        "selectAll": "tümünü seç",
+        "downloadStarted": "{{count}} öğenin indirilmesine başlandı",
+        "moveUp": "yukarı kaydır",
+        "moveDown": "aşağı kaydır"
     },
     "common": {
         "action_one": "eylem",
@@ -120,7 +128,8 @@
         "trackGain": "parça kazancı",
         "trackPeak": "parça zirvesi",
         "private": "gizli",
-        "clean": "temiz"
+        "clean": "temiz",
+        "countSelected": "{{count}} adet seçildi"
     },
     "entity": {
         "album_one": "albüm",
@@ -604,8 +613,6 @@
         "playButtonBehavior_optionAddNext": "$t(player.addNext)",
         "playButtonBehavior_optionPlay": "$t(player.play)",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
-        "playerAlbumArtResolution": "oynatıcı albüm resmi çözünürlüğü",
-        "playerAlbumArtResolution_description": "büyük oynatıcının albüm resmi önizlemesi için çözünürlük. daha büyük değerler daha net görünmesini sağlar, ancak yüklemeyi yavaşlatabilir. varsayılan değer 0, otomatik olarak çalışır",
         "playerbarOpenDrawer": "oynatma çubuğu tam ekran geçişi",
         "playerbarOpenDrawer_description": "tam ekran oynatıcıyı açmak için oynatma çubuğuna tıklamaya izin verir",
         "remotePassword": "uzaktan kontrol sunucusu şifresi",

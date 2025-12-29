@@ -31,7 +31,12 @@
         "shuffle": "随机播放",
         "shuffleAll": "随机播放全部",
         "shuffleSelected": "随机播放选定的内容",
-        "viewMore": "查看更多"
+        "viewMore": "查看更多",
+        "addOrRemoveFromSelection": "在所选内容中添加或移除",
+        "selectRangeOfItems": "批量选择",
+        "selectAll": "全选",
+        "createRadioStation": "创建$t(entity.radioStation_one)",
+        "deleteRadioStation": "删除$t(entity.radioStation_one)"
     },
     "common": {
         "increase": "增高",
@@ -189,7 +194,7 @@
         "queue_moveToTop": "将所选项移至底部",
         "queue_moveToBottom": "将所选项移至顶部",
         "shuffle_off": "禁用随机播放",
-        "addLast": "添加至播放列表末尾",
+        "addLast": "上一曲",
         "mute": "静音",
         "skip_forward": "向前跳过",
         "playbackSpeed": "播放速度",
@@ -367,8 +372,6 @@
         "startMinimized_description": "在系统托盘中启动应用程序",
         "passwordStore_description": "使用什么密码/密钥存储。如果您在存储密码时遇到问题，请更改此设置",
         "clearCacheSuccess": "缓存清除成功",
-        "playerAlbumArtResolution": "播放器专辑封面分辨率",
-        "playerAlbumArtResolution_description": "大型播放器专辑封面预览的分辨率。较大使其看起来更清晰，但可能会减慢加载速度。默认为0，表示自动",
         "homeConfiguration": "主页配置",
         "homeConfiguration_description": "配置主页上显示的项目以及显示顺序",
         "passwordStore": "密码/密钥存储",

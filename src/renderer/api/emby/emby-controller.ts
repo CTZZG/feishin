@@ -136,6 +136,9 @@ export const EmbyController: ControllerEndpoint = {
 
         return null;
     },
+    createInternetRadioStation: async () => {
+        throw new Error('Not supported');
+    },
     createPlaylist: async (args) => {
         const { apiClientProps, body } = args;
 
@@ -177,6 +180,9 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         return null;
+    },
+    deleteInternetRadioStation: async () => {
+        throw new Error('Not supported');
     },
     deletePlaylist: async (args) => {
         const { apiClientProps, query } = args;
@@ -397,6 +403,27 @@ export const EmbyController: ControllerEndpoint = {
             apiClientProps,
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
+    getArtistRadio: async (args) => {
+        const { apiClientProps, query } = args;
+        const { artistId, count } = query;
+
+        const res = await embyApiClient(apiClientProps as any).getInstantMix({
+            params: {
+                id: artistId,
+            },
+            query: {
+                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
+                Limit: count || 50,
+                UserId: apiClientProps.server?.userId || '',
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get artist radio');
+        }
+
+        return res.body.Items.map((item) => embyNormalize.song(item, apiClientProps.server!, ''));
+    },
     getDownloadUrl: (args) => {
         const { apiClientProps, query } = args;
 
@@ -517,6 +544,15 @@ export const EmbyController: ControllerEndpoint = {
             startIndex: query.startIndex || 0,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
+    },
+    getImageUrl: (args) => {
+        const { apiClientProps, query } = args;
+        const { id, size } = query;
+        if (!apiClientProps.server?.url) return null;
+        return `${apiClientProps.server.url}/Items/${id}/Images/Primary?MaxWidth=${size || 400}`;
+    },
+    getInternetRadioStations: async () => {
+        return [];
     },
     getLyrics: async (args) => {
         const { apiClientProps, query } = args;
@@ -733,6 +769,9 @@ export const EmbyController: ControllerEndpoint = {
             startIndex: query.startIndex,
             totalRecordCount: res.body?.TotalRecordCount || res.body?.Items?.length,
         };
+    },
+    getPlayQueue: async () => {
+        throw new Error('Not supported');
     },
     getRandomSongList: async (args) => {
         const { apiClientProps, query } = args;
@@ -1153,6 +1192,9 @@ export const EmbyController: ControllerEndpoint = {
     replacePlaylist: async () => {
         throw new Error('Not implemented');
     },
+    savePlayQueue: async () => {
+        throw new Error('Not supported');
+    },
     scrobble: async (args) => {
         const { apiClientProps, query } = args;
         const playSessionId = apiClientProps.server?.id + '-' + query.id;
@@ -1340,6 +1382,9 @@ export const EmbyController: ControllerEndpoint = {
         }
 
         return null;
+    },
+    updateInternetRadioStation: async () => {
+        throw new Error('Not supported');
     },
     updatePlaylist: async (args) => {
         const { apiClientProps, body, query } = args;

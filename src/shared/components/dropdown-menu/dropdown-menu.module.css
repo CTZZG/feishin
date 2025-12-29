@@ -26,11 +26,11 @@
         position: absolute;
         top: 50%;
         left: 2px;
-        width: 4px;
+        width: 2px;
         height: 50%;
         content: '';
         background-color: var(--theme-colors-primary-filled);
-        border-radius: var(--theme-border-radius-xl);
+        border-radius: var(--theme-radius-xl);
         transform: translateY(-50%);
     }
 }

@@ -550,8 +550,6 @@
         "playButtonBehavior_description": "வரிசையில் பாடல்களைச் சேர்க்கும்போது ப்ளே பொத்தானின் இயல்புநிலை நடத்தை அமைக்கிறது",
         "playButtonBehavior_optionAddLast": "$t(player.addLast)",
         "playButtonBehavior_optionAddNext": "$t(player.addNext)",
-        "playerAlbumArtResolution": "பிளேயர் ஆல்பம் கலைத் தீர்மானம்",
-        "playerAlbumArtResolution_description": "பெரிய வீரரின் ஆல்பம் கலை முன்னோட்டத்திற்கான தீர்மானம். பெரியது இது மிகவும் மிருதுவானதாக தோற்றமளிக்கிறது, ஆனால் மெதுவாக ஏற்றுவதை மெதுவாகக் கொண்டிருக்கலாம். இயல்புநிலை 0 க்கு, அதாவது ஆட்டோ",
         "playerbarOpenDrawer": "பிளேயர்பார் முழுத்திரை மாற்று",
         "playerbarOpenDrawer_description": "முழு திரை பிளேயரைத் திறக்க பிளேயர்பாரைக் சொடுக்கு செய்ய அனுமதிக்கிறது",
         "remotePassword": "ரிமோட் கண்ட்ரோல் சர்வர் கடவுச்சொல்",

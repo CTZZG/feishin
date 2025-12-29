@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useRef } from 'react';
-import { useLocation, useParams } from 'react-router';
+import { Suspense, useRef } from 'react';
+import { useParams } from 'react-router';
 
+import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { NativeScrollArea } from '/@/renderer/components/native-scroll-area/native-scroll-area';
 import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
 import { AlbumArtistDetailContent } from '/@/renderer/features/artists/components/album-artist-detail-content';
@@ -16,9 +17,10 @@ import { LibraryHeaderBar } from '/@/renderer/features/shared/components/library
 import { PageErrorBoundary } from '/@/renderer/features/shared/components/page-error-boundary';
 import { useFastAverageColor, useWaitForColorCalculation } from '/@/renderer/hooks';
 import { useCurrentServer, useGeneralSettings } from '/@/renderer/store';
+import { Spinner } from '/@/shared/components/spinner/spinner';
 import { LibraryItem } from '/@/shared/types/domain-types';
 
-const AlbumArtistDetailRoute = () => {
+const AlbumArtistDetailRouteContent = () => {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLDivElement>(null);
     const server = useCurrentServer();
@@ -31,18 +33,29 @@ const AlbumArtistDetailRoute = () => {
 
     const routeId = (artistId || albumArtistId) as string;
 
-    const location = useLocation();
+    const detailQuery = useSuspenseQuery(
+        artistsQueries.albumArtistDetail({ query: { id: routeId }, serverId: server?.id }),
+    );
 
-    const detailQuery = useSuspenseQuery({
-        ...artistsQueries.albumArtistDetail({ query: { id: routeId }, serverId: server?.id }),
-        initialData: location.state?.item,
-        staleTime: 0,
+    const imageUrl = useItemImageUrl({
+        id: detailQuery.data?.imageId || undefined,
+        imageUrl: detailQuery.data?.imageUrl,
+        itemType: LibraryItem.ALBUM_ARTIST,
+        type: 'header',
     });
+
+    const libraryBackgroundImageUrl = useItemImageUrl({
+        id: detailQuery.data?.imageId || undefined,
+        itemType: LibraryItem.ALBUM_ARTIST,
+        type: 'itemCard',
+    });
+
+    const selectedImageUrl = imageUrl || detailQuery.data?.imageUrl;
 
     const { background: backgroundColor, isLoading: isColorLoading } = useFastAverageColor({
         id: artistId,
-        src: detailQuery.data?.imageUrl,
-        srcLoaded: !detailQuery.isLoading,
+        src: selectedImageUrl,
+        srcLoaded: true,
     });
 
     const background = backgroundColor;
@@ -50,14 +63,14 @@ const AlbumArtistDetailRoute = () => {
     const showBlurredImage = artistBackground;
 
     const { isReady } = useWaitForColorCalculation({
-        hasImage: !!detailQuery.data?.imageUrl,
+        hasImage: !!selectedImageUrl,
         isLoading: isColorLoading,
         routeId,
         showBlurredImage,
     });
 
     if (!isReady) {
-        return null;
+        return <Spinner container />;
     }
 
     return (
@@ -73,7 +86,7 @@ const AlbumArtistDetailRoute = () => {
                                 variant="default"
                             />
                             <LibraryHeaderBar.Title>
-                                {detailQuery?.data?.name}
+                                {detailQuery.data?.name}
                             </LibraryHeaderBar.Title>
                         </LibraryHeaderBar>
                     ),
@@ -86,7 +99,7 @@ const AlbumArtistDetailRoute = () => {
                     <LibraryBackgroundImage
                         blur={artistBackgroundBlur}
                         headerRef={headerRef}
-                        imageUrl={detailQuery.data?.imageUrl || ''}
+                        imageUrl={libraryBackgroundImageUrl || ''}
                     />
                 ) : (
                     <LibraryBackgroundOverlay backgroundColor={background} headerRef={headerRef} />
@@ -97,6 +110,20 @@ const AlbumArtistDetailRoute = () => {
                 </LibraryContainer>
             </NativeScrollArea>
         </AnimatedPage>
+    );
+};
+
+const AlbumArtistDetailRoute = () => {
+    const { albumArtistId, artistId } = useParams() as {
+        albumArtistId?: string;
+        artistId?: string;
+    };
+    const routeId = (artistId || albumArtistId) as string;
+
+    return (
+        <Suspense fallback={<Spinner container />} key={`album-artist-detail-suspense-${routeId}`}>
+            <AlbumArtistDetailRouteContent />
+        </Suspense>
     );
 };
 

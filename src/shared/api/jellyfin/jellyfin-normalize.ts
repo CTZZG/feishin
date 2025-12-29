@@ -16,100 +16,6 @@ import { ServerListItem, ServerType } from '/@/shared/types/types';
 
 const TICKS_PER_MS = 10000;
 
-const getAlbumArtistCoverArtUrl = (args: {
-    baseUrl: string;
-    item: z.infer<typeof jfType._response.albumArtist>;
-    size: number;
-}) => {
-    const size = args.size ? args.size : 300;
-
-    if (!args.item.ImageTags?.Primary) {
-        return null;
-    }
-
-    return (
-        `${args.baseUrl}/Items` +
-        `/${args.item.Id}` +
-        '/Images/Primary' +
-        `?width=${size}` +
-        '&quality=96'
-    );
-};
-
-const getAlbumCoverArtUrl = (args: {
-    baseUrl: string;
-    item: z.infer<typeof jfType._response.album>;
-    size: number;
-}) => {
-    const size = args.size ? args.size : 300;
-
-    if (!args.item.ImageTags?.Primary && !args.item?.AlbumPrimaryImageTag) {
-        return null;
-    }
-
-    return (
-        `${args.baseUrl}/Items` +
-        `/${args.item.Id}` +
-        '/Images/Primary' +
-        `?width=${size}` +
-        '&quality=96'
-    );
-};
-
-const getSongCoverArtUrl = (args: {
-    baseUrl: string;
-    item: z.infer<typeof jfType._response.song>;
-    size: number;
-}) => {
-    const size = args.size ? args.size : 100;
-
-    if (args.item.ImageTags.Primary) {
-        return (
-            `${args.baseUrl}/Items` +
-            `/${args.item.Id}` +
-            '/Images/Primary' +
-            `?width=${size}` +
-            '&quality=96' +
-            // Invalidate the cache if the image chances. This appears to be
-            // how Jellyfin Web does it as well
-            `&tag=${args.item.ImageTags.Primary}`
-        );
-    }
-
-    if (args.item?.AlbumPrimaryImageTag) {
-        // Fall back to album art if no image embedded
-        return (
-            `${args.baseUrl}/Items` +
-            `/${args.item?.AlbumId}` +
-            '/Images/Primary' +
-            `?width=${size}` +
-            '&quality=96'
-        );
-    }
-
-    return null;
-};
-
-const getPlaylistCoverArtUrl = (args: {
-    baseUrl: string;
-    item: z.infer<typeof jfType._response.playlist>;
-    size: number;
-}) => {
-    const size = args.size ? args.size : 300;
-
-    if (!args.item.ImageTags?.Primary) {
-        return null;
-    }
-
-    return (
-        `${args.baseUrl}/Items` +
-        `/${args.item.Id}` +
-        '/Images/Primary' +
-        `?width=${size}` +
-        '&quality=96'
-    );
-};
-
 type AlbumOrSong = z.infer<typeof jfType._response.album> | z.infer<typeof jfType._response.song>;
 
 const KEYS_TO_OMIT = new Set(['AlbumArtist', 'Artist']);
@@ -128,8 +34,11 @@ const getPeople = (item: AlbumOrSong): null | Record<string, RelatedArtist[]> =>
                 // for other roles, we just want to display this and not filter.
                 // filtering (and links) would require a separate field, PersonIds
                 id: '',
+                imageId: null,
                 imageUrl: null,
                 name: person.Name,
+                userFavorite: false,
+                userRating: null,
             };
 
             if (key in participants) {
@@ -158,10 +67,47 @@ const getTags = (item: AlbumOrSong): null | Record<string, string[]> => {
     return null;
 };
 
+const getSongImageId = (item: z.infer<typeof jfType._response.song>): null | string => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
+    }
+
+    if (item.AlbumPrimaryImageTag && item.AlbumId) {
+        return item.AlbumId;
+    }
+
+    return null;
+};
+
+const getAlbumImageId = (item: z.infer<typeof jfType._response.album>): null | string => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
+    }
+
+    return null;
+};
+
+const getAlbumArtistImageId = (
+    item: z.infer<typeof jfType._response.albumArtist>,
+): null | string => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
+    }
+
+    return null;
+};
+
+const getPlaylistImageId = (item: z.infer<typeof jfType._response.playlist>): null | string => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
+    }
+
+    return null;
+};
+
 const normalizeSong = (
     item: z.infer<typeof jfType._response.song>,
     server: null | ServerListItem,
-    imageSize?: number,
 ): Song => {
     let bitRate = 0;
     let channels: null | number = null;
@@ -201,16 +147,22 @@ const normalizeSong = (
         album: item.Album,
         albumArtists: item.AlbumArtists?.map((entry) => ({
             id: entry.Id,
+            imageId: entry.Id,
             imageUrl: null,
             name: entry.Name,
+            userFavorite: false,
+            userRating: null,
         })),
         albumId: item.AlbumId || `dummy/${item.Id}`,
         artistName: item?.ArtistItems?.[0]?.Name || item?.AlbumArtists?.[0]?.Name,
         artists: (item?.ArtistItems?.length ? item.ArtistItems : item.AlbumArtists)?.map(
             (entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             }),
         ),
         bitDepth: null,
@@ -241,13 +193,14 @@ const normalizeSong = (
             _serverType: ServerType.JELLYFIN,
             albumCount: null,
             id: entry.Id,
+            imageId: null,
             imageUrl: null,
             name: entry.Name,
             songCount: null,
         })),
         id: item.Id,
-        imagePlaceholderUrl: null,
-        imageUrl: getSongCoverArtUrl({ baseUrl: server?.url || '', item, size: imageSize || 100 }),
+        imageId: getSongImageId(item),
+        imageUrl: null,
         lastPlayedAt: null,
         lyrics: null,
         mbzRecordingId: null,
@@ -273,7 +226,6 @@ const normalizeSong = (
 const normalizeAlbum = (
     item: z.infer<typeof jfType._response.album>,
     server: null | ServerListItem,
-    imageSize?: number,
 ): Album => {
     return {
         _itemType: LibraryItem.ALBUM,
@@ -283,17 +235,22 @@ const normalizeAlbum = (
         albumArtists:
             item.AlbumArtists.map((entry) => ({
                 id: entry.Id,
+                imageId: entry.Id,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             })) || [],
         artists: (item.ArtistItems?.length ? item.ArtistItems : item.AlbumArtists)?.map(
             (entry) => ({
                 id: entry.Id,
+                imageId: entry.Id,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             }),
         ),
-        backdropImageUrl: null,
         comment: null,
         createdAt: item.DateCreated,
         duration: item.RunTimeTicks / TICKS_PER_MS,
@@ -305,17 +262,14 @@ const normalizeAlbum = (
                 _serverType: ServerType.JELLYFIN,
                 albumCount: null,
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
                 songCount: null,
             })) || [],
         id: item.Id,
-        imagePlaceholderUrl: null,
-        imageUrl: getAlbumCoverArtUrl({
-            baseUrl: server?.url || '',
-            item,
-            size: imageSize || 300,
-        }),
+        imageId: getAlbumImageId(item),
+        imageUrl: null,
         isCompilation: null,
         lastPlayedAt: null,
         mbzId: item.ProviderIds?.MusicBrainzAlbum || null,
@@ -323,13 +277,13 @@ const normalizeAlbum = (
         originalDate: null,
         participants: getPeople(item),
         playCount: item.UserData?.PlayCount || 0,
-        recordLabels: [],
+        recordLabels: item.Studios?.map((entry) => entry.Name) || [],
         releaseDate: item.PremiereDate || null,
         releaseTypes: [],
         releaseYear: item.ProductionYear || null,
         size: null,
         songCount: item?.ChildCount || null,
-        songs: item.Songs?.map((song) => normalizeSong(song, server, imageSize)),
+        songs: item.Songs?.map((song) => normalizeSong(song, server)),
         tags: getTags(item),
         updatedAt: item?.DateLastMediaAdded || item.DateCreated,
         userFavorite: item.UserData?.IsFavorite || false,
@@ -343,18 +297,16 @@ const normalizeAlbumArtist = (
         similarArtists?: z.infer<typeof jfType._response.albumArtistList>;
     },
     server: null | ServerListItem,
-    imageSize?: number,
 ): AlbumArtist => {
     const similarArtists =
         item.similarArtists?.Items?.filter((entry) => entry.Name !== 'Various Artists').map(
             (entry) => ({
                 id: entry.Id,
-                imageUrl: getAlbumArtistCoverArtUrl({
-                    baseUrl: server?.url || '',
-                    item: entry,
-                    size: imageSize || 300,
-                }),
+                imageId: getAlbumArtistImageId(entry),
+                imageUrl: null,
                 name: entry.Name,
+                userFavorite: entry.UserData?.IsFavorite || false,
+                userRating: null,
             }),
         ) || [];
 
@@ -363,7 +315,6 @@ const normalizeAlbumArtist = (
         _serverId: server?.id || '',
         _serverType: ServerType.JELLYFIN,
         albumCount: item.AlbumCount ?? null,
-        backgroundImageUrl: null,
         biography: item.Overview || null,
         duration: item.RunTimeTicks / TICKS_PER_MS,
         genres: item.GenreItems?.map((entry) => ({
@@ -372,16 +323,14 @@ const normalizeAlbumArtist = (
             _serverType: ServerType.JELLYFIN,
             albumCount: null,
             id: entry.Id,
+            imageId: null,
             imageUrl: null,
             name: entry.Name,
             songCount: null,
         })),
         id: item.Id,
-        imageUrl: getAlbumArtistCoverArtUrl({
-            baseUrl: server?.url || '',
-            item,
-            size: imageSize || 300,
-        }),
+        imageId: getAlbumArtistImageId(item),
+        imageUrl: null,
         lastPlayedAt: null,
         mbz: item.ProviderIds?.MusicBrainzArtist || null,
         name: item.Name,
@@ -396,16 +345,7 @@ const normalizeAlbumArtist = (
 const normalizePlaylist = (
     item: z.infer<typeof jfType._response.playlist>,
     server: null | ServerListItem,
-    imageSize?: number,
 ): Playlist => {
-    const imageUrl = getPlaylistCoverArtUrl({
-        baseUrl: server?.url || '',
-        item,
-        size: imageSize || 300,
-    });
-
-    const imagePlaceholderUrl = null;
-
     return {
         _itemType: LibraryItem.PLAYLIST,
         _serverId: server?.id || '',
@@ -418,13 +358,14 @@ const normalizePlaylist = (
             _serverType: ServerType.JELLYFIN,
             albumCount: null,
             id: entry.Id,
+            imageId: null,
             imageUrl: null,
             name: entry.Name,
             songCount: null,
         })),
         id: item.Id,
-        imagePlaceholderUrl,
-        imageUrl: imageUrl || null,
+        imageId: getPlaylistImageId(item),
+        imageUrl: null,
         name: item.Name,
         owner: null,
         ownerId: null,
@@ -463,24 +404,12 @@ const normalizeMusicFolder = (item: z.infer<typeof jfType._response.musicFolder>
 //   };
 // };
 
-const getGenreCoverArtUrl = (args: {
-    baseUrl: string;
-    item: z.infer<typeof jfType._response.genre>;
-    size: number;
-}) => {
-    const size = args.size ? args.size : 300;
-
-    if (!args.item.ImageTags?.Primary) {
-        return null;
+const getGenreImageId = (item: z.infer<typeof jfType._response.genre>): null | string => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
     }
 
-    return (
-        `${args.baseUrl}/Items` +
-        `/${args.item.Id}` +
-        '/Images/Primary' +
-        `?width=${size}` +
-        '&quality=96'
-    );
+    return null;
 };
 
 const normalizeGenre = (
@@ -493,7 +422,8 @@ const normalizeGenre = (
         _serverType: ServerType.JELLYFIN,
         albumCount: null,
         id: item.Id,
-        imageUrl: getGenreCoverArtUrl({ baseUrl: server?.url || '', item, size: 200 }),
+        imageId: getGenreImageId(item),
+        imageUrl: null,
         name: item.Name,
         songCount: null,
     };

@@ -14,7 +14,8 @@
             "tracks": "$t(entity.track_other)",
             "nowPlaying": "ara sona",
             "shared": "$t(entity.playlist_other) compartida",
-            "favorites": "$t(entity.favorite_other)"
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "albumArtistDetail": {
             "relatedArtists": "$t(entity.artist_other) similars",
@@ -184,6 +185,9 @@
         },
         "folderList": {
             "title": "$t(entity.folder_other)"
+        },
+        "radioList": {
+            "title": "emissores de ràdio"
         }
     },
     "common": {
@@ -301,7 +305,8 @@
         "sort": "ordre",
         "gridRows": "files de la quadrícula",
         "tableColumns": "columnes de la taula",
-        "itemsMore": "{{count}} més"
+        "itemsMore": "{{count}} més",
+        "countSelected": "{{count}} seleccionats"
     },
     "entity": {
         "album_one": "àlbum",
@@ -355,7 +360,13 @@
         "song_other": "cançons",
         "favorite_one": "preferit",
         "favorite_many": "preferits",
-        "favorite_other": "preferits"
+        "favorite_other": "preferits",
+        "radioStation_one": "emissora de ràdio",
+        "radioStation_many": "emissores de ràdio",
+        "radioStation_other": "emissores de ràdio",
+        "radioStationWithCount_one": "{{count}} emissora de ràdio",
+        "radioStationWithCount_many": "{{count}} emissores de ràdio",
+        "radioStationWithCount_other": "{{count}} emissores de ràdio"
     },
     "form": {
         "addToPlaylist": {
@@ -445,6 +456,16 @@
             "input_played_optionAll": "totes les pistes",
             "input_played_optionUnplayed": "només les pistes sense reproduir",
             "input_played_optionPlayed": "només les pistes reproduïdes"
+        },
+        "createRadioStation": {
+            "success": "emissora de ràdio creada amb èxit",
+            "title": "crea una emissora de ràdio",
+            "input_homepageUrl": "URL de la pàgina d'inici",
+            "input_name": "nom",
+            "input_streamUrl": "URL de transmissió"
+        },
+        "saveQueue": {
+            "success": "cua de reproducció desada al servidor"
         }
     },
     "action": {
@@ -479,7 +500,13 @@
         "shuffle": "mescla",
         "shuffleAll": "mescla-ho tot",
         "shuffleSelected": "mescla els seleccionats",
-        "viewMore": "mostra'n més"
+        "viewMore": "mostra'n més",
+        "createRadioStation": "crea $t(entity.radioStation_one)",
+        "deleteRadioStation": "elimina $t(entity.radioStation_one)",
+        "addOrRemoveFromSelection": "afegeix o elimina de la selecció",
+        "selectRangeOfItems": "selecciona un interval d'elements",
+        "selectAll": "selecciona-ho tot",
+        "openApplicationDirectory": "obre el directori de l'aplicació"
     },
     "setting": {
         "language_description": "estableix l'idioma de l'aplicació ($t(common.restartRequired))",
@@ -643,8 +670,6 @@
         "playbackStyle_optionNormal": "normal",
         "playButtonBehavior": "comportament del botó de reproducció",
         "playButtonBehavior_description": "estableix el comportament predeterminat del botó de reproducció quan s'afegeixen cançons a la cua",
-        "playerAlbumArtResolution": "resolució de la caràtula de l'àlbum al reproductor",
-        "playerAlbumArtResolution_description": "la resolució de la previsualització gran de la caràtula al reproductor. si és més alta, serà més nítida, però es carregarà més lent. el valor predeterminat 0 vol dir automàtic",
         "playerbarOpenDrawer": "activa el reproductor en pantalla completa",
         "playerbarOpenDrawer_description": "permet fer clic a la barra de reproducció per obrir el reproductor de pantalla completa",
         "remotePassword": "contrasenya del servidor de control remot",
@@ -787,7 +812,9 @@
         "queryBuilderCustomFields_inputLabel": "discogràfica",
         "queryBuilderCustomFields_inputTag": "etiqueta",
         "queryBuilderCustomFields": "camps personalitzats",
-        "queryBuilderCustomFields_description": "afegeix camps personalitzats pel constructor de consultes"
+        "queryBuilderCustomFields_description": "afegeix camps personalitzats pel constructor de consultes",
+        "useThemeAccentColor": "fes servir el color d'accent del tema",
+        "useThemeAccentColor_description": "fes servir el color primari definit pel tema seleccionat en comptes del color d'accent personalitzat"
     },
     "table": {
         "column": {
@@ -953,8 +980,8 @@
         "repeat_all": "repetició",
         "shuffle": "reprodueix (mesclat)",
         "shuffle_off": "reproducció aleatòria desactivada",
-        "addLast": "afegeix al final",
-        "addNext": "afegeix a continuació",
+        "addLast": "al final",
+        "addNext": "a continuació",
         "favorite": "marcar com a preferida",
         "mute": "silencia",
         "next": "següent",
@@ -970,12 +997,15 @@
         "toggleFullscreenPlayer": "activa el reproductor de pantalla completa",
         "unfavorite": "elimina de preferits",
         "pause": "pausa",
-        "addLastShuffled": "afegeix al final (mesclat)",
-        "addNextShuffled": "afegeix a continuació (mesclat)",
+        "addLastShuffled": "al final (mesclat)",
+        "addNextShuffled": "a continuació (mesclat)",
         "holdToShuffle": "mantén premut per mesclar",
         "queueType": "tipus de cua",
         "queueType_default": "predeterminat",
-        "queueType_priority": "prioritat"
+        "queueType_priority": "prioritat",
+        "lyrics": "lletra",
+        "restoreQueueFromServer": "restaura la cua del servidor",
+        "saveQueueToServer": "desa la cua al servidor"
     },
     "error": {
         "credentialsRequired": "credencials requerides",
@@ -1001,7 +1031,10 @@
         "notificationDenied": "s'han negat els permisos per enviar notificacions. aquesta opció no té cap efecte",
         "playbackError": "hi ha hagut un error en intentar reproduir el mitjà",
         "remoteDisableError": "hi ha hagut un error en intentar $t(common.disable) el servidor remot",
-        "endpointNotImplementedError": "el punt final {{endpoint}} no està implementat per {{serverType}}"
+        "endpointNotImplementedError": "el punt final {{endpoint}} no està implementat per {{serverType}}",
+        "multipleServerSaveQueueError": "la cua de reproducció té una o més cançons que no són del servidor actual, cosa que no és compatible",
+        "saveQueueFailed": "error en desar la cua",
+        "settingsSyncError": "hi ha discrepàncies entre la configuració del renderitzador i el procés principal. reinicieu l'aplicació per aplicar els canvis"
     },
     "releaseType": {
         "primary": {
@@ -1055,5 +1088,11 @@
     "queryBuilder": {
         "standardTags": "etiquetes estàndard",
         "customTags": "etiquetes personalitzades"
+    },
+    "datetime": {
+        "minuteShort": "min",
+        "secondShort": "s",
+        "hourShort": "h",
+        "dayShort": "d"
     }
 }

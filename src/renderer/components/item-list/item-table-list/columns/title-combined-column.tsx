@@ -4,6 +4,7 @@ import { generatePath, Link } from 'react-router';
 
 import styles from './title-combined-column.module.css';
 
+import { ItemImage } from '/@/renderer/components/item-image/item-image';
 import { getTitlePath } from '/@/renderer/components/item-list/helpers/get-title-path';
 import {
     ColumnNullFallback,
@@ -19,13 +20,12 @@ import {
 import { AppRoute } from '/@/renderer/router/routes';
 import { usePlayButtonBehavior } from '/@/renderer/store';
 import { Icon } from '/@/shared/components/icon/icon';
-import { Image } from '/@/shared/components/image/image';
 import { Text } from '/@/shared/components/text/text';
 import { Folder, LibraryItem, QueueSong, RelatedAlbumArtist } from '/@/shared/types/domain-types';
 import { Play } from '/@/shared/types/types';
 
 export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
-    const row: object | undefined = (props.data as (any | undefined)[])[props.rowIndex];
+    const row: object | undefined = (props.data as (any | undefined)[])[props.rowIndex]?.id;
     const item = props.data[props.rowIndex] as any;
     const internalState = (props as any).internalState;
     const playButtonBehavior = usePlayButtonBehavior();
@@ -74,8 +74,8 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
     };
 
     const artists = useMemo(() => {
-        if (row && 'artists' in row && Array.isArray(row.artists)) {
-            return (row.artists as RelatedAlbumArtist[]).map((artist) => {
+        if (row && 'artists' in item && Array.isArray(item.artists)) {
+            return (item.artists as RelatedAlbumArtist[]).map((artist) => {
                 const path = generatePath(AppRoute.LIBRARY_ARTISTS_DETAIL, {
                     artistId: artist.id,
                 });
@@ -83,9 +83,9 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
             });
         }
         return [];
-    }, [row]);
+    }, [item, row]);
 
-    if (row && 'name' in row && 'imageUrl' in row && 'artists' in row) {
+    if (item && 'name' in item && 'imageUrl' in item && 'artists' in item) {
         const rowHeight = props.getRowHeight(props.rowIndex, props);
         const path = getTitlePath(props.itemType, (props.data[props.rowIndex] as any).id as string);
 
@@ -110,7 +110,12 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
-                    <Image containerClassName={styles.image} src={row.imageUrl as string} />
+                    <ItemImage
+                        containerClassName={styles.image}
+                        id={item?.id}
+                        itemType={item?._itemType}
+                        src={item?.imageUrl}
+                    />
                     {isHovered && (
                         <div
                             className={clsx(styles.playButtonOverlay, {
@@ -138,7 +143,7 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
                     })}
                 >
                     <Text className={styles.title} isNoSelect size="md" {...titleLinkProps}>
-                        {row.name as string}
+                        {item.name as string}
                     </Text>
                     <div className={styles.artists}>
                         {artists.map((artist, index) => (
@@ -263,7 +268,12 @@ export const QueueSongTitleCombinedColumn = (props: ItemTableListInnerColumn) =>
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
-                    <Image containerClassName={styles.image} src={row.imageUrl as string} />
+                    <ItemImage
+                        containerClassName={styles.image}
+                        id={item?.id}
+                        itemType={item?._itemType}
+                        src={item?.imageUrl}
+                    />
                     {isHovered && (
                         <div
                             className={clsx(styles.playButtonOverlay, {

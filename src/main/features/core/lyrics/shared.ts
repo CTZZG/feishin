@@ -11,7 +11,7 @@ export const orderSearchResults = (args: {
 }) => {
     const { params, results } = args;
 
-    const options: Fuse.IFuseOptions<InternetProviderLyricSearchResponse> = {
+    const options: any = {
         fieldNormWeight: 1,
         includeScore: true,
         keys: [

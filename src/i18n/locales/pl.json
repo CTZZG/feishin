@@ -33,7 +33,11 @@
         "holdToMoveToTop": "przytrzymaj aby, przesunąć na górę",
         "holdToMoveToBottom": "przytrzymaj aby, przesunąć na dół",
         "createRadioStation": "utwórz $t(entity.radioStation_one)",
-        "deleteRadioStation": "usuń $t(entity.radioStation_one)"
+        "deleteRadioStation": "usuń $t(entity.radioStation_one)",
+        "addOrRemoveFromSelection": "dodaj lub usuń z wyboru",
+        "selectRangeOfItems": "wybierz zakres elementów",
+        "selectAll": "wybierz wszystkie",
+        "openApplicationDirectory": "otwórz katalog aplikacji"
     },
     "common": {
         "increase": "zwiększ",
@@ -150,7 +154,9 @@
         "tableColumns": "tabela kolumn",
         "itemsMore": "{{count}} więcej",
         "noFilters": "nie skonfigurowano filtrów",
-        "view": "wyświetl"
+        "view": "wyświetl",
+        "countSelected": "wybrano {{count}}",
+        "retry": "spróbuj ponownie"
     },
     "entity": {
         "genre_one": "gatunek",
@@ -238,7 +244,10 @@
         "badValue": "niewłaściwa opcja \"{{value}}\". ta wartość już nie istnieje",
         "notificationDenied": "odmówiono uprawnień dla powiadomień. to ustawienie nie będzie miało efektu",
         "multipleServerSaveQueueError": "kolejka odtwarzania ma jedną lub więcej piosenek które nie pochodzą z aktualnego serwera. to nie jest wspierane",
-        "saveQueueFailed": "nie udało się zapisać kolejki"
+        "saveQueueFailed": "nie udało się zapisać kolejki",
+        "settingsSyncError": "zostały znalezione różnice pomiędzy ustawieniami w rendererze a głównym procesem. uruchom aplikację ponownie aby, zastosować zmiany",
+        "noNetwork": "serwer niedostępny",
+        "noNetworkDescription": "nie udało się połączyć z tym serwerem"
     },
     "filter": {
         "mostPlayed": "najczęściej odtwarzane",
@@ -383,6 +392,11 @@
             "input_homepageUrl": "url strony głównej",
             "input_name": "nazwa",
             "input_streamUrl": "url strumienia"
+        },
+        "lyricsExport": {
+            "export": "eksportuj tekst",
+            "input_synced": "eksportuj zsynchronizowany tekst",
+            "input_offset": "$t(setting.lyricOffset)"
         }
     },
     "page": {
@@ -521,7 +535,8 @@
             "transcoding": "transkodowanie",
             "discord": "discord",
             "playerFilters": "filtry odtwarzacza",
-            "logger": "logger"
+            "logger": "logger",
+            "lyricsDisplay": "wyświetlanie tekstu"
         },
         "trackList": {
             "title": "$t(entity.track_other)",
@@ -548,7 +563,9 @@
             "viewDiscography": "przeglądaj dyskografię",
             "relatedArtists": "powiązane z $t(entity.artist_other)",
             "appearsOn": "pojawia się na",
-            "viewAllTracks": "zobacz wszystko $t(entity.track_other)"
+            "viewAllTracks": "zobacz wszystko $t(entity.track_other)",
+            "groupingTypeAll": "wszystkie typy wydań",
+            "groupingTypePrimary": "główne typy wydań"
         },
         "itemDetail": {
             "copyPath": "kopiuj ścieżkę do schowka",
@@ -616,7 +633,9 @@
         "holdToShuffle": "przytrzymaj aby odtwarzać losowo",
         "lyrics": "tekst",
         "restoreQueueFromServer": "przywróć kolejkę z serwera",
-        "saveQueueToServer": "zapisz kolejkę na serwerze"
+        "saveQueueToServer": "zapisz kolejkę na serwerze",
+        "artistRadio": "radio wykonawcy",
+        "trackRadio": "radio utworu"
     },
     "setting": {
         "crossfadeStyle_description": "wybierz styl przenikania, który ma być używany do odtwarzania dźwięku",
@@ -779,12 +798,10 @@
         "clearQueryCache_description": "\"miękkie wyczyszczenie\" feishin. spowoduje to odświeżenie playlist, metadanych utworów i zresetowanie zapisanych tekstów. ustawienia, dane uwierzytelniające serwera i obrazy w pamięci podręcznej zostaną zachowane",
         "buttonSize_description": "rozmiar przycisków paska odtwarzacza",
         "clearCache": "wyczyść pamięć podręczną przeglądarki",
-        "playerAlbumArtResolution": "rozdzielczość okładki albumu odtwarzacza",
         "externalLinks": "pokaż zewnętrzne linki",
         "mpvExtraParameters_help": "po jednym na linię",
         "passwordStore": "hasła",
         "passwordStore_description": "jakie hasło ma być używane. zmień to, jeśli masz problemy z przechowywaniem haseł",
-        "playerAlbumArtResolution_description": "rozdzielczość podglądu okładki albumu w dużym odtwarzaczu. większa sprawia, że wygląda bardziej wyraziście, ale może spowolnić ładowanie. domyślnie 0, czyli auto",
         "startMinimized": "uruchom zminimalizowany",
         "startMinimized_description": "uruchom aplikację w zasobniku systemowym",
         "clearCacheSuccess": "pamięć podręczna została wyczyszczona pomyślnie",
@@ -926,7 +943,18 @@
         "logLevel_optionInfo": "info",
         "logLevel_optionWarn": "ostrzeżenia",
         "useThemeAccentColor": "używaj koloru akcentu motywu",
-        "useThemeAccentColor_description": "używaj głównego koloru ustawionego w wybranym motywie zamiast niestandardowego koloru akcentu"
+        "useThemeAccentColor_description": "używaj głównego koloru ustawionego w wybranym motywie zamiast niestandardowego koloru akcentu",
+        "artistRadioCount_description": "ustawia liczbę piosenek do załadowania dla radia wykonawcy i radia utworu",
+        "artistRadioCount": "liczba radio wykonawców/utworów",
+        "imageResolution": "rozdzielczość obrazu",
+        "imageResolution_description": "rozdzielczość dla obrazów używanych w programie. użycie wartości 0 ustawi rozdzielczość na natywną",
+        "imageResolution_optionTable": "tabela",
+        "imageResolution_optionItemCard": "karta elementu",
+        "imageResolution_optionSidebar": "­pasek boczny",
+        "imageResolution_optionHeader": "nagłówek",
+        "imageResolution_optionFullScreenPlayer": "odtwarzacz pełnoekranowy",
+        "combinedLyricsAndVisualizer_description": "połącz tekst i wizualizacje w tym samym panelu",
+        "combinedLyricsAndVisualizer": "połącz tekst i wizualizacje w pasku bocznym odtwarzacza"
     },
     "table": {
         "config": {
@@ -1084,5 +1112,153 @@
         "notInPlaylist": "nie jest w",
         "notInTheLast": "nie jest w ostatnim",
         "startsWith": "zaczyna się od"
+    },
+    "datetime": {
+        "minuteShort": "min",
+        "secondShort": "sek",
+        "hourShort": "godz",
+        "dayShort": "dzień"
+    },
+    "visualizer": {
+        "visualizerType": "Typ Wizualizacji",
+        "cycleTime": "Czas cyklu (w sekundach)",
+        "copyConfiguration": "Kopiuj Konfigurację",
+        "pasteConfiguration": "Wklej Konfigurację",
+        "pasteConfigurationPlaceholder": "Wklej konfigurację JSON tutaj...",
+        "pasteFromClipboard": "Wklej z schowka",
+        "applyConfiguration": "Zastosuj Konfigurację",
+        "configCopied": "Konfiguracja skopiowana do schowka",
+        "configCopyFailed": "Nie udało się skopiować konfiguracji",
+        "configPasted": "Konfiguracja zastosowana pomyślnie",
+        "configPasteFailed": "Nie udało się zastosować konfiguracji. Sprawdź jej format.",
+        "configPasteReadFailed": "Nie udało się odczytać z schowka",
+        "cyclePresets": "Cykl Ustawień",
+        "includeAllPresets": "Uwzględnij wszystkie Ustawienia",
+        "ignoredPresets": "Ignorowane Ustawienia",
+        "selectedPresets": "Wybrane Ustawienia",
+        "randomizeNextPreset": "Losuj Następne Ustawienie",
+        "blendTime": "Czas Mieszania",
+        "presets": "Ustawienia",
+        "selectPreset": "Wybierz Ustawienie",
+        "applyPreset": "Zastosuj Ustawienie",
+        "saveAsPreset": "Zapisz jako Ustawienie",
+        "updatePreset": "Uaktualnij Ustawienie",
+        "presetName": "Nazwa Ustawienia",
+        "presetNamePlaceholder": "Wpisz nazwę ustawienia",
+        "general": "Ogólne",
+        "mode": "Tryb",
+        "mode1To8": "Tryb 1 - 8",
+        "mode10": "Tryb 10",
+        "barSpace": "Odstęp Pasków",
+        "lineWidth": "Szerokość Linii",
+        "fillAlpha": "Wypełnij Alpha",
+        "channelLayout": "Układ Kanałów",
+        "maxFPS": "Maks FPS",
+        "opacity": "Nieprzezroczystość",
+        "customGradients": "­Niestandardowe Gradienty",
+        "addCustomGradient": "Dodaj Niestandardowy Gradient",
+        "gradientName": "Nazwa Gradientu",
+        "gradientNamePlaceholder": "Nazwa Gradientu",
+        "vertical": "Pionowy",
+        "horizontal": "Poziomy",
+        "colorStops": "Kroki Kolorów",
+        "addColor": "Dodaj Kolor",
+        "position": "Pozycja",
+        "level": "Poziom",
+        "remove": "Usuń",
+        "custom": "Niestandardowy",
+        "builtIn": "Wbudowany",
+        "colors": "Kolory",
+        "colorMode": "Tryb Koloru",
+        "gradient": "Gradient",
+        "gradientLeft": "Lewa Gradientu",
+        "gradientRight": "Prawa Gradientu",
+        "fft": "FFT",
+        "fftSize": "Rozmiar FFT",
+        "smoothing": "Wygładzanie",
+        "frequencyRangeAndScaling": "Zakres częstotliwości i skalowanie",
+        "minimumFrequency": "Minimalna Częstotliwość",
+        "maximumFrequency": "Maksymalna Częstotliwość",
+        "frequencyScale": "Skala Częstotliwości",
+        "sensitivity": "Czułość",
+        "weightingFilter": "Filtr Wagi",
+        "minimumDecibels": "Minimum Decybeli",
+        "maximumDecibels": "Maksimum Decybeli",
+        "linearAmplitude": "Amplituda Linearna",
+        "linearBoost": "Podbicie Linearne",
+        "peakBehavior": "Zachowanie Szczytów",
+        "showPeaks": "Pokaż Szczyty",
+        "fadePeaks": "Zanikaj Sczyty",
+        "peakLine": "Linia Szczytów",
+        "gravity": "Grawitacja",
+        "peakFadeTime": "Czas Zanikania Szczytów (ms)",
+        "peakHoldTime": "Czas Utrzymywania Szczytu (ms)",
+        "radialSpectrum": "Spektrum Promieniowe",
+        "radial": "Promieniowe",
+        "radialInvert": "Odwrócenie Promieniowe",
+        "spinSpeed": "Prędkość Obrotu",
+        "radius": "Promień",
+        "reflexMirror": "Lustro refleksyjne",
+        "reflexFit": "Dopasowanie Odbić",
+        "reflexRatio": "Współczynnik Odbić",
+        "reflexAlpha": "Alpha Odbić",
+        "reflexBrightness": "Jasność Odbić",
+        "mirror": "Odbij lustrzanie",
+        "miscellaneousSettings": "Różne Ustawienia",
+        "alphaBars": "Alpha Pasków",
+        "ledBars": "Paski LED",
+        "trueLeds": "Prawdziwe LEDy",
+        "lumiBars": "Paski Lumi",
+        "outlineBars": "Obwódki Pasków",
+        "roundBars": "Zaokrąglone Paski",
+        "lowResolution": "­Niska Rozdzielczość",
+        "splitGradient": "Rozdziel Gradient",
+        "showFPS": "Pokaż FPS",
+        "showScaleX": "Pokaż Skalę X",
+        "noteLabels": "Etykiety Nut",
+        "showScaleY": "Pokaż Skalę Y",
+        "options": {
+            "mode": {
+                "bars": "[0] Pasków",
+                "circle": "[1] Kółko",
+                "wave": "[2] Fala",
+                "rainbow": "[3] Tęcza",
+                "rings": "[4] Pierścienie",
+                "mirror": "[5] Lustro",
+                "line": "[6] Linia",
+                "particles": "[7] Cząsteczki",
+                "fullOctave": "[8] Pełna oktawa / 10 pasm",
+                "outlineBars": "[10] Paski z obwódką"
+            },
+            "colorMode": {
+                "gradient": "Gradient",
+                "barIndex": "Indeks-Paska",
+                "barLevel": "Poziom-Paska"
+            },
+            "gradient": {
+                "classic": "Klasyczny",
+                "prism": "Pryzmat",
+                "rainbow": "Tęcza",
+                "steelblue": "Stalowoniebieski",
+                "orangered": "Pomarańczowo-czerwony"
+            },
+            "channelLayout": {
+                "single": "Pojedynczy",
+                "dualCombined": "Podwójne-Połączone",
+                "dualHorizontal": "Podwójne-Poziome",
+                "dualVertical": "Podwójne-Pionowe"
+            },
+            "frequencyScale": {
+                "linear": "Linearne"
+            },
+            "weightingFilter": {
+                "none": "Żadne",
+                "a": "A",
+                "b": "B",
+                "c": "C",
+                "d": "D",
+                "z": "Z"
+            }
+        }
     }
 }

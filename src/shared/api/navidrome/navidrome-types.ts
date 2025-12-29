@@ -480,7 +480,7 @@ const albumList = z.array(album);
 const albumListParameters = paginationParameters.extend({
     _sort: z.nativeEnum(NDAlbumListSort).optional(),
     album_id: z.string().optional(),
-    artist_id: z.string().optional(),
+    artist_id: z.union([z.string(), z.string().array()]).optional(),
     compilation: z.boolean().optional(),
     // in older versions, this was a single string. post BFR, you can repeat it multiple times
     genre_id: z.union([z.string(), z.string().array()]).optional(),

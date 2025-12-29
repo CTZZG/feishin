@@ -103,6 +103,8 @@ const GenreTargetSchema = z.enum(['album', 'track']);
 
 const SideQueueTypeSchema = z.enum(['sideDrawerQueue', 'sideQueue']);
 
+const SidebarPanelTypeSchema = z.enum(['queue', 'lyrics', 'visualizer']);
+
 const SidebarItemTypeSchema = z.object({
     disabled: z.boolean(),
     id: z.string(),
@@ -152,6 +154,7 @@ const ItemListConfigSchema = z.object({
         itemsPerRow: z.number(),
         itemsPerRowEnabled: z.boolean(),
         rows: z.array(ItemGridListRowConfigSchema),
+        size: z.enum(['compact', 'default', 'large']),
     }),
     itemsPerPage: z.number(),
     pagination: z.nativeEnum(ListPaginationType),
@@ -215,7 +218,124 @@ const PlayerbarSliderSchema = z.object({
     type: PlayerbarSliderTypeSchema,
 });
 
-const GeneralSettingsSchema = z.object({
+const AudioMotionAnalyzerSettingsSchema = z.object({
+    alphaBars: z
+        .boolean()
+        .describe(
+            'When set to true each bar’s amplitude affects its opacity, i.e., higher bars are rendered more opaque while shorter bars are more transparent. This is similar to the lumiBars effect, but bars’ amplitudes are preserved and it also works on Discrete mode and radial spectrum.',
+        ),
+    ansiBands: z
+        .boolean()
+        .describe(
+            'When set to true, ANSI/IEC preferred frequencies are used to generate the bands for octave bands modes (see mode). The preferred base-10 scale is used to compute the center and bandedge frequencies, as specified in the ANSI S1.11-2004 standard. When false, bands are based on the equal-tempered scale, so that in 1/12 octave bands the center of each band is perfectly tuned to a musical note.',
+        ),
+    barSpace: z
+        .number()
+        .describe(
+            'Customize the spacing between bars in frequency bands modes (see mode). Use a value between 0 and 1 for spacing proportional to the band width. Values >= 1 will be considered as a literal number of pixels.',
+        ),
+    channelLayout: z
+        .enum(['single', 'dual-combined', 'dual-horizontal', 'dual-vertical'])
+        .describe('Defines the number and layout of analyzer channels.'),
+    colorMode: z
+        .enum(['gradient', 'bar-index', 'bar-level'])
+        .describe('Selects the desired mode for coloring the analyzer bars.'),
+    customGradients: z.array(
+        z.object({
+            colorStops: z.array(
+                z.object({
+                    color: z.string(),
+                    level: z.number().min(0).max(1).optional(),
+                    levelEnabled: z.boolean().optional(),
+                    pos: z.number().min(0).max(1).optional(),
+                    positionEnabled: z.boolean().optional(),
+                }),
+            ),
+            dir: z.string().optional(),
+            name: z.string(),
+        }),
+    ),
+    fadePeaks: z
+        .boolean()
+        .describe(
+            'When true, peaks fade out instead of falling down. It has no effect when peakLine is active.',
+        ),
+    fftSize: z
+        .number()
+        .describe(
+            'Number of samples used for the FFT performed by the AnalyzerNode. It must be a power of 2 between 32 and 32768, so valid values are: 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, and 32768. Higher values provide more detail in the frequency domain, but less detail in the time domain (slower response), so you may need to adjust smoothing accordingly.',
+        ),
+    fillAlpha: z.number(),
+    frequencyScale: z.enum(['bark', 'linear', 'log', 'mel']),
+    gradient: z.string(),
+    gradientLeft: z.string().optional(),
+    gradientRight: z.string().optional(),
+    gravity: z.number(),
+    ledBars: z.boolean(),
+    linearAmplitude: z.boolean(),
+    linearBoost: z.number(),
+    lineWidth: z.number(),
+    loRes: z.boolean(),
+    lumiBars: z.boolean(),
+    maxDecibels: z.number(),
+    maxFPS: z.number(),
+    maxFreq: z.number(),
+    minDecibels: z.number(),
+    minFreq: z.number(),
+    mirror: z.number(),
+    mode: z.number(),
+    noteLabels: z.boolean(),
+    opacity: z.number().min(0).max(1),
+    outlineBars: z.boolean(),
+    peakFadeTime: z.number(),
+    peakHoldTime: z.number(),
+    peakLine: z.boolean(),
+    presets: z.array(
+        z.object({
+            name: z.string(),
+            value: z.any(),
+        }),
+    ),
+    radial: z.boolean(),
+    radialInvert: z.boolean(),
+    radius: z.number(),
+    reflexAlpha: z.number(),
+    reflexBright: z.number(),
+    reflexFit: z.boolean(),
+    reflexRatio: z.number(),
+    roundBars: z.boolean(),
+    showFPS: z.boolean(),
+    showPeaks: z.boolean(),
+    showScaleX: z.boolean(),
+    showScaleY: z.boolean(),
+    smoothing: z.number(),
+    spinSpeed: z.number(),
+    splitGradient: z.boolean(),
+    trueLeds: z.boolean(),
+    volume: z.number(),
+    weightingFilter: z.enum(['', 'A', 'B', 'C', 'D', 'Z']),
+});
+
+const ButterchurnSettingsSchema = z.object({
+    blendTime: z.number().min(0).max(10),
+    currentPreset: z.string().optional(),
+    cyclePresets: z.boolean(),
+    cycleTime: z.number().min(1).max(300),
+    ignoredPresets: z.array(z.string()),
+    includeAllPresets: z.boolean(),
+    maxFPS: z.number().min(0),
+    opacity: z.number().min(0).max(1),
+    randomizeNextPreset: z.boolean(),
+    selectedPresets: z.array(z.string()),
+});
+
+const VisualizerSettingsSchema = z.object({
+    audiomotionanalyzer: AudioMotionAnalyzerSettingsSchema,
+    butterchurn: ButterchurnSettingsSchema,
+    type: z.enum(['audiomotionanalyzer', 'butterchurn']),
+});
+
+export const GeneralSettingsSchema = z.object({
     accent: z
         .string()
         .refine(
@@ -224,13 +344,14 @@ const GeneralSettingsSchema = z.object({
                 message: 'Accent must be a valid rgb() color string',
             },
         ),
-    albumArtRes: z.number().nullable().optional(),
     albumBackground: z.boolean(),
     albumBackgroundBlur: z.number(),
     artistBackground: z.boolean(),
     artistBackgroundBlur: z.number(),
     artistItems: z.array(SortableItemSchema(ArtistItemSchema)),
+    artistRadioCount: z.number(),
     buttonSize: z.number(),
+    combinedLyricsAndVisualizer: z.boolean(),
     disabledContextMenu: z.record(z.string(), z.boolean()),
     externalLinks: z.boolean(),
     followCurrentSong: z.boolean(),
@@ -238,6 +359,13 @@ const GeneralSettingsSchema = z.object({
     genreTarget: GenreTargetSchema,
     homeFeature: z.boolean(),
     homeItems: z.array(SortableItemSchema(HomeItemSchema)),
+    imageRes: z.object({
+        fullScreenPlayer: z.number(),
+        header: z.number(),
+        itemCard: z.number(),
+        sidebar: z.number(),
+        table: z.number(),
+    }),
     language: z.string(),
     lastFM: z.boolean(),
     lastfmApiKey: z.string(),
@@ -249,10 +377,12 @@ const GeneralSettingsSchema = z.object({
     playerbarSlider: PlayerbarSliderSchema,
     resume: z.boolean(),
     showLyricsInSidebar: z.boolean(),
+    showRatings: z.boolean(),
     showVisualizerInSidebar: z.boolean(),
     sidebarCollapsedNavigation: z.boolean(),
     sidebarCollapseShared: z.boolean(),
     sidebarItems: z.array(SidebarItemTypeSchema),
+    sidebarPanelOrder: z.array(SidebarPanelTypeSchema),
     sidebarPlaylistList: z.boolean(),
     sideQueueType: SideQueueTypeSchema,
     skipButtons: SkipButtonsSchema,
@@ -280,6 +410,13 @@ const HotkeysSettingsSchema = z.object({
     globalMediaHotkeys: z.boolean(),
 });
 
+const LyricsDisplaySettingsSchema = z.object({
+    fontSize: z.number(),
+    fontSizeUnsync: z.number(),
+    gap: z.number(),
+    gapUnsync: z.number(),
+});
+
 const LyricsSettingsSchema = z.object({
     alignment: z.enum(['center', 'left', 'right']),
     delayMs: z.number(),
@@ -287,10 +424,6 @@ const LyricsSettingsSchema = z.object({
     enableNeteaseTranslation: z.boolean(),
     fetch: z.boolean(),
     follow: z.boolean(),
-    fontSize: z.number(),
-    fontSizeUnsync: z.number(),
-    gap: z.number(),
-    gapUnsync: z.number(),
     preferLocalLyrics: z.boolean(),
     showMatch: z.boolean(),
     showProvider: z.boolean(),
@@ -344,6 +477,7 @@ const PlayerFilterOperatorSchema = z.enum([
 const PlayerFilterSchema = z.object({
     field: PlayerFilterFieldSchema,
     id: z.string(),
+    isEnabled: z.boolean().optional(),
     operator: PlayerFilterOperatorSchema,
     value: z.union([
         z.string(),
@@ -422,6 +556,7 @@ export const ValidationSettingsStateSchema = z.object({
     hotkeys: HotkeysSettingsSchema,
     lists: z.record(z.nativeEnum(ItemListKey), ItemListConfigSchema),
     lyrics: LyricsSettingsSchema,
+    lyricsDisplay: z.record(z.string(), LyricsDisplaySettingsSchema),
     playback: PlaybackSettingsSchema,
     queryBuilder: QueryBuilderSettingsSchema,
     remote: RemoteSettingsSchema,
@@ -432,6 +567,7 @@ export const ValidationSettingsStateSchema = z.object({
         z.literal('window'),
         z.string(),
     ]),
+    visualizer: VisualizerSettingsSchema,
     window: WindowSettingsSchema,
 });
 
@@ -532,6 +668,7 @@ export type DataGridProps = {
     itemsPerRow: number;
     itemsPerRowEnabled: boolean;
     rows: ItemGridListRowConfig[];
+    size: 'compact' | 'default' | 'large';
 };
 
 export type DataTableProps = z.infer<typeof ItemTableListPropsSchema>;
@@ -712,13 +849,14 @@ const initialState: SettingsState = {
     },
     general: {
         accent: 'rgb(53, 116, 252)',
-        albumArtRes: undefined,
         albumBackground: false,
         albumBackgroundBlur: 3,
-        artistBackground: false,
+        artistBackground: true,
         artistBackgroundBlur: 3,
         artistItems,
+        artistRadioCount: 20,
         buttonSize: 15,
+        combinedLyricsAndVisualizer: false,
         disabledContextMenu: {},
         externalLinks: true,
         followCurrentSong: true,
@@ -726,6 +864,13 @@ const initialState: SettingsState = {
         genreTarget: GenreTarget.TRACK,
         homeFeature: true,
         homeItems,
+        imageRes: {
+            fullScreenPlayer: 0,
+            header: 300,
+            itemCard: 300,
+            sidebar: 400,
+            table: 80,
+        },
         language: 'en',
         lastFM: true,
         lastfmApiKey: '',
@@ -739,14 +884,16 @@ const initialState: SettingsState = {
             barGap: 1,
             barRadius: 4,
             barWidth: 2,
-            type: PlayerbarSliderType.WAVEFORM,
+            type: PlayerbarSliderType.SLIDER,
         },
         resume: true,
-        showLyricsInSidebar: false,
-        showVisualizerInSidebar: false,
+        showLyricsInSidebar: true,
+        showRatings: true,
+        showVisualizerInSidebar: true,
         sidebarCollapsedNavigation: true,
         sidebarCollapseShared: false,
         sidebarItems,
+        sidebarPanelOrder: ['queue', 'lyrics', 'visualizer'],
         sidebarPlaylistList: true,
         sideQueueType: 'sideQueue',
         skipButtons: {
@@ -799,7 +946,7 @@ const initialState: SettingsState = {
             zoomIn: { allowGlobal: true, hotkey: '', isGlobal: false },
             zoomOut: { allowGlobal: true, hotkey: '', isGlobal: false },
         },
-        globalMediaHotkeys: false,
+        globalMediaHotkeys: true,
     },
     lists: {
         ['albumDetail']: {
@@ -809,6 +956,7 @@ const initialState: SettingsState = {
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
                 rows: [],
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
@@ -822,13 +970,11 @@ const initialState: SettingsState = {
                         [TableColumn.TITLE]: 400,
                         [TableColumn.TRACK_NUMBER]: 50,
                         [TableColumn.USER_FAVORITE]: 60,
-                        [TableColumn.USER_RATING]: 100,
                     },
                     enabledColumns: [
                         TableColumn.TRACK_NUMBER,
                         TableColumn.TITLE,
                         TableColumn.DURATION,
-                        TableColumn.USER_RATING,
                         TableColumn.USER_FAVORITE,
                     ],
                 }),
@@ -846,11 +992,12 @@ const initialState: SettingsState = {
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
                 rows: [],
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: SONG_TABLE_COLUMNS.map((column) => ({
                     align: column.align,
                     autoSize: column.autoSize,
@@ -887,18 +1034,20 @@ const initialState: SettingsState = {
                         TableColumn.BIT_RATE,
                         TableColumn.BPM,
                         TableColumn.DATE_ADDED,
-                        TableColumn.DURATION,
                         TableColumn.GENRE,
                         TableColumn.PLAY_COUNT,
                         TableColumn.SONG_COUNT,
+                        TableColumn.RELEASE_DATE,
+                        TableColumn.LAST_PLAYED,
                         TableColumn.YEAR,
                     ],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: ALBUM_TABLE_COLUMNS.map((column) => ({
                     align: column.align,
                     autoSize: column.autoSize,
@@ -931,11 +1080,12 @@ const initialState: SettingsState = {
                         TableColumn.SONG_COUNT,
                     ],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: pickTableColumns({
                     autoSizeColumns: [TableColumn.TITLE],
                     columns: ALBUM_ARTIST_TABLE_COLUMNS,
@@ -943,12 +1093,7 @@ const initialState: SettingsState = {
                         TableColumn.ROW_INDEX,
                         TableColumn.IMAGE,
                         TableColumn.TITLE,
-                        TableColumn.ALBUM_COUNT,
-                        TableColumn.SONG_COUNT,
-                        TableColumn.PLAY_COUNT,
-                        TableColumn.LAST_PLAYED,
                         TableColumn.USER_FAVORITE,
-                        TableColumn.USER_RATING,
                     ],
                 }),
                 enableAlternateRowColors: false,
@@ -975,6 +1120,7 @@ const initialState: SettingsState = {
                         TableColumn.SONG_COUNT,
                     ],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
@@ -1026,6 +1172,7 @@ const initialState: SettingsState = {
                         TableColumn.SONG_COUNT,
                     ],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
@@ -1058,11 +1205,12 @@ const initialState: SettingsState = {
                     enabledColumns: [TableColumn.TITLE],
                     pickColumns: [TableColumn.TITLE, TableColumn.SONG_COUNT],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: pickTableColumns({
                     autoSizeColumns: [TableColumn.TITLE],
                     columns: PLAYLIST_TABLE_COLUMNS,
@@ -1087,11 +1235,12 @@ const initialState: SettingsState = {
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
                 rows: [],
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: PLAYLIST_SONG_TABLE_COLUMNS.map((column) => ({
                     align: column.align,
                     autoSize: column.autoSize,
@@ -1114,11 +1263,12 @@ const initialState: SettingsState = {
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
                 rows: [],
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: SONG_TABLE_COLUMNS.map((column) => ({
                     align: column.align,
                     autoSize: column.autoSize,
@@ -1159,11 +1309,12 @@ const initialState: SettingsState = {
                         TableColumn.TRACK_NUMBER,
                     ],
                 }),
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.PAGINATED,
             table: {
-                autoFitColumns: false,
+                autoFitColumns: true,
                 columns: SONG_TABLE_COLUMNS.map((column) => ({
                     align: column.align,
                     autoSize: column.autoSize,
@@ -1186,6 +1337,7 @@ const initialState: SettingsState = {
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
                 rows: [],
+                size: 'default',
             },
             itemsPerPage: 100,
             pagination: ListPaginationType.INFINITE,
@@ -1216,10 +1368,6 @@ const initialState: SettingsState = {
         enableNeteaseTranslation: false,
         fetch: true,
         follow: true,
-        fontSize: 24,
-        fontSizeUnsync: 24,
-        gap: 24,
-        gapUnsync: 24,
         preferLocalLyrics: true,
         showMatch: true,
         showProvider: true,
@@ -1227,6 +1375,14 @@ const initialState: SettingsState = {
         translationApiKey: '',
         translationApiProvider: '',
         translationTargetLanguage: 'en',
+    },
+    lyricsDisplay: {
+        default: {
+            fontSize: 24,
+            fontSizeUnsync: 24,
+            gap: 24,
+            gapUnsync: 24,
+        },
     },
     playback: {
         audioDeviceId: undefined,
@@ -1267,6 +1423,73 @@ const initialState: SettingsState = {
         username: 'feishin',
     },
     tab: 'general',
+    visualizer: {
+        audiomotionanalyzer: {
+            alphaBars: false,
+            ansiBands: false,
+            barSpace: 0,
+            channelLayout: 'single',
+            colorMode: 'gradient',
+            customGradients: [],
+            fadePeaks: true,
+            fftSize: 8192,
+            fillAlpha: 1,
+            frequencyScale: 'log',
+            gradient: 'prism',
+            gravity: 11,
+            ledBars: true,
+            linearAmplitude: false,
+            linearBoost: 4,
+            lineWidth: 0,
+            loRes: false,
+            lumiBars: false,
+            maxDecibels: -25,
+            maxFPS: 0,
+            maxFreq: 8000,
+            minDecibels: -85,
+            minFreq: 20,
+            mirror: 0,
+            mode: 5,
+            noteLabels: false,
+            opacity: 1,
+            outlineBars: false,
+            peakFadeTime: 900,
+            peakHoldTime: 500,
+            peakLine: true,
+            presets: [],
+            radial: false,
+            radialInvert: false,
+            radius: 0.7,
+            reflexAlpha: 0.5,
+            reflexBright: 1,
+            reflexFit: false,
+            reflexRatio: 0,
+            roundBars: false,
+            showFPS: false,
+            showPeaks: false,
+            showScaleX: true,
+            showScaleY: false,
+            smoothing: 0.7,
+            spinSpeed: 0.5,
+            splitGradient: false,
+            trueLeds: false,
+            volume: 1,
+            weightingFilter: '',
+        },
+        butterchurn: {
+            blendTime: 2.5,
+            currentPreset: undefined,
+            cyclePresets: true,
+            cycleTime: 30,
+            ignoredPresets: [],
+            includeAllPresets: true,
+            maxFPS: 0,
+            opacity: 1,
+            randomizeNextPreset: true,
+            selectedPresets: [],
+        },
+        type: 'audiomotionanalyzer',
+    },
     window: {
         disableAutoUpdate: false,
         exitToTray: false,
@@ -1337,6 +1560,7 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                             state.queryBuilder = resetState.queryBuilder;
                             state.remote = resetState.remote;
                             state.tab = resetState.tab;
+                            state.visualizer = resetState.visualizer;
                             state.window = resetState.window;
                         });
                     },
@@ -1536,10 +1760,50 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     state.window.releaseChannel = 'beta';
                 }
 
+                if (version <= 17) {
+                    // Migrate lyrics settings from record structure to separate lyrics and lyricsDisplay
+                    if (
+                        state.lyrics &&
+                        typeof state.lyrics === 'object' &&
+                        'default' in state.lyrics
+                    ) {
+                        const oldLyrics = state.lyrics as any;
+                        const defaultSettings = oldLyrics.default || oldLyrics;
+
+                        // Extract display settings
+                        const displaySettings = {
+                            fontSize: defaultSettings.fontSize || 24,
+                            fontSizeUnsync: defaultSettings.fontSizeUnsync || 24,
+                            gap: defaultSettings.gap || 24,
+                            gapUnsync: defaultSettings.gapUnsync || 24,
+                        };
+
+                        // Remove display properties from main settings
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const { fontSize, fontSizeUnsync, gap, gapUnsync, ...mainSettings } =
+                            defaultSettings;
+
+                        state.lyrics = mainSettings;
+                        state.lyricsDisplay = {
+                            default: displaySettings,
+                        };
+                    }
+                }
+
+                if (version <= 18) {
+                    // Add isEnabled property to all existing player filters
+                    if (state.playback?.filters && Array.isArray(state.playback.filters)) {
+                        state.playback.filters = state.playback.filters.map((filter) => ({
+                            ...filter,
+                            isEnabled: true,
+                        }));
+                    }
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 17,
+            version: 19,
         },
     ),
 );
@@ -1566,6 +1830,9 @@ export const useMpvSettings = () =>
     useSettingsStore((state) => state.playback.mpvProperties, shallow);
 
 export const useLyricsSettings = () => useSettingsStore((state) => state.lyrics, shallow);
+
+export const useLyricsDisplaySettings = (key: string = 'default') =>
+    useSettingsStore((state) => state.lyricsDisplay[key] || state.lyricsDisplay.default, shallow);
 
 export const useRemoteSettings = () => useSettingsStore((state) => state.remote, shallow);
 
@@ -1606,3 +1873,5 @@ export const usePlayerbarSlider = () => useSettingsStore((store) => store.genera
 export const useGenreTarget = () => useSettingsStore((store) => store.general.genreTarget);
 
 export const useAutoDJSettings = () => useSettingsStore((store) => store.autoDJ, shallow);
+
+export const useVisualizerSettings = () => useSettingsStore((store) => store.visualizer, shallow);

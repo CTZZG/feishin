@@ -65,6 +65,7 @@
     margin-right: var(--theme-spacing-xl);
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 500;
     white-space: nowrap;
 }
 

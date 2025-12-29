@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
+import { useIsFetchingItemListCount } from '/@/renderer/components/item-list/helpers/use-is-fetching-item-list';
 import { PageHeader } from '/@/renderer/components/page-header/page-header';
 import { useListContext } from '/@/renderer/context/list-context';
 import { GenreListHeaderFilters } from '/@/renderer/features/genres/components/genre-list-header-filters';
@@ -18,7 +19,6 @@ interface GenreListHeaderProps {
 export const GenreListHeader = ({ title }: GenreListHeaderProps) => {
     const { t } = useTranslation();
 
-    const { itemCount } = useListContext();
     const pageTitle = title || t('page.genreList.title', { postProcess: 'titleCase' });
 
     return (
@@ -27,9 +27,7 @@ export const GenreListHeader = ({ title }: GenreListHeaderProps) => {
                 <LibraryHeaderBar ignoreMaxWidth>
                     <PlayButton />
                     <LibraryHeaderBar.Title>{pageTitle}</LibraryHeaderBar.Title>
-                    <LibraryHeaderBar.Badge isLoading={!itemCount}>
-                        {itemCount}
-                    </LibraryHeaderBar.Badge>
+                    <GenreListHeaderBadge />
                 </LibraryHeaderBar>
                 <Group>
                     <ListSearchInput />
@@ -40,6 +38,16 @@ export const GenreListHeader = ({ title }: GenreListHeaderProps) => {
             </FilterBar>
         </Stack>
     );
+};
+
+const GenreListHeaderBadge = () => {
+    const { itemCount } = useListContext();
+
+    const isFetching = useIsFetchingItemListCount({
+        itemType: LibraryItem.GENRE,
+    });
+
+    return <LibraryHeaderBar.Badge isLoading={isFetching}>{itemCount}</LibraryHeaderBar.Badge>;
 };
 
 const PlayButton = () => {

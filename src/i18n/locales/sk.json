@@ -654,8 +654,6 @@
         "playButtonBehavior_optionAddNext": "$t(player.addNext)",
         "playButtonBehavior_optionPlay": "$t(player.play)",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
-        "playerAlbumArtResolution": "rozlíšenie obrázka albumu",
-        "playerAlbumArtResolution_description": "rozlíšenie zobrazenia náhľadu veľkých obrázkov albumov. pri väčšom rozlíšení budú krajšie, ale môže sa spomaliť ich načítavanie. predvolené je 0, čo znamená automatické",
         "playerbarOpenDrawer": "zobrazenie na celú obrazovku panelom prehrávača",
         "playerbarOpenDrawer_description": "umožní kliknutím na panel prehrávača prepnúť zobrazenie prehrávača na celú obrazovku",
         "remotePassword": "heslo servera vzdialeného ovládania",

@@ -44,11 +44,11 @@
             position: absolute;
             top: 50%;
             left: 2px;
-            width: 4px;
+            width: 2px;
             height: 50%;
             content: '';
             background-color: var(--theme-colors-primary-filled);
-            border-radius: var(--theme-border-radius-xl);
+            border-radius: var(--theme-radius-xl);
             transform: translateY(-50%);
         }
     }
@@ -56,4 +56,18 @@
 
 .option:hover {
     background: lighten(var(--theme-colors-surface), 5%);
+}
+
+.pill {
+    font-size: var(--theme-font-size-sm);
+    background: var(--theme-colors-background);
+    border-radius: var(--theme-radius-sm);
+}
+
+.pills-list {
+    padding-right: var(--theme-spacing-lg);
+}
+
+.clear-button {
+    background: transparent !important;
 }

@@ -11,16 +11,20 @@ import {
 } from '/@/renderer/components/item-list/item-table-list/item-table-list';
 import { ItemTableListColumn } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
 import { ItemListHandle } from '/@/renderer/components/item-list/types';
+import { eventEmitter } from '/@/renderer/events/event-emitter';
 import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
 import { searchLibraryItems } from '/@/renderer/features/shared/utils';
 import { useDragDrop } from '/@/renderer/hooks/use-drag-drop';
 import {
+    isShuffleEnabled,
+    mapShuffledToQueueIndex,
     subscribeCurrentTrack,
     subscribePlayerQueue,
     useListSettings,
     usePlayerActions,
     usePlayerQueueType,
     usePlayerSong,
+    usePlayerStore,
     useSettingsStore,
 } from '/@/renderer/store';
 import { Flex } from '/@/shared/components/flex/flex';
@@ -101,11 +105,35 @@ export const PlayQueue = forwardRef<ItemListHandle, QueueProps>(({ listKey, sear
             }
         });
 
+        const handleAutoDJQueueAdded = () => {
+            if (followCurrentSong) {
+                const state = usePlayerStore.getState();
+                let index = state.player.index;
+
+                if (isShuffleEnabled(state)) {
+                    index = mapShuffledToQueueIndex(index, state.queue.shuffled);
+                }
+
+                if (index !== -1) {
+                    // Use setTimeout to ensure the DOM has updated with the new queue items
+                    setTimeout(() => {
+                        tableRef.current?.scrollToIndex(index, {
+                            align: 'center',
+                            behavior: 'auto',
+                        });
+                    }, 0);
+                }
+            }
+        };
+
+        eventEmitter.on('AUTODJ_QUEUE_ADDED', handleAutoDJQueueAdded);
+
         setQueue();
 
         return () => {
             unsub();
             unsubCurrentTrack();
+            eventEmitter.off('AUTODJ_QUEUE_ADDED', handleAutoDJQueueAdded);
         };
     }, [getQueue, queueType, tableRef, followCurrentSong]);
 

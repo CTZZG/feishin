@@ -355,8 +355,6 @@
         "passwordStore": "Archivio di password/segreti",
         "passwordStore_description": "specifica quale archivio di password e segreti utilizzare. modificalo in caso di problemi nel salvataggio delle credenziali",
         "playButtonBehavior_optionPlayShuffled": "$t(player.shuffle)",
-        "playerAlbumArtResolution": "risoluzione della copertina nel lettore",
-        "playerAlbumArtResolution_description": "la risoluzione dell’anteprima della copertina nel lettore in formato grande. valori più alti la rendono più nitida, ma possono rallentare il caricamento. Il valore predefinito è 0, che indica la modalità automatica",
         "sidePlayQueueStyle_optionAttached": "fissata",
         "sidePlayQueueStyle_optionDetached": "sganciata",
         "startMinimized": "avvia minimizzato",

@@ -2,10 +2,7 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { ChangeEvent, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-    MultiSelectWithInvalidData,
-    SelectWithInvalidData,
-} from '/@/renderer/components/select-with-invalid-data';
+import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
 import { useListContext } from '/@/renderer/context/list-context';
 import { useAlbumListFilters } from '/@/renderer/features/albums/hooks/use-album-list-filters';
 import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
@@ -187,14 +184,14 @@ export const NavidromeAlbumFilters = ({ disableArtistFilter }: NavidromeAlbumFil
                     searchable
                 />
             )}
-            <SelectWithInvalidData
+            <MultiSelectWithInvalidData
                 clearable
                 data={selectableAlbumArtists}
-                defaultValue={query.artistIds?.[0] || undefined}
+                defaultValue={query.artistIds || []}
                 disabled={disableArtistFilter}
-                label={t('entity.artist', { count: 1, postProcess: 'titleCase' })}
+                label={t('entity.artist', { count: 2, postProcess: 'sentenceCase' })}
                 limit={300}
-                onChange={(e) => setAlbumArtist(e ? [e] : null)}
+                onChange={(e) => (e && e.length > 0 ? setAlbumArtist(e) : setAlbumArtist(null))}
                 rightSection={albumArtistListQuery.isFetching ? <SpinnerIcon /> : undefined}
                 searchable
             />
@@ -206,10 +203,10 @@ export const NavidromeAlbumFilters = ({ disableArtistFilter }: NavidromeAlbumFil
 
 interface TagFilterItemProps {
     label: string;
-    onChange: (value: null | string) => void;
+    onChange: (value: null | string[]) => void;
     options: Array<{ id: string; name: string }>;
     tagValue: string;
-    value: string | undefined;
+    value: string | string[] | undefined;
 }
 
 const TagFilterItem = ({ label, onChange, options, tagValue, value }: TagFilterItemProps) => {
@@ -222,15 +219,20 @@ const TagFilterItem = ({ label, onChange, options, tagValue, value }: TagFilterI
         [options],
     );
 
+    const defaultValue = useMemo(() => {
+        if (!value) return [];
+        return Array.isArray(value) ? value : [value];
+    }, [value]);
+
     return (
-        <SelectWithInvalidData
+        <MultiSelectWithInvalidData
             clearable
             data={selectData}
-            defaultValue={value}
+            defaultValue={defaultValue}
             key={tagValue}
             label={label}
             limit={100}
-            onChange={onChange}
+            onChange={(e) => (e && e.length > 0 ? onChange(e) : onChange(null))}
             searchable
         />
     );
@@ -257,7 +259,7 @@ const TagFilters = () => {
     );
 
     const handleTagFilter = useMemo(
-        () => (tag: string, e: null | string) => {
+        () => (tag: string, e: null | string[]) => {
             setCustom({ [tag]: e });
         },
         [setCustom],
@@ -289,7 +291,7 @@ const TagFilters = () => {
                     onChange={(e) => handleTagFilter(tag.value, e)}
                     options={tag.options}
                     tagValue={tag.value}
-                    value={query._custom?.[tag.value] as string | undefined}
+                    value={query._custom?.[tag.value] as string | string[] | undefined}
                 />
             ))}
         </>

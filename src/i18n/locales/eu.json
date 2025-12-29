@@ -519,7 +519,6 @@
         "playbackStyle_description": "aukeratu audio erreproduzitzailearentzat erabiliko den erreprodukzio estiloa",
         "playButtonBehavior": "erreprodukzio botoiaren portaera",
         "playButtonBehavior_description": "ezartzen du erreprodukzio botoiaren portaera lehenetsia abestiak ilaran gehitzean",
-        "playerAlbumArtResolution": "erreproduzitzailearen albumaren arte-azalaren erresoluzioa",
         "gaplessAudio": "hutsune gabeko audioa",
         "gaplessAudio_description": "ezartzen du hutsunik gabeko audio ezarpena mpv-rako",
         "passwordStore": "pasahitzak/biltegi sekretua",

@@ -27,7 +27,17 @@
         "shuffle": "shuffle",
         "shuffleAll": "shuffle alles",
         "shuffleSelected": "shuffle geselecteerde",
-        "viewMore": "bekijk meer"
+        "viewMore": "bekijk meer",
+        "addOrRemoveFromSelection": "toevoegen of verwijderen van selectie",
+        "selectRangeOfItems": "selecteer een reeks van nummers",
+        "createRadioStation": "maak $t(entity.radioStation_one)",
+        "deleteRadioStation": "verwijder $t(entity.radioStation_one)",
+        "selectAll": "selecteer alles",
+        "moveUp": "beweeg naar boven",
+        "moveDown": "beweeg naar beneden",
+        "holdToMoveToTop": "ingedrukt houden om naar boven te verplaatsen",
+        "holdToMoveToBottom": "ingedrukt houden om naar beneden te verplaatsen",
+        "openApplicationDirectory": "applicatiefolder openen"
     },
     "common": {
         "backward": "achteruit",
@@ -139,7 +149,10 @@
         "clean": "schoon",
         "gridRows": "rasterrijen",
         "tableColumns": "tabelkolommen",
-        "itemsMore": "{{count}} meer"
+        "itemsMore": "{{count}} meer",
+        "countSelected": "{{count}} geselecteerd",
+        "view": "bekijken",
+        "noFilters": "geen filters ingesteld"
     },
     "filter": {
         "rating": "rating",
@@ -427,7 +440,11 @@
         "song_one": "lied",
         "song_other": "liedjes",
         "play_one": "{{count}} keer afgespeeld",
-        "play_other": "{{count}} keren afgespeeld"
+        "play_other": "{{count}} keren afgespeeld",
+        "radioStation_one": "radiostation",
+        "radioStation_other": "radiostations",
+        "radioStationWithCount_one": "{{count}} radiostation",
+        "radioStationWithCount_other": "{{count}} radiostations"
     },
     "table": {
         "column": {

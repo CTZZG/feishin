@@ -657,6 +657,9 @@ if (mprisPlayer) {
         }
         currentState.volume = volume;
         broadcast({ data: volume, event: 'volume' });
+        getMainWindow()?.webContents.send('request-volume', {
+            volume,
+        });
     });
 }
 

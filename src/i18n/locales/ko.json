@@ -21,7 +21,23 @@
         },
         "viewPlaylists": "$t(entity.playlist_other) 보기",
         "setRating": "평점 지정",
-        "toggleSmartPlaylistEditor": "$t(entity.smartPlaylist) 편집기 펼치기"
+        "toggleSmartPlaylistEditor": "$t(entity.smartPlaylist) 편집기 펼치기",
+        "addOrRemoveFromSelection": "선택항목에서 추가 또는 제거",
+        "selectRangeOfItems": "항목의 범위 선택",
+        "createRadioStation": "$t(entity.radioStation_one) 생성",
+        "deleteRadioStation": "$t(entity.radioStation_one) 삭제",
+        "selectAll": "전부 선택",
+        "downloadStarted": "{{count}}개 항목 다운로드 시작했습니다",
+        "moveUp": "위로 옮기기",
+        "moveDown": "아래로 옮기기",
+        "holdToMoveToTop": "맨 위로 옮기기 위해 끌기",
+        "holdToMoveToBottom": "맨 아래로 옮기기 위해 끌기",
+        "moveItems": "항목 옮기기",
+        "shuffle": "섞기",
+        "shuffleAll": "모두 섞기",
+        "shuffleSelected": "선택항목 섞기",
+        "viewMore": "더 보기",
+        "openApplicationDirectory": "앱 디렉토리 열기"
     },
     "common": {
         "translation": "번역",
@@ -122,7 +138,18 @@
         "recordLabel": "레이블",
         "releaseType": "발매형태",
         "explicit": "성인컨텐츠",
-        "clean": "클린"
+        "clean": "클린",
+        "countSelected": "{{count}}개 선택됨",
+        "doNotShowAgain": "다시 보지 않기",
+        "view": "보기",
+        "externalLinks": "외부 링크",
+        "faster": "빠르게",
+        "noFilters": "필터 미설정",
+        "slower": "천천히",
+        "sort": "정렬",
+        "gridRows": "행 그리드",
+        "tableColumns": "테이블 열",
+        "itemsMore": "{{count}}개 더"
     },
     "entity": {
         "albumWithCount_other": "{{count}} 앨범",
@@ -142,7 +169,9 @@
         "play_other": "{{count}} 재생",
         "playlistWithCount_other": "{{count}} 재생목록",
         "smartPlaylist": "스마트 $t(entity.playlist_one)",
-        "track_other": "트랙"
+        "track_other": "트랙",
+        "radioStation_other": "라디오 방송국",
+        "radioStationWithCount_other": "{{count}}개 라디오 방송국"
     },
     "error": {
         "systemFontError": "시스템 폰트를 가져오는데 실패하였습니다",

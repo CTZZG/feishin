@@ -30,19 +30,19 @@ function getGenresToShow(breakpoints: {
     isLargerThanXxxl: boolean;
 }) {
     if (breakpoints.isLargerThanXxxl) {
-        return 42;
+        return 18;
     }
 
     if (breakpoints.isLargerThanXxl) {
-        return 30;
+        return 15;
     }
 
     if (breakpoints.isLargerThanXl) {
-        return 24;
+        return 12;
     }
 
     if (breakpoints.isLargerThanLg) {
-        return 18;
+        return 12;
     }
 
     if (breakpoints.isLargerThanMd) {
@@ -50,7 +50,7 @@ function getGenresToShow(breakpoints: {
     }
 
     if (breakpoints.isLargerThanSm) {
-        return 9;
+        return 8;
     }
 
     return 6;

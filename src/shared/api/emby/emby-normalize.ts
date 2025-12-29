@@ -113,16 +113,22 @@ const normalizeSong = (
         albumArtists:
             item.AlbumArtists?.map((entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             })) ?? [],
         albumId: item.AlbumId || `dummy/${item.Id}`,
         artistName: item?.ArtistItems?.[0]?.Name ?? '',
         artists:
             item?.ArtistItems?.map((entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             })) ?? [],
         bitDepth: audioMetadata.bitDepth,
         bitRate: audioMetadata.bitRate,
@@ -141,11 +147,13 @@ const normalizeSong = (
             (item.GenreItems?.map((entry) => ({
                 _itemType: LibraryItem.GENRE,
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
-        imagePlaceholderUrl: null,
+        imageId: null,
+
         imageUrl: getSongImageUrl(),
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         lyrics: null,
@@ -263,16 +271,22 @@ const normalizeAlbum = async (
         albumArtists:
             item.AlbumArtists?.map((entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             })) || [],
         artists:
             item.ArtistItems?.map((entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             })) ?? [],
-        backdropImageUrl: null,
+
         comment: null,
         createdAt: item.DateCreated ?? '',
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
@@ -281,11 +295,13 @@ const normalizeAlbum = async (
             (item.GenreItems?.map((entry) => ({
                 _itemType: LibraryItem.GENRE,
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
-        imagePlaceholderUrl: null,
+        imageId: null,
+
         imageUrl,
         isCompilation: null,
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
@@ -324,6 +340,7 @@ const normalizeAlbumArtist = (
         item.similarArtists?.Items?.filter((entry) => entry.Name !== 'Various Artists').map(
             (entry) => ({
                 id: entry.Id,
+                imageId: null,
                 imageUrl: getImageUrl({
                     baseUrl: server?.url || '',
                     imageType: 'Primary',
@@ -332,6 +349,8 @@ const normalizeAlbumArtist = (
                     tag: entry.ImageTags?.Primary,
                 }),
                 name: entry.Name,
+                userFavorite: false,
+                userRating: null,
             }),
         ) || [];
 
@@ -340,17 +359,18 @@ const normalizeAlbumArtist = (
         _serverId: server?.id || '',
         _serverType: ServerType.EMBY,
         albumCount: item.AlbumCount ?? null,
-        backgroundImageUrl: null,
         biography: item.Overview || null,
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
         genres:
             (item.GenreItems?.map((entry) => ({
                 _itemType: LibraryItem.GENRE,
                 id: entry.Id,
+                imageId: null,
                 imageUrl: null,
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
+        imageId: null,
         imageUrl: getImageUrl({
             baseUrl: server?.url || '',
             imageType: 'Primary',
@@ -390,7 +410,7 @@ const normalizePlaylist = (
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
         genres: [],
         id: item.Id,
-        imagePlaceholderUrl: null,
+
         imageUrl: imageUrl || null,
         name: item.Name,
         owner: null,
@@ -417,6 +437,7 @@ const normalizeGenre = (item: EmbyGenre, server: null | ServerListItem): Genre =
         _serverType: ServerType.EMBY,
         albumCount: undefined as any,
         id: item.Id,
+        imageId: null,
         imageUrl: getImageUrl({
             baseUrl: server?.url || '',
             imageType: 'Primary',

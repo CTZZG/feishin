@@ -236,6 +236,8 @@ const artistInfo = z.object({
                 coverArt: z.string().optional(),
                 id: z.string(),
                 name: z.string(),
+                starred: z.string().optional(),
+                userRating: z.number().optional(),
             }),
         ),
         smallImageUrl: z.string().optional(),
@@ -354,6 +356,19 @@ const similarSongs = z.object({
         .optional(),
 });
 
+const similarSongs2Parameters = z.object({
+    count: z.number().optional(),
+    id: z.string(),
+});
+
+const similarSongs2 = z.object({
+    similarSongs2: z
+        .object({
+            song: z.array(song),
+        })
+        .optional(),
+});
+
 export enum SubsonicExtensions {
     FORM_POST = 'formPost',
     INDEX_BASED_QUEUE = 'indexBasedQueue',
@@ -401,7 +416,6 @@ const getSongsByGenre = z.object({
 
 const getAlbumParameters = z.object({
     id: z.string(),
-    musicFolderId: z.string().optional(),
 });
 
 const getAlbum = z.object({
@@ -724,6 +738,7 @@ export const ssType = {
         search3: search3Parameters,
         setRating: setRatingParameters,
         similarSongs: similarSongsParameters,
+        similarSongs2: similarSongs2Parameters,
         structuredLyrics: structuredLyricsParameters,
         topSongsList: topSongsListParameters,
         updateInternetRadioStation: updateInternetRadioStationParameters,
@@ -775,6 +790,7 @@ export const ssType = {
         serverInfo,
         setRating,
         similarSongs,
+        similarSongs2,
         song,
         structuredLyrics,
         topSongsList,

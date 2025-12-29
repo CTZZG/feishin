@@ -325,6 +325,20 @@ export const controller: GeneralController = {
             query: mergeMusicFolderId(args.query, server),
         });
     },
+    getArtistRadio(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            throw new Error(
+                `${i18n.t('error.apiRouteError', { postProcess: 'sentenceCase' })}: getArtistRadio`,
+            );
+        }
+
+        return apiController(
+            'getArtistRadio',
+            server.type,
+        )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
+    },
     getDownloadUrl(args) {
         const server = getServerById(args.apiClientProps.serverId);
 
@@ -374,6 +388,20 @@ export const controller: GeneralController = {
             apiClientProps: { ...args.apiClientProps, server },
             query: mergeMusicFolderId(args.query, server),
         });
+    },
+    getImageUrl(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            return null;
+        }
+
+        return (
+            apiController(
+                'getImageUrl',
+                server.type,
+            )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } }) || null
+        );
     },
     getInternetRadioStations(args) {
         const server = getServerById(args.apiClientProps.serverId);
@@ -498,7 +526,11 @@ export const controller: GeneralController = {
         return apiController(
             'getRandomSongList',
             server.type,
-        )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
+        )?.({
+            ...args,
+            apiClientProps: { ...args.apiClientProps, server },
+            query: mergeMusicFolderId(args.query, server),
+        });
     },
     getRecentlyPlayedAlbums(args) {
         return apiController('getRecentlyPlayedAlbums', args.apiClientProps.server?.type)?.(args);
@@ -543,7 +575,11 @@ export const controller: GeneralController = {
         return apiController(
             'getSimilarSongs',
             server.type,
-        )?.({ ...args, apiClientProps: { ...args.apiClientProps, server } });
+        )?.({
+            ...args,
+            apiClientProps: { ...args.apiClientProps, server },
+            query: mergeMusicFolderId(args.query, server),
+        });
     },
     getSongDetail(args) {
         const server = getServerById(args.apiClientProps.serverId);

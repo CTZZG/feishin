@@ -55,3 +55,42 @@ export const normalizeReleaseTypes = (types: string[], t: TFunction) => {
 
     return primary.concat(secondary, unknown);
 };
+
+export const normalizeToPrimaryReleaseTypes = (types: string[], t: TFunction) => {
+    const primary: string[] = [];
+    for (const type of types) {
+        const lower = type.toLocaleLowerCase();
+        if (lower in PRIMARY_MAPPING) {
+            primary.push(
+                t(`releaseType.primary.${PRIMARY_MAPPING[lower]}`, { postProcess: 'sentenceCase' }),
+            );
+        }
+    }
+
+    // If no primary types found, use "other" category
+    if (primary.length === 0) {
+        primary.push(
+            t(`releaseType.primary.${PRIMARY_MAPPING.other}`, { postProcess: 'sentenceCase' }),
+        );
+    }
+
+    return primary;
+};
+
+export const normalizeToSecondaryReleaseTypes = (types: string[], t: TFunction) => {
+    const secondary: string[] = [];
+    for (const type of types) {
+        const lower = type.toLocaleLowerCase();
+        if (lower in SECONDARY_MAPPING) {
+            secondary.push(
+                t(`releaseType.secondary.${SECONDARY_MAPPING[lower]}`, {
+                    postProcess: 'sentenceCase',
+                }),
+            );
+        }
+    }
+
+    secondary.sort();
+
+    return secondary;
+};

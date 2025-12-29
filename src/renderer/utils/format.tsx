@@ -99,20 +99,25 @@ export const formatDateRelative = (key: null | string) => (key ? dayjs(key).from
 export const formatDurationString = (duration: number) => {
     const rawDuration = formatDuration(duration, { leading: false }).split(':');
 
-    let string;
+    const formattedDuration = rawDuration.map((part) => {
+        // Remove leading zero
+        return part.replace(/^0/, '');
+    });
+
+    let string: string = '';
 
     switch (rawDuration.length) {
         case 1:
-            string = `${rawDuration[0]} ${i18n.t('datetime.secondShort')}`;
+            string = `${formattedDuration[0]}${i18n.t('datetime.secondShort')}`;
             break;
         case 2:
-            string = `${rawDuration[0]} ${i18n.t('datetime.minuteShort')} ${rawDuration[1]} ${i18n.t('datetime.secondShort')}`;
+            string = `${formattedDuration[0]}${i18n.t('datetime.minuteShort')} ${formattedDuration[1]}${i18n.t('datetime.secondShort')}`;
             break;
         case 3:
-            string = `${rawDuration[0]} ${i18n.t('datetime.hourShort')} ${rawDuration[1]} ${i18n.t('datetime.minuteShort')} ${rawDuration[2]} ${i18n.t('datetime.secondShort')}`;
+            string = `${formattedDuration[0]}${i18n.t('datetime.hourShort')} ${formattedDuration[1]}${i18n.t('datetime.minuteShort')} ${formattedDuration[2]}${i18n.t('datetime.secondShort')}`;
             break;
         case 4:
-            string = `${rawDuration[0]} ${i18n.t('datetime.dayShort')} ${rawDuration[1]} ${i18n.t('datetime.hourShort')} ${rawDuration[2]} ${i18n.t('datetime.minuteShort')} ${rawDuration[3]} ${i18n.t('datetime.secondShort')}`;
+            string = `${formattedDuration[0]}${i18n.t('datetime.dayShort')} ${formattedDuration[1]}${i18n.t('datetime.hourShort')} ${formattedDuration[2]}${i18n.t('datetime.minuteShort')} ${formattedDuration[3]}${i18n.t('datetime.secondShort')}`;
             break;
     }
 
