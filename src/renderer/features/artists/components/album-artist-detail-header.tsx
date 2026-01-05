@@ -14,7 +14,7 @@ import {
     LibraryHeaderMenu,
 } from '/@/renderer/features/shared/components/library-header';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useCurrentServer, useGeneralSettings } from '/@/renderer/store';
+import { useCurrentServer, useShowRatings } from '/@/renderer/store';
 import { usePlayButtonBehavior } from '/@/renderer/store/settings.store';
 import { formatDurationString } from '/@/renderer/utils';
 import { Group } from '/@/shared/components/group/group';
@@ -30,7 +30,7 @@ export const AlbumArtistDetailHeader = forwardRef((_props, ref: Ref<HTMLDivEleme
     };
     const routeId = (artistId || albumArtistId) as string;
     const server = useCurrentServer();
-    const { showRatings } = useGeneralSettings();
+    const showRatings = useShowRatings();
     const { t } = useTranslation();
     const detailQuery = useSuspenseQuery(
         artistsQueries.albumArtistDetail({
@@ -141,7 +141,12 @@ export const AlbumArtistDetailHeader = forwardRef((_props, ref: Ref<HTMLDivEleme
     return (
         <LibraryHeader
             imageUrl={selectedImageUrl}
-            item={{ route: AppRoute.LIBRARY_ALBUM_ARTISTS, type: LibraryItem.ALBUM_ARTIST }}
+            item={{
+                imageId: detailQuery.data?.imageId,
+                imageUrl: detailQuery.data?.imageUrl,
+                route: AppRoute.LIBRARY_ALBUM_ARTISTS,
+                type: LibraryItem.ALBUM_ARTIST,
+            }}
             ref={ref}
             title={detailQuery.data?.name || ''}
         >

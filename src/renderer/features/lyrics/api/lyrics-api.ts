@@ -3,7 +3,7 @@ import isElectron from 'is-electron';
 
 import { api } from '/@/renderer/api';
 import { queryKeys } from '/@/renderer/api/query-keys';
-import { QueryHookArgs } from '/@/renderer/lib/react-query';
+import { queryClient, QueryHookArgs } from '/@/renderer/lib/react-query';
 import { getServerById, useSettingsStore } from '/@/renderer/store';
 import { hasFeature } from '/@/shared/api/utils';
 import {
@@ -14,7 +14,6 @@ import {
     LyricSearchQuery,
     LyricsQuery,
     QueueSong,
-    ServerType,
     StructuredLyric,
     SynchronizedLyricsArray,
 } from '/@/shared/types/domain-types';
@@ -65,6 +64,34 @@ const formatLyrics = (lyrics: string) => {
 };
 
 export const lyricsQueries = {
+    remoteLyrics: (args: QueryHookArgs<LyricsQuery>, song: QueueSong | undefined) => {
+        return queryOptions({
+            gcTime: Infinity,
+            queryFn: async (): Promise<FullLyricsMetadata | null> => {
+                if (!song) return null;
+
+                const { fetch } = useSettingsStore.getState().lyrics;
+
+                if (!fetch) return null;
+
+                const remoteLyricsResult: InternetProviderLyricResponse | null =
+                    await lyricsIpc?.getRemoteLyricsBySong(song);
+
+                if (remoteLyricsResult) {
+                    return {
+                        ...remoteLyricsResult,
+                        lyrics: formatLyrics(remoteLyricsResult.lyrics),
+                        remote: true,
+                    };
+                }
+
+                return null;
+            },
+            queryKey: queryKeys.songs.remoteLyrics(args.serverId, args.query),
+            staleTime: Infinity,
+            ...args.options,
+        });
+    },
     search: (args: Omit<QueryHookArgs<LyricSearchQuery>, 'serverId'>) => {
         return queryOptions({
             gcTime: 1000 * 60 * 1,
@@ -79,34 +106,15 @@ export const lyricsQueries = {
             ...args.options,
         });
     },
-    serverLyrics: (args: QueryHookArgs<LyricsQuery>) => {
-        return queryOptions({
-            queryFn: ({ signal }) => {
-                const server = getServerById(args.serverId);
-                if (!server) throw new Error('Server not found');
-                // This should only be called for Jellyfin. Return null to ignore errors
-                if (server.type !== ServerType.JELLYFIN) return null;
-                return api.controller.getLyrics({
-                    apiClientProps: { serverId: args.serverId, signal },
-                    query: args.query,
-                });
-            },
-            queryKey: queryKeys.songs.lyrics(args.serverId, args.query),
-            ...args.options,
-        });
-    },
-    songLyrics: (args: QueryHookArgs<LyricsQuery>, song: QueueSong | undefined) => {
+    serverLyrics: (args: QueryHookArgs<LyricsQuery>, song: QueueSong | undefined) => {
         return queryOptions({
             gcTime: Infinity,
             queryFn: async ({ signal }): Promise<FullLyricsMetadata | null | StructuredLyric[]> => {
-                const server = getServerById(song?._serverId);
+                const server = getServerById(args.serverId);
                 if (!server) throw new Error('Server not found');
                 if (!song) return null;
 
-                const { preferLocalLyrics } = useSettingsStore.getState().lyrics;
-
                 let localLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
-                let remoteLyrics: FullLyricsMetadata | null | StructuredLyric[] = null;
 
                 if (hasFeature(server, ServerFeature.LYRICS_MULTIPLE_STRUCTURED)) {
                     const subsonicLyrics = await api.controller
@@ -146,34 +154,33 @@ export const lyricsQueries = {
                     };
                 }
 
-                if (preferLocalLyrics && localLyrics) {
-                    return localLyrics;
-                }
+                return localLyrics;
+            },
+            queryKey: queryKeys.songs.serverLyrics(args.serverId, args.query),
+            staleTime: Infinity,
+            ...args.options,
+        });
+    },
+    songLyrics: (args: QueryHookArgs<LyricsQuery>, song: QueueSong | undefined) => {
+        return queryOptions({
+            gcTime: Infinity,
+            queryFn: async ({ signal }): Promise<FullLyricsMetadata | null | StructuredLyric[]> => {
+                if (!song) return null;
 
-                const { fetch } = useSettingsStore.getState().lyrics;
+                const serverLyricsQuery = lyricsQueries.serverLyrics(args, song);
+                const serverLyrics = await queryClient.fetchQuery({
+                    ...serverLyricsQuery,
+                    queryFn: async (context) => {
+                        return (
+                            serverLyricsQuery.queryFn?.({
+                                ...context,
+                                signal,
+                            }) ?? null
+                        );
+                    },
+                });
 
-                if (fetch) {
-                    const remoteLyricsResult: InternetProviderLyricResponse | null =
-                        await lyricsIpc?.getRemoteLyricsBySong(song);
-
-                    if (remoteLyricsResult) {
-                        remoteLyrics = {
-                            ...remoteLyricsResult,
-                            lyrics: formatLyrics(remoteLyricsResult.lyrics),
-                            remote: true,
-                        };
-                    }
-                }
-
-                if (remoteLyrics) {
-                    return remoteLyrics;
-                }
-
-                if (localLyrics) {
-                    return localLyrics;
-                }
-
-                return null;
+                return serverLyrics;
             },
             queryKey: queryKeys.songs.lyrics(args.serverId, args.query),
             staleTime: Infinity,
@@ -182,6 +189,7 @@ export const lyricsQueries = {
     },
     songLyricsByRemoteId: (args: QueryHookArgs<Partial<LyricGetQuery>>) => {
         return queryOptions({
+            gcTime: Infinity,
             queryFn: async () => {
                 const remoteLyricsResult = await lyricsIpc?.getRemoteLyricsByRemoteId(
                     args.query as any,
@@ -194,6 +202,7 @@ export const lyricsQueries = {
                 return null;
             },
             queryKey: queryKeys.songs.lyricsByRemoteId(args.query),
+            staleTime: Infinity,
             ...args.options,
         });
     },

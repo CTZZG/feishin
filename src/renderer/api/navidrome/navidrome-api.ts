@@ -8,6 +8,7 @@ import qs from 'qs';
 import i18n from '/@/i18n/i18n';
 import { authenticationFailure } from '/@/renderer/api/utils';
 import { useAuthStore } from '/@/renderer/store';
+import { getServerUrl } from '/@/renderer/utils/normalize-server-url';
 import { ndType } from '/@/shared/api/navidrome/navidrome-types';
 import { resultWithHeaders } from '/@/shared/api/utils';
 import { toast } from '/@/shared/components/toast/toast';
@@ -411,7 +412,8 @@ export const ndApiClient = (args: {
             const { params, path: api } = parsePath(path);
 
             if (server) {
-                baseUrl = `${server?.url}/api`;
+                const serverUrl = getServerUrl(server);
+                baseUrl = serverUrl ? `${serverUrl}/api` : undefined;
                 token = server?.ndCredential;
             } else {
                 baseUrl = url;

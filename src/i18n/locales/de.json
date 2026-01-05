@@ -150,7 +150,8 @@
         "slower": "langsamer",
         "releaseType": "Veröffentlichungsformat",
         "view": "Betrachten",
-        "countSelected": "{{count}} ausgewählt"
+        "countSelected": "{{count}} ausgewählt",
+        "mood": "Stimmung"
     },
     "error": {
         "remotePortWarning": "Starten Sie den Server neu, um den neuen Port anzuwenden",
@@ -178,7 +179,9 @@
         "badValue": "ungültige option \"{{value}}\". Dieser Wert existiert nicht mehr",
         "notificationDenied": "Berechtigungen über Benachrichtigungen wurden verweigert. Diese Einstellung hat keinen Effekt",
         "saveQueueFailed": "Wiedergabeliste konnte nicht gespeichert werden",
-        "multipleServerSaveQueueError": "die Wiedergabeliste enthält einen oder mehrere Titel, die nicht vom aktuellen Server stammen. dies wird nicht unterstützt"
+        "multipleServerSaveQueueError": "die Wiedergabeliste enthält einen oder mehrere Titel, die nicht vom aktuellen Server stammen. dies wird nicht unterstützt",
+        "noNetwork": "Server nicht verfügbar",
+        "noNetworkDescription": "Verbindung zum Server konnte nicht hergestellt werden"
     },
     "filter": {
         "mostPlayed": "Meistgespielt",
@@ -323,6 +326,9 @@
             "input_homepageUrl": "Homepage URL",
             "input_name": "Name",
             "input_streamUrl": "Stream URL"
+        },
+        "lyricsExport": {
+            "input_offset": "$t(setting.lyricOffset)"
         }
     },
     "entity": {
@@ -621,7 +627,9 @@
             "topSongsFrom": "Toplieder von {{title}}",
             "viewAll": "Alles ansehen",
             "topSongs": "Toplieder",
-            "relatedArtists": "ähnliche $t(entity.artist_other)"
+            "relatedArtists": "ähnliche $t(entity.artist_other)",
+            "groupingTypeAll": "alle Veröffentlichungsformate",
+            "groupingTypePrimary": "primäre Veröffentlichungsformate"
         },
         "manageServers": {
             "title": "Servers verwalten",

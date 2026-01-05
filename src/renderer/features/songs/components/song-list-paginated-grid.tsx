@@ -44,7 +44,7 @@ export const SongListPaginatedGrid = ({
         serverId,
     });
 
-    const rows = useGridRows(LibraryItem.SONG, ItemListKey.SONG);
+    const rows = useGridRows(LibraryItem.SONG, ItemListKey.SONG, size);
 
     return (
         <ItemListWithPagination

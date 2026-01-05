@@ -21,7 +21,11 @@
         "createPlaylist": "sortu $t(entity.playlist_one)",
         "deletePlaylist": "ezabatu $t(entity.playlist_one)",
         "addToFavorites": "gehitu $t(entity.favorite_other)-(e)ra",
-        "addToPlaylist": "gehitu $t(entity.playlist_one)-(e)ra"
+        "addToPlaylist": "gehitu $t(entity.playlist_one)-(e)ra",
+        "createRadioStation": "sortu $t(entity.radioStation_one)",
+        "deleteRadioStation": "ezabatu $t(entity.radioStation_one)",
+        "viewMore": "ikusi gehiago",
+        "shuffle": "nahastu"
     },
     "common": {
         "add": "gehitu",
@@ -124,7 +128,16 @@
         "clean": "garbia",
         "private": "pribatua",
         "public": "publikoa",
-        "releaseType": "argitalpen mota"
+        "releaseType": "argitalpen mota",
+        "countSelected": "{{count}} hautatuta",
+        "view": "ikuspegia",
+        "externalLinks": "kanpoko estekak",
+        "faster": "azkarrago",
+        "noFilters": "ez dago iragazkirik konfiguratuta",
+        "retry": "saiatu berriro",
+        "slower": "motelago",
+        "itemsMore": "{{count}} gehiago",
+        "sort": "ordenatu"
     },
     "player": {
         "repeat": "errepikatu",
@@ -151,13 +164,19 @@
         "queue_remove": "kendu hautatutakoak",
         "repeat_all": "errepikatu dena",
         "repeat_off": "errepikapena desgaituta",
-        "shuffle": "erreproduzitu ausaz",
+        "shuffle": "erreproduzitu (ausaz)",
         "shuffle_off": "auza desgaituta",
         "skip_back": "saltatu atzeraka",
         "skip_forward": "saltatu aurreraka",
         "toggleFullscreenPlayer": "txandakatu pantaila osoko erreproduzitzailea",
         "viewQueue": "ikusi ilara",
-        "playbackFetchCancel": "honek denbora pixka bat behar du... itxi jakinarazpena bertan behera uzteko"
+        "playbackFetchCancel": "honek denbora pixka bat behar du... itxi jakinarazpena bertan behera uzteko",
+        "lyrics": "letrak",
+        "queueType": "ilara mota",
+        "queueType_default": "lehenetsia",
+        "queueType_priority": "lehentasuna",
+        "restoreQueueFromServer": "berrezarri ilara zerbitzaritik",
+        "saveQueueToServer": "gorde ilara zerbitzarira"
     },
     "table": {
         "config": {
@@ -171,7 +190,8 @@
                 "size": "$t(common.size)",
                 "tableColumns": "taula zutabeak",
                 "itemSize": "elementuaren tamaina (px)",
-                "followCurrentSong": "jarraitu uneko abestia"
+                "followCurrentSong": "jarraitu uneko abestia",
+                "size_default": "lehenetsia"
             },
             "label": {
                 "actions": "$t(common.action_other)",
@@ -199,7 +219,11 @@
                 "playCount": "erreprodukzio kopurua",
                 "lastPlayed": "azken aldiz entzunda",
                 "discNumber": "disko zenbakia",
-                "dateAdded": "gehitze data"
+                "dateAdded": "gehitze data",
+                "albumCount": "$t(entity.album_other)",
+                "image": "irudia",
+                "bitDepth": "$t(common.bitDepth)",
+                "sampleRate": "$t(common.sampleRate)"
             }
         },
         "column": {
@@ -226,7 +250,10 @@
             "releaseDate": "argitalpen data",
             "lastPlayed": "azken aldiz entzundakoa",
             "dateAdded": "gehitutako data",
-            "albumArtist": "albumeko artista"
+            "albumArtist": "albumeko artista",
+            "owner": "jabea",
+            "bitDepth": "$t(common.bitDepth)",
+            "sampleRate": "$t(common.sampleRate)"
         }
     },
     "entity": {
@@ -290,7 +317,10 @@
         "badAlbum": "Orrialde hau ikusten ari zara abesti hau album batekoa ez delako. Ziurrenik arazo hau ikusten ari zara zure musika karpetaren goiko mailan abesti bat baduzu. Jellyfinek abestiak karpeta batean badaude taldekatzen ditu bakarrik",
         "loginRateError": "Saioa hasteko saiakera gehiegi egin dira, saiatu berriro segundo batzuk barru",
         "notificationDenied": "jakinarazpenetarako baimenak ukatu dira. Ezarpen honek ez du eraginik",
-        "systemFontError": "errore bat gertatu da sistemaren letra-tipoak lortzen saiatzean"
+        "systemFontError": "errore bat gertatu da sistemaren letra-tipoak lortzen saiatzean",
+        "noNetwork": "zerbitzaria ez dago erabilgarri",
+        "noNetworkDescription": "ezin izan da zerbitzari honetara konektatu",
+        "saveQueueFailed": "huts egin du ilara gordetzean"
     },
     "filter": {
         "disc": "diskoa",
@@ -536,7 +566,17 @@
         "exportImportSettings_control_importText": "inportatu ezarpenak",
         "exportImportSettings_control_title": "inportatu / esportatu ezarpenak",
         "exportImportSettings_importBtn": "inportatu ezarpenak",
-        "exportImportSettings_importModalTitle": "inportatu feishin ezarpenak"
+        "exportImportSettings_importModalTitle": "inportatu feishin ezarpenak",
+        "autoDJ_itemCount": "elementu kopurua",
+        "language": "hizkuntza",
+        "queryBuilderCustomFields_inputTag": "etiketa",
+        "logLevel_optionError": "errore bat",
+        "logLevel_optionInfo": "informazioa",
+        "imageResolution_optionTable": "taula",
+        "imageResolution_optionSidebar": "alboko barra",
+        "replayGainClipping": "{{ReplayGain}} mozketa",
+        "replayGainFallback": "{{ReplayGain}} ordezko aukera",
+        "trayEnabled": "erakutsi erretilua"
     },
     "form": {
         "addServer": {
@@ -591,7 +631,8 @@
         "editPlaylist": {
             "success": "$t(entity.playlist_one) behar bezala eguneratu da",
             "title": "$t(entity.playlist_one) editatu",
-            "publicJellyfinNote": "Arrazoiren batengatik, Jellyfin ez du erakusten erreprodukzio-zerrendak publikoak diren edo ez. Hau publiko izaten jarraitzea nahi baduzu, hautatu sarrera hau"
+            "publicJellyfinNote": "Arrazoiren batengatik, Jellyfin ez du erakusten erreprodukzio-zerrendak publikoak diren edo ez. Hau publiko izaten jarraitzea nahi baduzu, hautatu sarrera hau",
+            "editNote": "ez da gomendatzen eskuzko edizioak egitea erreprodukzio-zerrenda handietarako. ziur zaude onartzen duzula lehendik dagoen erreprodukzio-zerrenda gainidazteagatik datuak galtzeko arriskua?"
         },
         "queryEditor": {
             "title": "kontsulta editorea",
@@ -606,6 +647,21 @@
             "title": "modu pribatua",
             "enabled": "modu pribatua gaituta, erreprodukzio egoera kanpoko integrazioetatik ezkutatuta dago orain",
             "disabled": "modu pribatua desgaituta, erreprodukzio egoera ikusgai dago orain gaitutako kanpoko integrazioentzat"
+        },
+        "largeFetchConfirmation": {
+            "title": "gehitu elementuak ilaran"
+        },
+        "createRadioStation": {
+            "input_homepageUrl": "hasierako orriaren URLa",
+            "input_name": "izena"
+        },
+        "lyricsExport": {
+            "export": "esportatu letrak",
+            "input_synced": "esportatu sinkronizatutako letrak",
+            "input_offset": "$t(setting.lyricOffset)"
+        },
+        "shuffleAll": {
+            "input_genre": "$t(entity.genre_one)"
         }
     },
     "page": {
@@ -668,7 +724,8 @@
             "shareItem": "partekatu elementua",
             "goToAlbum": "joan $t(entity.album_one)-(e)ra",
             "goToAlbumArtist": "joan albumera",
-            "showDetails": "informazioa lortu"
+            "showDetails": "informazioa lortu",
+            "moveItems": "$t(action.moveItems)"
         },
         "fullscreenPlayer": {
             "config": {
@@ -712,7 +769,8 @@
             "newlyAdded": "azken aldian gehitutako argitalpenak",
             "recentlyPlayed": "azken aldian entzundakoak",
             "recentlyReleased": "azken aldian argitaratutak",
-            "explore": "arakatu zure liburutegitik"
+            "explore": "arakatu zure liburutegitik",
+            "genres": "$t(entity.genre_other)"
         },
         "playlistList": {
             "title": "$t(entity.playlist_other)"
@@ -722,7 +780,18 @@
             "generalTab": "orokorra",
             "playbackTab": "erreprodukzioa",
             "windowTab": "leihoa",
-            "hotkeysTab": "laster-teklak"
+            "hotkeysTab": "laster-teklak",
+            "cache": "katxea",
+            "application": "aplikazioa",
+            "theme": "gaia",
+            "sidebar": "alboko barra",
+            "exportImport": "inportatu/esportatu",
+            "scrobble": "scrobble",
+            "audio": "audioa",
+            "lyrics": "letrak",
+            "discord": "discord",
+            "playerFilters": "erreproduzitzailearen iragazkiak",
+            "updates": "eguneraketa"
         },
         "sidebar": {
             "albumArtists": "$t(entity.albumArtist_other)",
@@ -737,7 +806,9 @@
             "tracks": "$t(entity.track_other)",
             "myLibrary": "nire liburutegia",
             "nowPlaying": "orain erreproduzitzen",
-            "shared": "partekatutako $t(entity.playlist_other)"
+            "shared": "partekatutako $t(entity.playlist_other)",
+            "favorites": "$t(entity.favorite_other)",
+            "radio": "$t(entity.radioStation_other)"
         },
         "trackList": {
             "title": "$t(entity.track_other)",
@@ -762,12 +833,19 @@
         },
         "playlist": {
             "reorder": "berrantolaketa IDaren arabera ordenatzean bakarrik gaituta dago"
+        },
+        "folderList": {
+            "title": "$t(entity.folder_other)"
+        },
+        "favorites": {
+            "title": "$t(entity.favorite_other)"
         }
     },
     "releaseType": {
         "primary": {
             "album": "$t(entity.album_one)",
-            "other": "bestelakoa"
+            "other": "bestelakoa",
+            "ep": "ep"
         },
         "secondary": {
             "compilation": "konpilazioa",
@@ -775,5 +853,58 @@
             "interview": "elkarrizketa",
             "remix": "nahasketa"
         }
+    },
+    "datetime": {
+        "minuteShort": "m",
+        "secondShort": "s",
+        "hourShort": "h",
+        "dayShort": "d"
+    },
+    "queryBuilder": {
+        "customTags": "etiketa pertsonalizatutak"
+    },
+    "filterOperator": {
+        "is": "da"
+    },
+    "visualizer": {
+        "general": "Orokorra",
+        "mode": "Modua",
+        "vertical": "Bertikala",
+        "horizontal": "Horizontala",
+        "position": "Posizioa",
+        "level": "Maila",
+        "remove": "Kendu",
+        "custom": "Pertsonalizatua",
+        "builtIn": "Barneratua",
+        "colors": "Koloreak",
+        "gradient": "Gradientea",
+        "fft": "FFT",
+        "sensitivity": "Sentikortasuna",
+        "smoothing": "Leuntzea",
+        "gravity": "Grabitatea",
+        "radial": "Erradiala",
+        "radius": "Erradioa",
+        "mirror": "Ispilua",
+        "options": {
+            "colorMode": {
+                "gradient": "Gradientea",
+                "barIndex": "Barra-indizea",
+                "barLevel": "Barra-maila"
+            },
+            "gradient": {
+                "classic": "Klasikoa",
+                "prism": "Prisma",
+                "rainbow": "Ostadarra"
+            },
+            "weightingFilter": {
+                "none": "Bat ere ez",
+                "a": "A",
+                "b": "B",
+                "c": "C",
+                "d": "D",
+                "z": "Z"
+            }
+        },
+        "opacity": "Opakotasuna"
     }
 }

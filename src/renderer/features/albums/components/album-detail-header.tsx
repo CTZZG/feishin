@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { forwardRef } from 'react';
-import { generatePath, Link, useParams } from 'react-router';
+import { forwardRef, Fragment, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams } from 'react-router';
 
 import styles from './album-detail-header.module.css';
 
-import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { albumQueries } from '/@/renderer/features/albums/api/album-api';
+import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { ContextMenuController } from '/@/renderer/features/context-menu/context-menu-controller';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
@@ -13,9 +14,12 @@ import {
     LibraryHeaderMenu,
 } from '/@/renderer/features/shared/components/library-header';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useCurrentServer, useGeneralSettings } from '/@/renderer/store';
+import { useCurrentServer, useShowRatings } from '/@/renderer/store';
 import { usePlayButtonBehavior } from '/@/renderer/store/settings.store';
+import { formatDateAbsoluteUTC, formatDurationString } from '/@/renderer/utils';
+import { normalizeReleaseTypes } from '/@/renderer/utils/normalize-release-types';
 import { Group } from '/@/shared/components/group/group';
+import { Separator } from '/@/shared/components/separator/separator';
 import { Stack } from '/@/shared/components/stack/stack';
 import { Text } from '/@/shared/components/text/text';
 import { LibraryItem, ServerType } from '/@/shared/types/domain-types';
@@ -23,8 +27,9 @@ import { Play } from '/@/shared/types/types';
 
 export const AlbumDetailHeader = forwardRef<HTMLDivElement>((_props, ref) => {
     const { albumId } = useParams() as { albumId: string };
+    const { t } = useTranslation();
     const server = useCurrentServer();
-    const { showRatings } = useGeneralSettings();
+    const showRatings = useShowRatings();
     const detailQuery = useQuery(
         albumQueries.detail({ query: { id: albumId }, serverId: server?.id }),
     );
@@ -82,50 +87,160 @@ export const AlbumDetailHeader = forwardRef<HTMLDivElement>((_props, ref) => {
         });
     };
 
-    const firstAlbumArtist = detailQuery?.data?.albumArtists?.[0];
     const releaseYear = detailQuery?.data?.releaseYear;
+    const releaseDate = detailQuery?.data?.releaseDate;
 
-    const imageUrl = useItemImageUrl({
-        id: detailQuery?.data?.imageId || undefined,
-        itemType: LibraryItem.ALBUM,
-        type: 'header',
-    });
+    const metadataItems = useMemo(() => {
+        const items: Array<{ id: string; value: React.ReactNode | string | undefined }> = [];
+
+        const album = detailQuery?.data;
+
+        if (!album) return [];
+
+        const originalDifferentFromRelease =
+            album?.originalDate && album?.originalDate !== album?.releaseDate;
+
+        const originalYearDifferentFromRelease = album?.originalYear !== album?.releaseYear;
+
+        const playCount = album?.playCount;
+
+        const releasePrefix = originalDifferentFromRelease
+            ? t('page.albumDetail.released', { postProcess: 'sentenceCase' })
+            : '♫';
+
+        const releaseYearPrefix = originalYearDifferentFromRelease
+            ? t('page.albumDetail.released', { postProcess: 'sentenceCase' })
+            : '♫';
+
+        if (album.originalDate) {
+            if (originalDifferentFromRelease) {
+                items.push({
+                    id: 'originalDate',
+                    value: `♫ ${formatDateAbsoluteUTC(album.originalDate)}`,
+                });
+            }
+
+            if (releaseDate) {
+                items.push({
+                    id: 'releaseDate',
+                    value: `${releasePrefix} ${formatDateAbsoluteUTC(releaseDate)}`,
+                });
+            }
+        } else if (album.originalYear) {
+            if (originalYearDifferentFromRelease) {
+                items.push({
+                    id: 'originalYear',
+                    value: `♫ ${album.originalYear}`,
+                });
+            }
+
+            if (releaseDate) {
+                items.push({
+                    id: 'releaseDate',
+                    value: `${releaseYearPrefix} ${formatDateAbsoluteUTC(releaseDate)}`,
+                });
+            } else if (releaseYear) {
+                items.push({
+                    id: 'releaseYear',
+                    value: `${releaseYearPrefix} ${releaseYear}`,
+                });
+            }
+        }
+
+        items.push(
+            ...[
+                {
+                    id: 'songCount',
+                    value: t('entity.trackWithCount', { count: detailQuery?.data?.songCount || 0 }),
+                },
+                {
+                    id: 'duration',
+                    value: formatDurationString(detailQuery?.data?.duration || 0),
+                },
+                {
+                    id: 'explicitStatus',
+                    value: detailQuery?.data?.explicitStatus,
+                },
+                {
+                    id: 'playCount',
+                    value: playCount ? t('entity.play', { count: playCount }) : undefined,
+                },
+            ],
+        );
+
+        return items.filter((item) => !!item.value);
+    }, [detailQuery?.data, releaseDate, releaseYear, t]);
+
+    const headerItem = useMemo(() => {
+        const album = detailQuery?.data;
+
+        if (!album) return null;
+
+        const releaseTypes = album.releaseType
+            ? normalizeReleaseTypes([album.releaseType], t)
+            : null;
+
+        const releaseTypeText = releaseTypes?.length ? releaseTypes[0] : null;
+
+        if (releaseTypeText) {
+            return (
+                <Group gap="sm">
+                    <Text
+                        component={Link}
+                        fw={600}
+                        isLink
+                        size="md"
+                        to={AppRoute.LIBRARY_ALBUMS}
+                        tt="uppercase"
+                    >
+                        {releaseTypeText}
+                    </Text>
+                    {album.version && (
+                        <>
+                            <Text fw={600} isMuted>
+                                <Separator />
+                            </Text>
+                            <Text>{album.version}</Text>
+                        </>
+                    )}
+                </Group>
+            );
+        }
+
+        return null;
+    }, [detailQuery?.data, t]);
 
     return (
         <Stack ref={ref}>
             <LibraryHeader
-                imageUrl={imageUrl}
-                item={{ route: AppRoute.LIBRARY_ALBUMS, type: LibraryItem.ALBUM }}
+                item={{
+                    children: headerItem,
+                    imageId: detailQuery?.data?.imageId,
+                    imageUrl: detailQuery?.data?.imageUrl,
+                    route: AppRoute.LIBRARY_ALBUMS,
+                    type: LibraryItem.ALBUM,
+                }}
                 title={detailQuery?.data?.name || ''}
             >
                 <Stack gap="md" w="100%">
-                    {(firstAlbumArtist || releaseYear) && (
-                        <Group className={styles.metadataGroup}>
-                            {firstAlbumArtist && (
-                                <Text
-                                    component={Link}
-                                    fw={600}
-                                    isLink
-                                    isNoSelect
-                                    to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL, {
-                                        albumArtistId: firstAlbumArtist.id,
-                                    })}
-                                >
-                                    {firstAlbumArtist.name}
-                                </Text>
-                            )}
-                            {firstAlbumArtist && releaseYear && (
-                                <Text fw={600} isNoSelect>
-                                    •
-                                </Text>
-                            )}
-                            {releaseYear && (
-                                <Text fw={600} isMuted isNoSelect>
-                                    {releaseYear}
-                                </Text>
-                            )}
-                        </Group>
-                    )}
+                    <Group className={styles.metadataGroup} gap="xs">
+                        {metadataItems.map((item, index) => (
+                            <Fragment key={item.id}>
+                                {index > 0 && (
+                                    <Text fw={400} isMuted isNoSelect>
+                                        •
+                                    </Text>
+                                )}
+                                <Text fw={400}>{item.value}</Text>
+                            </Fragment>
+                        ))}
+                    </Group>
+                    <Group className={styles.metadataGroup}>
+                        <JoinedArtists
+                            artistName={detailQuery?.data?.albumArtistName || ''}
+                            artists={detailQuery?.data?.albumArtists || []}
+                        />
+                    </Group>
                     <LibraryHeaderMenu
                         favorite={detailQuery?.data?.userFavorite}
                         onFavorite={handleFavorite}

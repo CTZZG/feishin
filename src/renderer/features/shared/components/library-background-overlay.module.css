@@ -37,7 +37,7 @@
     width: 100%;
     background-position: center !important;
     background-size: cover !important;
-    opacity: 0.9;
+    opacity: 0.7;
 }
 
 .background-image-overlay {
@@ -47,5 +47,5 @@
     z-index: 0;
     width: 100%;
     background: var(--theme-overlay-subheader);
-    opacity: 0.5;
+    opacity: 0.9;
 }

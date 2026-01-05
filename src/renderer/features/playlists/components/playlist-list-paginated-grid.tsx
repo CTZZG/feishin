@@ -55,7 +55,7 @@ export const PlaylistListPaginatedGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.PLAYLIST, ItemListKey.PLAYLIST);
+    const rows = useGridRows(LibraryItem.PLAYLIST, ItemListKey.PLAYLIST, size);
 
     return (
         <ItemListWithPagination

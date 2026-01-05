@@ -50,7 +50,7 @@ export const AlbumListInfiniteGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.ALBUM, ItemListKey.ALBUM);
+    const rows = useGridRows(LibraryItem.ALBUM, ItemListKey.ALBUM, size);
 
     return (
         <ItemGridList

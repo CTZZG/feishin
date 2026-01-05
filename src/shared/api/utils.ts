@@ -139,7 +139,7 @@ export const getClientType = (): string => {
     }
 };
 
-export const SEPARATOR_STRING = ' · ';
+export const SEPARATOR_STRING = ' • ';
 
 export const sortSongList = (songs: Song[], sortBy: SongListSort, sortOrder: SortOrder) => {
     let results: Song[] = songs;
@@ -419,13 +419,13 @@ export const sortAlbumList = (albums: Album[], sortBy: AlbumListSort, sortOrder:
                 results,
                 [
                     (v) => {
-                        if (v.releaseDate) {
-                            return new Date(v.releaseDate).getTime();
+                        if (v.originalDate) {
+                            return new Date(v.originalDate).getTime();
                         }
 
                         // Fallback to the first day of the release year
-                        if (v.releaseYear) {
-                            return new Date(v.releaseYear, 0, 1).getTime();
+                        if (v.originalYear) {
+                            return new Date(v.originalYear, 0, 1).getTime();
                         }
                         return 0;
                     },
@@ -470,4 +470,12 @@ export const sortRadioList = (
     }
 
     return results;
+};
+
+export const replacePathPrefix = (path: string, replacePrefix?: string, addPrefix?: string) => {
+    if (replacePrefix && path.startsWith(replacePrefix)) {
+        return path.slice(replacePrefix.length);
+    }
+
+    return addPrefix ? addPrefix + path : path;
 };

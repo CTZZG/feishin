@@ -2,6 +2,7 @@ import z from 'zod';
 
 import { ndType } from '/@/shared/api/navidrome/navidrome-types';
 import { ssType } from '/@/shared/api/subsonic/subsonic-types';
+import { replacePathPrefix } from '/@/shared/api/utils';
 import {
     Album,
     AlbumArtist,
@@ -32,20 +33,111 @@ const normalizePlayDate = (item: WithDate): null | string => {
     return !item.playDate || item.playDate.includes('0001-') ? null : item.playDate;
 };
 
+const matchesFullDate = (date: string) => {
+    return Boolean(date.match(/^\d{4}-\d{2}-\d{2}$/));
+};
+
+const matchesYearOnly = (date: string) => {
+    return Boolean(date.match(/^\d{4}$/));
+};
+
+const normalizeReleaseDate = (item: {
+    date?: string;
+    releaseDate?: string;
+}): { date: null | string; year: null | number } => {
+    if (item.releaseDate && matchesFullDate(item.releaseDate)) {
+        return {
+            date: item.releaseDate,
+            year: parseInt(item.releaseDate.split('-')[0]),
+        };
+    } else if (item.releaseDate && matchesYearOnly(item.releaseDate)) {
+        return {
+            date: null,
+            year: parseInt(item.releaseDate),
+        };
+    }
+
+    if (item.date && matchesFullDate(item.date)) {
+        return {
+            date: item.date,
+            year: parseInt(item.date.split('-')[0]),
+        };
+    } else if (item.date && matchesYearOnly(item.date)) {
+        return {
+            date: null,
+            year: parseInt(item.date),
+        };
+    }
+
+    return {
+        date: null,
+        year: null,
+    };
+};
+
+const normalizeOriginalDate = (item: {
+    date?: string;
+    originalDate?: string;
+    releaseDate?: string;
+}): { date: null | string; year: null | number } => {
+    if (item.originalDate && matchesFullDate(item.originalDate)) {
+        return {
+            date: item.originalDate,
+            year: parseInt(item.originalDate.split('-')[0]),
+        };
+    } else if (item.originalDate && matchesYearOnly(item.originalDate)) {
+        return {
+            date: null,
+            year: parseInt(item.originalDate),
+        };
+    }
+
+    if (item.releaseDate && matchesFullDate(item.releaseDate)) {
+        return {
+            date: item.releaseDate,
+            year: parseInt(item.releaseDate.split('-')[0]),
+        };
+    } else if (item.releaseDate && matchesYearOnly(item.releaseDate)) {
+        return {
+            date: null,
+            year: parseInt(item.releaseDate),
+        };
+    }
+
+    if (item.date && matchesFullDate(item.date)) {
+        return {
+            date: item.date,
+            year: parseInt(item.date.split('-')[0]),
+        };
+    } else if (item.date && matchesYearOnly(item.date)) {
+        return {
+            date: null,
+            year: parseInt(item.date),
+        };
+    }
+
+    return {
+        date: null,
+        year: null,
+    };
+};
+
 const getArtists = (
     item:
         | z.infer<typeof ndType._response.album>
         | z.infer<typeof ndType._response.playlistSong>
         | z.infer<typeof ndType._response.song>,
+    includeRemixers = true,
 ) => {
     let albumArtists: RelatedArtist[] | undefined;
     let artists: RelatedArtist[] | undefined;
+    let remixers: RelatedArtist[] | undefined;
     let participants: null | Record<string, RelatedArtist[]> = null;
 
     if (item.participants) {
         participants = {};
         for (const [role, list] of Object.entries(item.participants)) {
-            if (role === 'albumartist' || role === 'artist') {
+            if (role === 'albumartist' || role === 'artist' || role === 'remixer') {
                 const roleList = list.map((item) => ({
                     id: item.id,
                     imageId: null,
@@ -57,6 +149,8 @@ const getArtists = (
 
                 if (role === 'albumartist') {
                     albumArtists = roleList;
+                } else if (role === 'remixer' && includeRemixers) {
+                    remixers = roleList;
                 } else {
                     artists = roleList;
                 }
@@ -104,7 +198,7 @@ const getArtists = (
         ];
     }
 
-    if (artists === undefined) {
+    if (artists === undefined && (includeRemixers ? remixers === undefined : true)) {
         artists = [
             {
                 id: item.artistId,
@@ -117,12 +211,18 @@ const getArtists = (
         ];
     }
 
-    return { albumArtists, artists, participants };
+    return {
+        albumArtists,
+        artists: [...(artists || []), ...(includeRemixers ? remixers || [] : [])],
+        participants,
+    };
 };
 
 const normalizeSong = (
     item: z.infer<typeof ndType._response.playlistSong> | z.infer<typeof ndType._response.song>,
     server?: null | ServerListItem,
+    pathReplace?: string,
+    pathReplaceWith?: string,
 ): Song => {
     let id;
     let playlistItemId;
@@ -138,10 +238,11 @@ const normalizeSong = (
     return {
         album: item.album,
         albumId: item.albumId,
-        ...getArtists(item),
+        ...getArtists(item, true),
         _itemType: LibraryItem.SONG,
         _serverId: server?.id || 'unknown',
         _serverType: ServerType.NAVIDROME,
+        albumArtistName: item.albumArtist,
         artistName: item.artist,
         bitDepth: item.bitDepth || null,
         bitRate: item.bitRate,
@@ -185,19 +286,20 @@ const normalizeSong = (
         name: item.title,
         // Thankfully, Windows is merciful and allows a mix of separators. So, we can use the
         // POSIX separator here instead
-        path: (item.libraryPath ? item.libraryPath + '/' : '') + item.path,
+        path: item.path ? replacePathPrefix(item.path, pathReplace, pathReplaceWith) : null,
         peak:
             item.rgAlbumPeak || item.rgTrackPeak
                 ? { album: item.rgAlbumPeak, track: item.rgTrackPeak }
                 : null,
         playCount: item.playCount || 0,
         playlistItemId,
-        releaseDate: item.releaseDate ? new Date(item.releaseDate).toISOString() : null,
+        releaseDate: normalizeReleaseDate(item).date,
         releaseYear: item.year || null,
         sampleRate: item.sampleRate || null,
         size: item.size,
         tags: item.tags || null,
         trackNumber: item.trackNumber,
+        trackSubtitle: item.tags?.subtitle ? item.tags.subtitle.join(' · ') : null,
         updatedAt: item.updatedAt,
         userFavorite: item.starred || false,
         userRating: item.rating || null,
@@ -250,14 +352,19 @@ const normalizeAlbum = (
         songs?: z.infer<typeof ndType._response.songList>;
     },
     server?: null | ServerListItem,
+    pathReplace?: string,
+    pathReplaceWith?: string,
 ): Album => {
+    const releaseDate = normalizeReleaseDate(item);
+    const originalDate = normalizeOriginalDate(item);
+
     return {
         ...parseAlbumTags(item),
-        ...getArtists(item),
+        ...getArtists(item, false),
         _itemType: LibraryItem.ALBUM,
         _serverId: server?.id || 'unknown',
         _serverType: ServerType.NAVIDROME,
-        albumArtist: item.albumArtist,
+        albumArtistName: item.albumArtist,
         comment: item.comment || null,
         createdAt: item.createdAt,
         duration: item.duration !== undefined ? item.duration * 1000 : null,
@@ -285,13 +392,17 @@ const normalizeAlbum = (
         lastPlayedAt: normalizePlayDate(item),
         mbzId: item.mbzAlbumId || null,
         name: item.name,
-        originalDate: item.originalDate ? new Date(item.originalDate).toISOString() : null,
+        originalDate: originalDate.date,
+        originalYear: originalDate.year,
         playCount: item.playCount || 0,
-        releaseDate: item.releaseDate ? new Date(item.releaseDate).toISOString() : null,
-        releaseYear: item.maxYear || null,
+        releaseDate: releaseDate.date,
+        releaseType: item.mbzAlbumType || null,
+        releaseYear: releaseDate.year,
         size: item.size,
         songCount: item.songCount,
-        songs: item.songs ? item.songs.map((song) => normalizeSong(song, server)) : undefined,
+        songs: item.songs
+            ? item.songs.map((song) => normalizeSong(song, server, pathReplace, pathReplaceWith))
+            : undefined,
         tags: item.tags || null,
         updatedAt: item.updatedAt,
         userFavorite: item.starred || false,

@@ -2,13 +2,17 @@ import type { IpcRendererEvent } from 'electron';
 
 import { t } from 'i18next';
 import isElectron from 'is-electron';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import i18n, { languages } from '/@/i18n/i18n';
 import { ImageResolutionSettings } from '/@/renderer/features/settings/components/general/art-resolution-settings';
-import { ArtistSettings } from '/@/renderer/features/settings/components/general/artist-settings';
+import {
+    ArtistReleaseTypeSettings,
+    ArtistSettings,
+} from '/@/renderer/features/settings/components/general/artist-settings';
 import { HomeSettings } from '/@/renderer/features/settings/components/general/home-settings';
+import { PathSettings } from '/@/renderer/features/settings/components/general/path-settings';
 import {
     SettingOption,
     SettingsSection,
@@ -74,7 +78,7 @@ if (isElectron()) {
     });
 }
 
-export const ApplicationSettings = () => {
+export const ApplicationSettings = memo(() => {
     const { t } = useTranslation();
     const settings = useGeneralSettings();
     const fontSettings = useFontSettings();
@@ -606,10 +610,12 @@ export const ApplicationSettings = () => {
                     <ImageResolutionSettings />
                     <HomeSettings />
                     <ArtistSettings />
+                    <ArtistReleaseTypeSettings />
+                    <PathSettings />
                 </>
             }
             options={options}
             title={t('page.setting.application', { postProcess: 'sentenceCase' })}
         />
     );
-};
+});

@@ -12,16 +12,41 @@ import { Button } from '/@/shared/components/button/button';
 export type DraggableItemsProps<K, T> = {
     description: string;
     itemLabels: Array<[K, string]>;
+    items: T[];
     setItems: (items: T[]) => void;
-    settings: T[];
     title: string;
+};
+
+const mergeItems = <K extends string, T extends SortableItem<K>>(
+    items: T[],
+    itemLabels: Array<[string, string]>,
+): T[] => {
+    const allItemIds = itemLabels.map(([key]) => key);
+
+    const missingItemIds = allItemIds.filter((id) => !items.some((item) => item.id === id));
+
+    const merged = [
+        ...items,
+        ...(missingItemIds.map((id) => ({
+            disabled: true,
+            id,
+        })) as T[]),
+    ];
+
+    // Remove any duplicates
+    const uniqueMerged = merged.filter(
+        (item, index, self) => index === self.findIndex((t) => t.id === item.id),
+    );
+
+    // Remove any that don't match the itemLabels
+    return uniqueMerged.filter((item) => itemLabels.some(([key]) => key === item.id));
 };
 
 export const DraggableItems = <K extends string, T extends SortableItem<K>>({
     description,
     itemLabels,
+    items,
     setItems,
-    settings,
     title,
 }: DraggableItemsProps<K, T>) => {
     const { t } = useTranslation();
@@ -31,12 +56,12 @@ export const DraggableItems = <K extends string, T extends SortableItem<K>>({
     const translatedItemMap = useMemo(
         () =>
             Object.fromEntries(
-                itemLabels.map((label) => [label[0], t(label[1], { postProcess: 'sentenceCase' })]),
+                itemLabels.map(([key, value]) => [key, t(value, { postProcess: 'sentenceCase' })]),
             ) as Record<K, string>,
         [itemLabels, t],
     );
 
-    const [localItems, setLocalItems] = useState(settings);
+    const [localItems, setLocalItems] = useState(mergeItems(items, itemLabels));
 
     const handleChangeDisabled = useCallback((id: string, e: boolean) => {
         setLocalItems((items) =>
@@ -68,10 +93,10 @@ export const DraggableItems = <K extends string, T extends SortableItem<K>>({
     }, [description, keyword, title]);
 
     if (!shouldShow) {
-        return <></>;
+        return null;
     }
 
-    const isSaveButtonDisabled = isEqual(settings, localItems);
+    const isSaveButtonDisabled = isEqual(items, localItems);
 
     const handleSave = () => {
         setItems(localItems);

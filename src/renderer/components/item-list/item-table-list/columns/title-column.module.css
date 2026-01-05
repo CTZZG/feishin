@@ -16,3 +16,7 @@
 .name-container.large {
     -webkit-line-clamp: 3;
 }
+
+.active {
+    color: var(--theme-colors-primary);
+}

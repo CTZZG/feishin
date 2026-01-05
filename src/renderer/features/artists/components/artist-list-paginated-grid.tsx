@@ -55,7 +55,7 @@ export const ArtistListPaginatedGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.ARTIST, ItemListKey.ARTIST);
+    const rows = useGridRows(LibraryItem.ARTIST, ItemListKey.ARTIST, size);
 
     return (
         <ItemListWithPagination

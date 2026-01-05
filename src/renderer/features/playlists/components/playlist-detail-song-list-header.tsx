@@ -94,7 +94,12 @@ export const PlaylistDetailSongListHeader = ({
             ) : (
                 <LibraryHeader
                     imageUrl={imageUrl}
-                    item={{ route: AppRoute.PLAYLISTS, type: LibraryItem.PLAYLIST }}
+                    item={{
+                        imageId: detailQuery?.data?.imageId,
+                        imageUrl: detailQuery?.data?.imageUrl,
+                        route: AppRoute.PLAYLISTS,
+                        type: LibraryItem.PLAYLIST,
+                    }}
                     title={detailQuery?.data?.name}
                 >
                     <LibraryHeaderMenu

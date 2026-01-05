@@ -50,7 +50,7 @@ export const GenreListInfiniteGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.GENRE, ItemListKey.GENRE);
+    const rows = useGridRows(LibraryItem.GENRE, ItemListKey.GENRE, size);
 
     return (
         <ItemGridList

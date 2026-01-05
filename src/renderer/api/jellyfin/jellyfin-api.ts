@@ -9,6 +9,7 @@ import packageJson from '../../../../package.json';
 import i18n from '/@/i18n/i18n';
 import { authenticationFailure } from '/@/renderer/api/utils';
 import { useAuthStore } from '/@/renderer/store';
+import { getServerUrl } from '/@/renderer/utils/normalize-server-url';
 import { jfType } from '/@/shared/api/jellyfin/jellyfin-types';
 import { getClientType } from '/@/shared/api/utils';
 import { ServerListItemWithCredential } from '/@/shared/types/domain-types';
@@ -408,7 +409,8 @@ export const jfApiClient = (args: {
             const { params, path: api } = parsePath(path);
 
             if (server) {
-                baseUrl = `${server?.url}`;
+                const serverUrl = getServerUrl(server);
+                baseUrl = serverUrl;
                 token = server?.credential;
             } else {
                 baseUrl = url;

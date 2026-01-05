@@ -27,7 +27,11 @@
 .metadata-column {
     display: flex;
     flex-direction: column;
+    flex-wrap: wrap;
     grid-area: metadata;
+    gap: var(--theme-spacing-xl);
+    align-items: center;
+    text-align: center;
 }
 
 .songs-column {
@@ -50,6 +54,47 @@
 
     @mixin dark {
         border-color: rgb(255 255 255 / 5%);
+    }
+}
+
+.external-links-group {
+    justify-content: center;
+}
+
+.metadata-pill-group {
+    align-items: center;
+}
+
+.pill-group-wrapper {
+    display: flex;
+    width: 100%;
+
+    & > div {
+        justify-content: center;
+    }
+}
+
+@container (min-width: $mantine-breakpoint-sm) {
+    .metadata-column {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .external-links-group {
+        justify-content: flex-start;
+    }
+
+    .metadata-pill-group {
+        align-items: flex-start;
+    }
+
+    .pill-group-wrapper {
+        justify-content: flex-start;
+
+        & > div {
+            justify-content: flex-start;
+        }
     }
 }
 

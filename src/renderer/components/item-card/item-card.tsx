@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { AnimatePresence } from 'motion/react';
-import { Fragment, memo, ReactNode, useState } from 'react';
+import { Fragment, memo, ReactNode, useCallback, useMemo, useState } from 'react';
 import { generatePath, Link } from 'react-router';
 
 import styles from './item-card.module.css';
@@ -16,9 +16,10 @@ import {
     useItemSelectionState,
 } from '/@/renderer/components/item-list/helpers/item-list-state';
 import { ItemControls } from '/@/renderer/components/item-list/types';
+import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { useDragDrop } from '/@/renderer/hooks/use-drag-drop';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useGeneralSettings } from '/@/renderer/store';
+import { useShowRatings } from '/@/renderer/store';
 import {
     formatDateAbsolute,
     formatDateAbsoluteUTC,
@@ -26,6 +27,7 @@ import {
     formatDurationString,
     formatRating,
 } from '/@/renderer/utils/format';
+import { SEPARATOR_STRING } from '/@/shared/api/utils';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
 import { Separator } from '/@/shared/components/separator/separator';
@@ -76,14 +78,14 @@ export const ItemCard = ({
     type = 'poster',
     withControls,
 }: ItemCardProps) => {
-    const { showRatings } = useGeneralSettings();
+    const showRatings = useShowRatings();
     const imageUrl = getImageUrl(data);
     const rows = providedRows || [];
 
     switch (type) {
         case 'compact':
             return (
-                <CompactItemCard
+                <MemoizedCompactItemCard
                     controls={controls}
                     data={data}
                     enableDrag={enableDrag}
@@ -100,7 +102,7 @@ export const ItemCard = ({
             );
         case 'poster':
             return (
-                <PosterItemCard
+                <MemoizedPosterItemCard
                     controls={controls}
                     data={data}
                     enableDrag={enableDrag}
@@ -118,7 +120,7 @@ export const ItemCard = ({
         case 'default':
         default:
             return (
-                <DefaultItemCard
+                <MemoizedDefaultItemCard
                     controls={controls}
                     data={data}
                     enableDrag={enableDrag}
@@ -166,46 +168,64 @@ const CompactItemCard = ({
             : undefined;
     const isSelected = useItemSelectionState(internalState, itemRowId || undefined);
 
-    const { isDragging: isDraggingLocal, ref } = useDragDrop<HTMLDivElement>({
-        drag: {
-            getId: () => {
-                if (!data) {
-                    return [];
-                }
+    const getId = useCallback(() => {
+        if (!data) {
+            return [];
+        }
 
-                const draggedItems = getDraggedItems(data, internalState);
-                return draggedItems.map((item) => item.id);
-            },
-            getItem: () => {
-                if (!data) {
-                    return [];
-                }
+        const draggedItems = getDraggedItems(data, internalState);
+        return draggedItems.map((item) => item.id);
+    }, [data, internalState]);
 
-                const draggedItems = getDraggedItems(data, internalState);
-                return draggedItems;
-            },
+    const getItem = useCallback(() => {
+        if (!data) {
+            return [];
+        }
+
+        const draggedItems = getDraggedItems(data, internalState);
+        return draggedItems;
+    }, [data, internalState]);
+
+    const onDragStart = useCallback(() => {
+        if (!data) {
+            return;
+        }
+
+        const draggedItems = getDraggedItems(data, internalState);
+        if (internalState) {
+            internalState.setDragging(draggedItems);
+        }
+    }, [data, internalState]);
+
+    const onDrop = useCallback(() => {
+        if (internalState) {
+            internalState.setDragging([]);
+        }
+    }, [internalState]);
+
+    const dragOperation = useMemo(
+        () =>
+            itemType === LibraryItem.QUEUE_SONG
+                ? [DragOperation.REORDER, DragOperation.ADD]
+                : [DragOperation.ADD],
+        [itemType],
+    );
+
+    const drag = useMemo(
+        () => ({
+            getId,
+            getItem,
             itemType,
-            onDragStart: () => {
-                if (!data) {
-                    return;
-                }
-
-                const draggedItems = getDraggedItems(data, internalState);
-                if (internalState) {
-                    internalState.setDragging(draggedItems);
-                }
-            },
-            onDrop: () => {
-                if (internalState) {
-                    internalState.setDragging([]);
-                }
-            },
-            operation:
-                itemType === LibraryItem.QUEUE_SONG
-                    ? [DragOperation.REORDER, DragOperation.ADD]
-                    : [DragOperation.ADD],
+            onDragStart,
+            onDrop,
+            operation: dragOperation,
             target: DragTarget.ALBUM,
-        },
+        }),
+        [getId, getItem, itemType, onDragStart, onDrop, dragOperation],
+    );
+
+    const { isDragging: isDraggingLocal, ref } = useDragDrop<HTMLDivElement>({
+        drag,
         isEnabled: !!enableDrag && !!data,
     });
 
@@ -313,9 +333,10 @@ const CompactItemCard = ({
                     className={clsx(styles.image, {
                         [styles.isRound]: isRound,
                     })}
-                    id={data?.id}
+                    id={data?.imageId}
                     itemType={itemType}
                     src={(data as Album | AlbumArtist | Playlist | Song)?.imageUrl}
+                    type="itemCard"
                 />
                 {isFavorite && <div className={styles.favoriteBadge} />}
                 {hasRating && <div className={styles.ratingBadge}>{userRating}</div>}
@@ -327,7 +348,7 @@ const CompactItemCard = ({
                             internalState={internalState}
                             item={data}
                             itemType={itemType}
-                            showRating={hasRating}
+                            showRating={showRating}
                             type="compact"
                         />
                     )}
@@ -531,9 +552,10 @@ const DefaultItemCard = ({
             <>
                 <ItemImage
                     className={clsx(styles.image, { [styles.isRound]: isRound })}
-                    id={data?.id}
+                    id={data?.imageId}
                     itemType={itemType}
                     src={(data as Album | AlbumArtist | Playlist | Song)?.imageUrl}
+                    type="itemCard"
                 />
                 {isFavorite && <div className={styles.favoriteBadge} />}
                 {hasRating && <div className={styles.ratingBadge}>{userRating}</div>}
@@ -648,46 +670,64 @@ const PosterItemCard = ({
             : undefined;
     const isSelected = useItemSelectionState(internalState, itemRowId || undefined);
 
-    const { isDragging: isDraggingLocal, ref } = useDragDrop<HTMLDivElement>({
-        drag: {
-            getId: () => {
-                if (!data) {
-                    return [];
-                }
+    const getId = useCallback(() => {
+        if (!data) {
+            return [];
+        }
 
-                const draggedItems = getDraggedItems(data, internalState);
-                return draggedItems.map((item) => item.id);
-            },
-            getItem: () => {
-                if (!data) {
-                    return [];
-                }
+        const draggedItems = getDraggedItems(data, internalState);
+        return draggedItems.map((item) => item.id);
+    }, [data, internalState]);
 
-                const draggedItems = getDraggedItems(data, internalState);
-                return draggedItems;
-            },
+    const getItem = useCallback(() => {
+        if (!data) {
+            return [];
+        }
+
+        const draggedItems = getDraggedItems(data, internalState);
+        return draggedItems;
+    }, [data, internalState]);
+
+    const onDragStart = useCallback(() => {
+        if (!data) {
+            return;
+        }
+
+        const draggedItems = getDraggedItems(data, internalState);
+        if (internalState) {
+            internalState.setDragging(draggedItems);
+        }
+    }, [data, internalState]);
+
+    const onDrop = useCallback(() => {
+        if (internalState) {
+            internalState.setDragging([]);
+        }
+    }, [internalState]);
+
+    const dragOperation = useMemo(
+        () =>
+            itemType === LibraryItem.QUEUE_SONG
+                ? [DragOperation.REORDER, DragOperation.ADD]
+                : [DragOperation.ADD],
+        [itemType],
+    );
+
+    const drag = useMemo(
+        () => ({
+            getId,
+            getItem,
             itemType,
-            onDragStart: () => {
-                if (!data) {
-                    return;
-                }
-
-                const draggedItems = getDraggedItems(data, internalState);
-                if (internalState) {
-                    internalState.setDragging(draggedItems);
-                }
-            },
-            onDrop: () => {
-                if (internalState) {
-                    internalState.setDragging([]);
-                }
-            },
-            operation:
-                itemType === LibraryItem.QUEUE_SONG
-                    ? [DragOperation.REORDER, DragOperation.ADD]
-                    : [DragOperation.ADD],
+            onDragStart,
+            onDrop,
+            operation: dragOperation,
             target: DragTarget.ALBUM,
-        },
+        }),
+        [getId, getItem, itemType, onDragStart, onDrop, dragOperation],
+    );
+
+    const { isDragging: isDraggingLocal, ref } = useDragDrop<HTMLDivElement>({
+        drag,
         isEnabled: !!enableDrag && !!data,
     });
 
@@ -796,6 +836,7 @@ const PosterItemCard = ({
                     id={(data as { imageId: string })?.imageId}
                     itemType={itemType}
                     src={(data as { imageUrl: string })?.imageUrl}
+                    type="itemCard"
                 />
                 {isFavorite && <div className={styles.favoriteBadge} />}
                 {hasRating && <div className={styles.ratingBadge}>{userRating}</div>}
@@ -895,7 +936,16 @@ const PosterItemCard = ({
     );
 };
 
-export const getDataRows = (): DataRow[] => {
+const MemoizedPosterItemCard = memo(PosterItemCard);
+MemoizedPosterItemCard.displayName = 'MemoizedPosterItemCard';
+
+const MemoizedCompactItemCard = memo(CompactItemCard);
+MemoizedCompactItemCard.displayName = 'MemoizedCompactItemCard';
+
+const MemoizedDefaultItemCard = memo(DefaultItemCard);
+MemoizedDefaultItemCard.displayName = 'MemoizedDefaultItemCard';
+
+export const getDataRows = (type?: 'compact' | 'default' | 'poster'): DataRow[] => {
     return [
         {
             format: (data) => {
@@ -953,21 +1003,18 @@ export const getDataRows = (): DataRow[] => {
         {
             format: (data) => {
                 if ('albumArtists' in data && Array.isArray(data.albumArtists)) {
-                    return (data as Album | Song).albumArtists.map((artist, index) => (
-                        <Fragment key={artist.id}>
-                            <Link
-                                state={{ item: artist }}
-                                to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL, {
-                                    albumArtistId: artist.id,
-                                })}
-                            >
-                                {artist.name}
-                            </Link>
-                            {index < (data as Album | Song).albumArtists.length - 1 && (
-                                <Separator />
-                            )}
-                        </Fragment>
-                    ));
+                    return (
+                        <JoinedArtists
+                            artistName={data.albumArtistName}
+                            artists={data.albumArtists}
+                            linkProps={{ fw: 400, isMuted: true }}
+                            rootTextProps={{
+                                fw: 400,
+                                isMuted: type === 'compact' ? false : true,
+                                size: 'sm',
+                            }}
+                        />
+                    );
                 }
                 return '';
             },
@@ -1008,7 +1055,17 @@ export const getDataRows = (): DataRow[] => {
         {
             format: (data) => {
                 if ('releaseYear' in data && data.releaseYear !== null) {
-                    return String(data.releaseYear);
+                    const releaseYear = data.releaseYear;
+                    const originalYear =
+                        'originalYear' in data && data.originalYear !== null
+                            ? data.originalYear
+                            : null;
+
+                    if (originalYear !== null && originalYear !== releaseYear) {
+                        return `♫ ${originalYear}${SEPARATOR_STRING}${releaseYear}`;
+                    }
+
+                    return String(releaseYear);
                 }
                 return '';
             },
@@ -1017,7 +1074,15 @@ export const getDataRows = (): DataRow[] => {
         {
             format: (data) => {
                 if ('releaseDate' in data && data.releaseDate) {
-                    return formatDateAbsoluteUTC(data.releaseDate);
+                    if (
+                        'originalDate' in data &&
+                        data.originalDate &&
+                        data.originalDate !== data.releaseDate
+                    ) {
+                        return `♫ ${formatDateAbsoluteUTC(data.originalDate)}${SEPARATOR_STRING}${formatDateAbsoluteUTC(data.releaseDate)}`;
+                    }
+
+                    return `${formatDateAbsoluteUTC(data.releaseDate)}`;
                 }
                 return '';
             },
@@ -1107,7 +1172,7 @@ export const getDataRows = (): DataRow[] => {
         {
             format: (data) => {
                 if ('albumCount' in data && data.albumCount !== null) {
-                    return String(data.albumCount);
+                    return i18n.t('entity.albumWithCount', { count: data.albumCount });
                 }
                 return '';
             },
@@ -1162,56 +1227,67 @@ const getItemNavigationPath = (
     return getTitlePath(effectiveItemType, data.id);
 };
 
-const ItemCardRow = ({
-    data,
-    index,
-    row,
-    type,
-}: {
-    data: Album | AlbumArtist | Artist | Playlist | Song | undefined;
-    index: number;
-    row: DataRow;
-    type?: 'compact' | 'default' | 'poster';
-}) => {
-    const alignmentClass =
-        row.align === 'center'
-            ? styles['align-center']
-            : row.align === 'end'
-              ? styles['align-end']
-              : styles['align-start'];
+const ItemCardRow = memo(
+    ({
+        data,
+        index,
+        row,
+        type,
+    }: {
+        data: Album | AlbumArtist | Artist | Playlist | Song | undefined;
+        index: number;
+        row: DataRow;
+        type?: 'compact' | 'default' | 'poster';
+    }) => {
+        const alignmentClass =
+            row.align === 'center'
+                ? styles['align-center']
+                : row.align === 'end'
+                  ? styles['align-end']
+                  : styles['align-start'];
 
-    // All rows except the first one (index 0) should be muted
-    const isMuted = index > 0 || row.isMuted;
+        // All rows except the first one (index 0) should be muted
+        const isMuted = index > 0 || row.isMuted;
 
-    if (!data) {
+        const formattedContent = useMemo(() => {
+            if (!data) {
+                return null;
+            }
+            return row.format(data);
+        }, [data, row]);
+
+        if (!data) {
+            return (
+                <div
+                    className={clsx(styles.row, alignmentClass, {
+                        [styles.compact]: type === 'compact',
+                        [styles.default]: type === 'default',
+                        [styles.muted]: isMuted,
+                        [styles.poster]: type === 'poster',
+                    })}
+                >
+                    &nbsp;
+                </div>
+            );
+        }
+
         return (
-            <div
+            <Text
                 className={clsx(styles.row, alignmentClass, {
+                    [styles.bold]: index === 0,
                     [styles.compact]: type === 'compact',
                     [styles.default]: type === 'default',
                     [styles.muted]: isMuted,
                     [styles.poster]: type === 'poster',
                 })}
+                size={index > 0 ? 'sm' : 'md'}
             >
-                &nbsp;
-            </div>
+                {formattedContent}
+            </Text>
         );
-    }
+    },
+);
 
-    return (
-        <Text
-            className={clsx(styles.row, alignmentClass, {
-                [styles.bold]: index === 0,
-                [styles.compact]: type === 'compact',
-                [styles.default]: type === 'default',
-                [styles.muted]: isMuted,
-                [styles.poster]: type === 'poster',
-            })}
-            size={index > 0 ? 'sm' : 'md'}
-        >
-            {row.format(data)}
-        </Text>
-    );
-};
+ItemCardRow.displayName = 'ItemCardRow';
 
 export const MemoizedItemCard = memo(ItemCard);

@@ -1,10 +1,11 @@
-import { ConstructorOptions } from 'audiomotion-analyzer';
 import butterchurnPresets from 'butterchurn-presets';
+import { nanoid } from 'nanoid';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import styles from './visualizer-settings-form.module.css';
 
+import i18n from '/@/i18n/i18n';
 import { useSettingsStoreActions, useVisualizerSettings } from '/@/renderer/store/settings.store';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Button } from '/@/shared/components/button/button';
@@ -24,41 +25,50 @@ import { Text } from '/@/shared/components/text/text';
 import { Textarea } from '/@/shared/components/textarea/textarea';
 import { toast } from '/@/shared/components/toast/toast';
 
-const modeOptions: { label: string; value: ConstructorOptions['mode'] | string }[] = [
-    { label: '[0] Bars', value: '0' },
-    { label: '[1] Circle', value: '1' },
-    { label: '[2] Wave', value: '2' },
-    { label: '[3] Rainbow', value: '3' },
-    { label: '[4] Rings', value: '4' },
-    { label: '[5] Mirror', value: '5' },
-    { label: '[6] Line', value: '6' },
-    { label: '[7] Particles', value: '7' },
-    { label: '[8] Full octave / 10 bands', value: '8' },
-    { label: '[10] Outline bars', value: '10' },
+const modeOptions: { label: string; value: string }[] = [
+    { label: i18n.t('visualizer.options.mode.0') as string, value: '0' },
+    { label: i18n.t('visualizer.options.mode.1') as string, value: '1' },
+    { label: i18n.t('visualizer.options.mode.2') as string, value: '2' },
+    { label: i18n.t('visualizer.options.mode.3') as string, value: '3' },
+    { label: i18n.t('visualizer.options.mode.4') as string, value: '4' },
+    { label: i18n.t('visualizer.options.mode.5') as string, value: '5' },
+    { label: i18n.t('visualizer.options.mode.6') as string, value: '6' },
+    { label: i18n.t('visualizer.options.mode.7') as string, value: '7' },
+    { label: i18n.t('visualizer.options.mode.8') as string, value: '8' },
+    { label: i18n.t('visualizer.options.mode.10') as string, value: '10' },
 ];
 
-const colorModeOptions: { label: string; value: ConstructorOptions['colorMode'] }[] = [
-    { label: 'Gradient', value: 'gradient' },
-    { label: 'Bar-Index', value: 'bar-index' },
-    { label: 'Bar-Level', value: 'bar-level' },
+const colorModeOptions: { label: string; value: string }[] = [
+    { label: i18n.t('visualizer.options.colorMode.gradient') as string, value: 'gradient' },
+    { label: i18n.t('visualizer.options.colorMode.barIndex') as string, value: 'bar-index' },
+    { label: i18n.t('visualizer.options.colorMode.barLevel') as string, value: 'bar-level' },
 ];
 
-const gradientOptions: { label: string; value: ConstructorOptions['gradient'] }[] = [
-    { label: 'Classic', value: 'classic' },
-    { label: 'Prism', value: 'prism' },
-    { label: 'Rainbow', value: 'rainbow' },
-    { label: 'Steelblue', value: 'steelblue' },
-    { label: 'Orangered', value: 'orangered' },
+const gradientOptions: { label: string; value: string }[] = [
+    { label: i18n.t('visualizer.options.gradient.classic') as string, value: 'classic' },
+    { label: i18n.t('visualizer.options.gradient.prism') as string, value: 'prism' },
+    { label: i18n.t('visualizer.options.gradient.rainbow') as string, value: 'rainbow' },
+    { label: i18n.t('visualizer.options.gradient.steelblue') as string, value: 'steelblue' },
+    { label: i18n.t('visualizer.options.gradient.orangered') as string, value: 'orangered' },
 ];
 
-const channelLayoutOptions: { label: string; value: ConstructorOptions['channelLayout'] }[] = [
-    { label: 'Single', value: 'single' },
-    { label: 'Dual-Combined', value: 'dual-combined' },
-    { label: 'Dual-Horizontal', value: 'dual-horizontal' },
-    { label: 'Dual-Vertical', value: 'dual-vertical' },
+const channelLayoutOptions: { label: string; value: string }[] = [
+    { label: i18n.t('visualizer.options.channelLayout.single') as string, value: 'single' },
+    {
+        label: i18n.t('visualizer.options.channelLayout.dualCombined') as string,
+        value: 'dual-combined',
+    },
+    {
+        label: i18n.t('visualizer.options.channelLayout.dualHorizontal') as string,
+        value: 'dual-horizontal',
+    },
+    {
+        label: i18n.t('visualizer.options.channelLayout.dualVertical') as string,
+        value: 'dual-vertical',
+    },
 ];
 
-const fftSizeOptions: { label: string; value: ConstructorOptions['fftSize'] | string }[] = [
+const fftSizeOptions: { label: string; value: string }[] = [
     { label: '1024', value: '1024' },
     { label: '2048', value: '2048' },
     { label: '4096', value: '4096' },
@@ -67,20 +77,20 @@ const fftSizeOptions: { label: string; value: ConstructorOptions['fftSize'] | st
     { label: '32768', value: '32768' },
 ];
 
-const frequencyScaleOptions: { label: string; value: ConstructorOptions['frequencyScale'] }[] = [
-    { label: 'Bark', value: 'bark' },
-    { label: 'Linear', value: 'linear' },
-    { label: 'Log', value: 'log' },
-    { label: 'Mel', value: 'mel' },
+const frequencyScaleOptions: { label: string; value: string }[] = [
+    { label: i18n.t('visualizer.options.frequencyScale.bark') as string, value: 'bark' },
+    { label: i18n.t('visualizer.options.frequencyScale.linear') as string, value: 'linear' },
+    { label: i18n.t('visualizer.options.frequencyScale.log') as string, value: 'log' },
+    { label: i18n.t('visualizer.options.frequencyScale.mel') as string, value: 'mel' },
 ];
 
 const weightingFilterOptions = [
-    { label: 'None', value: '' },
-    { label: 'A', value: 'A' },
-    { label: 'B', value: 'B' },
-    { label: 'C', value: 'C' },
-    { label: 'D', value: 'D' },
-    { label: 'Z', value: 'Z' },
+    { label: i18n.t('visualizer.options.weightingFilter.none') as string, value: '' },
+    { label: i18n.t('visualizer.options.weightingFilter.a') as string, value: 'A' },
+    { label: i18n.t('visualizer.options.weightingFilter.b') as string, value: 'B' },
+    { label: i18n.t('visualizer.options.weightingFilter.C') as string, value: 'C' },
+    { label: i18n.t('visualizer.options.weightingFilter.D') as string, value: 'D' },
+    { label: i18n.t('visualizer.options.weightingFilter.z') as string, value: 'Z' },
 ];
 
 const minFreqOptions = [
@@ -118,9 +128,7 @@ const useUpdateAudioMotionAnalyzer = () => {
     ) => {
         setSettings({
             visualizer: {
-                ...visualizer,
                 audiomotionanalyzer: {
-                    ...visualizer.audiomotionanalyzer,
                     [property]: value,
                 },
             },
@@ -140,9 +148,7 @@ const useUpdateButterchurn = () => {
     ) => {
         setSettings({
             visualizer: {
-                ...visualizer,
                 butterchurn: {
-                    ...visualizer.butterchurn,
                     [property]: value,
                 },
             },
@@ -168,7 +174,6 @@ export const VisualizerSettingsForm = () => {
     const handleTypeChange = (value: string) => {
         setSettings({
             visualizer: {
-                ...visualizer,
                 type: value as 'audiomotionanalyzer' | 'butterchurn',
             },
         });
@@ -381,14 +386,15 @@ const PresetSettings = () => {
     const { setSettings } = useSettingsStoreActions();
     const [selectedPreset, setSelectedPreset] = useState<null | string>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(false);
     const [newPresetName, setNewPresetName] = useState('');
     const [isPasting, setIsPasting] = useState(false);
     const [pasteValue, setPasteValue] = useState('');
 
-    const applyPreset = (presetName: null | string) => {
-        if (!presetName) return;
+    const applyPreset = (presetId: null | string) => {
+        if (!presetId) return;
 
-        const preset = visualizer.audiomotionanalyzer.presets.find((p) => p.name === presetName);
+        const preset = visualizer.audiomotionanalyzer.presets.find((p) => p.id === presetId);
 
         if (!preset) return;
 
@@ -421,6 +427,7 @@ const PresetSettings = () => {
             mirror: 0.0,
             mode: 0,
             noteLabels: false,
+            opacity: 1,
             outlineBars: false,
             peakFadeTime: 750,
             peakHoldTime: 500,
@@ -453,9 +460,7 @@ const PresetSettings = () => {
 
         setSettings({
             visualizer: {
-                ...visualizer,
                 audiomotionanalyzer: {
-                    ...visualizer.audiomotionanalyzer,
                     ...presetValue,
                 },
             },
@@ -480,7 +485,7 @@ const PresetSettings = () => {
         if (existingPreset) {
             // Update existing preset
             const updatedPresets = visualizer.audiomotionanalyzer.presets.map((p) =>
-                p.name === newPresetName.trim()
+                p.id === existingPreset.id
                     ? {
                           ...p,
                           value: getCurrentSettingsAsPresetValue(),
@@ -490,34 +495,34 @@ const PresetSettings = () => {
 
             setSettings({
                 visualizer: {
-                    ...visualizer,
                     audiomotionanalyzer: {
-                        ...visualizer.audiomotionanalyzer,
                         presets: updatedPresets,
                     },
                 },
             });
+
+            setSelectedPreset(existingPreset.id);
         } else {
             // Add new preset
             const newPreset = {
+                id: nanoid(),
                 name: newPresetName.trim(),
                 value: getCurrentSettingsAsPresetValue(),
             };
 
             setSettings({
                 visualizer: {
-                    ...visualizer,
                     audiomotionanalyzer: {
-                        ...visualizer.audiomotionanalyzer,
                         presets: [...visualizer.audiomotionanalyzer.presets, newPreset],
                     },
                 },
             });
+
+            setSelectedPreset(newPreset.id);
         }
 
         setNewPresetName('');
         setIsSaving(false);
-        setSelectedPreset(newPresetName.trim());
     };
 
     const getCurrentSettingsAsPresetValue = () => {
@@ -527,6 +532,7 @@ const PresetSettings = () => {
             barSpace: visualizer.audiomotionanalyzer.barSpace,
             channelLayout: visualizer.audiomotionanalyzer.channelLayout,
             colorMode: visualizer.audiomotionanalyzer.colorMode,
+            customGradients: visualizer.audiomotionanalyzer.customGradients,
             fadePeaks: visualizer.audiomotionanalyzer.fadePeaks,
             fftSize: visualizer.audiomotionanalyzer.fftSize,
             fillAlpha: visualizer.audiomotionanalyzer.fillAlpha,
@@ -549,6 +555,7 @@ const PresetSettings = () => {
             mirror: visualizer.audiomotionanalyzer.mirror,
             mode: visualizer.audiomotionanalyzer.mode,
             noteLabels: visualizer.audiomotionanalyzer.noteLabels,
+            opacity: visualizer.audiomotionanalyzer.opacity,
             outlineBars: visualizer.audiomotionanalyzer.outlineBars,
             peakFadeTime: visualizer.audiomotionanalyzer.peakFadeTime,
             peakHoldTime: visualizer.audiomotionanalyzer.peakHoldTime,
@@ -575,12 +582,38 @@ const PresetSettings = () => {
     };
 
     const handleUpdatePreset = () => {
-        if (!selectedPreset) return;
+        if (!selectedPreset || !newPresetName.trim()) return;
+
+        const selectedPresetObj = visualizer.audiomotionanalyzer.presets.find(
+            (p) => p.id === selectedPreset,
+        );
+        if (!selectedPresetObj) return;
+
+        let trimmedName = newPresetName.trim();
+        const isRenaming = trimmedName !== selectedPresetObj.name;
+
+        if (isRenaming) {
+            const existingNames = visualizer.audiomotionanalyzer.presets
+                .filter((p) => p.id !== selectedPreset)
+                .map((p) => p.name);
+
+            if (existingNames.includes(trimmedName)) {
+                const pattern = /^(.+?)(\s+\((\d+)\))?$/;
+                const match = trimmedName.match(pattern);
+                const baseName = match ? match[1] : trimmedName;
+                let counter = 1;
+                while (existingNames.includes(`${baseName} (${counter})`)) {
+                    counter++;
+                }
+                trimmedName = `${baseName} (${counter})`;
+            }
+        }
 
         const updatedPresets = visualizer.audiomotionanalyzer.presets.map((p) =>
-            p.name === selectedPreset
+            p.id === selectedPreset
                 ? {
                       ...p,
+                      name: trimmedName,
                       value: getCurrentSettingsAsPresetValue(),
                   }
                 : p,
@@ -595,20 +628,21 @@ const PresetSettings = () => {
                 },
             },
         });
+
+        setNewPresetName('');
+        setIsRenaming(false);
     };
 
     const handleDeletePreset = () => {
         if (!selectedPreset) return;
 
         const updatedPresets = visualizer.audiomotionanalyzer.presets.filter(
-            (p) => p.name !== selectedPreset,
+            (p) => p.id !== selectedPreset,
         );
 
         setSettings({
             visualizer: {
-                ...visualizer,
                 audiomotionanalyzer: {
-                    ...visualizer.audiomotionanalyzer,
                     presets: updatedPresets,
                 },
             },
@@ -673,6 +707,7 @@ const PresetSettings = () => {
                 mirror: 0.0,
                 mode: 0,
                 noteLabels: false,
+                opacity: 1,
                 outlineBars: false,
                 peakFadeTime: 750,
                 peakHoldTime: 500,
@@ -697,16 +732,47 @@ const PresetSettings = () => {
                 weightingFilter: '' as const,
             };
 
+            const pastedCustomGradients = Array.isArray(parsed.customGradients)
+                ? parsed.customGradients
+                : [];
+
+            const parsedWithoutCustomGradients = { ...parsed };
+            delete parsedWithoutCustomGradients.customGradients;
+
+            // Determine the channel layout from the pasted config (or use default)
+            const pastedChannelLayout = parsed.channelLayout || initialDefaults.channelLayout;
+
+            // Get the gradient values that would be used based on channel layout
+            const gradientNamesToCheck: (string | undefined)[] = [];
+            if (pastedChannelLayout === 'single') {
+                gradientNamesToCheck.push(parsed.gradient);
+            } else {
+                gradientNamesToCheck.push(parsed.gradientLeft, parsed.gradientRight);
+            }
+
+            // Check if any of the gradient names match custom gradients in the pasted config
+            const pastedCustomGradientNames = pastedCustomGradients.map((g) => g.name);
+            const isUsingCustomGradient = gradientNamesToCheck.some(
+                (gradientName) => gradientName && pastedCustomGradientNames.includes(gradientName),
+            );
+
+            // Only append custom gradients if they're actually being used in the configuration
+            const customGradientsToUse = isUsingCustomGradient
+                ? [
+                      ...(visualizer.audiomotionanalyzer.customGradients || []),
+                      ...pastedCustomGradients,
+                  ]
+                : pastedCustomGradients;
+
             const configValue = {
                 ...initialDefaults,
-                ...parsed,
+                ...parsedWithoutCustomGradients,
+                customGradients: customGradientsToUse,
             };
 
             setSettings({
                 visualizer: {
-                    ...visualizer,
                     audiomotionanalyzer: {
-                        ...visualizer.audiomotionanalyzer,
                         ...configValue,
                     },
                 },
@@ -740,7 +806,7 @@ const PresetSettings = () => {
     const presetOptions = useMemo(() => {
         return visualizer.audiomotionanalyzer.presets.map((preset) => ({
             label: preset.name,
-            value: preset.name,
+            value: preset.id,
         }));
     }, [visualizer.audiomotionanalyzer.presets]);
 
@@ -783,6 +849,36 @@ const PresetSettings = () => {
                             </Button>
                         </Group>
                     </Group>
+                ) : isRenaming ? (
+                    <Group grow>
+                        <TextInput
+                            autoFocus
+                            label={t('visualizer.presetName')}
+                            onChange={(e) => setNewPresetName(e.currentTarget.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleUpdatePreset();
+                                } else if (e.key === 'Escape') {
+                                    setIsRenaming(false);
+                                    setNewPresetName('');
+                                }
+                            }}
+                            placeholder={t('visualizer.presetNamePlaceholder')}
+                            value={newPresetName}
+                        />
+                        <Group style={{ alignSelf: 'flex-end' }}>
+                            <Button onClick={() => setIsRenaming(false)} variant="subtle">
+                                {t('common.cancel', { postProcess: 'titleCase' })}
+                            </Button>
+                            <Button
+                                disabled={!newPresetName.trim()}
+                                onClick={handleUpdatePreset}
+                                variant="filled"
+                            >
+                                {t('common.save', { postProcess: 'titleCase' })}
+                            </Button>
+                        </Group>
+                    </Group>
                 ) : isPasting ? (
                     <Stack>
                         <Textarea
@@ -792,6 +888,7 @@ const PresetSettings = () => {
                             minRows={5}
                             onChange={(e) => setPasteValue(e.currentTarget.value)}
                             placeholder={t('visualizer.pasteConfigurationPlaceholder')}
+                            spellCheck={false}
                             value={pasteValue}
                         />
                         <Group>
@@ -817,7 +914,18 @@ const PresetSettings = () => {
                         </Button>
                         {selectedPreset && (
                             <>
-                                <Button onClick={handleUpdatePreset} variant="default">
+                                <Button
+                                    onClick={() => {
+                                        const preset = visualizer.audiomotionanalyzer.presets.find(
+                                            (p) => p.id === selectedPreset,
+                                        );
+                                        if (preset) {
+                                            setNewPresetName(preset.name);
+                                            setIsRenaming(true);
+                                        }
+                                    }}
+                                    variant="default"
+                                >
                                     {t('visualizer.updatePreset')}
                                 </Button>
                                 <Button onClick={handleDeletePreset} variant="subtle">
@@ -844,34 +952,6 @@ const GeneralSettings = () => {
 
     const isMode18Disabled = visualizer.audiomotionanalyzer.mode > 8;
     const isMode10Disabled = visualizer.audiomotionanalyzer.mode !== 10;
-
-    const getModeKey = (value: string) => {
-        const modeMap: Record<string, string> = {
-            '0': 'bars',
-            '1': 'circle',
-            '2': 'wave',
-            '3': 'rainbow',
-            '4': 'rings',
-            '5': 'mirror',
-            '6': 'line',
-            '7': 'particles',
-            '8': 'fullOctave',
-            '10': 'outlineBars',
-        };
-        return modeMap[value] || 'bars';
-    };
-
-    const translatedModeOptions = useMemo(
-        () =>
-            modeOptions.map((option) => {
-                const value = option.value as string;
-                return {
-                    label: t(`visualizer.options.mode.${getModeKey(value)}`),
-                    value,
-                };
-            }),
-        [t],
-    );
 
     const getChannelLayoutKey = (value: string) => {
         const layoutMap: Record<string, string> = {
@@ -915,7 +995,7 @@ const GeneralSettings = () => {
             <Stack>
                 <Group grow>
                     <VisualizerSelect
-                        data={translatedModeOptions}
+                        data={modeOptions}
                         defaultValue={visualizer.audiomotionanalyzer.mode.toString()}
                         label={t('visualizer.mode')}
                         onChange={(e) => updateProperty('mode', Number(e))}
@@ -1021,6 +1101,8 @@ const CustomGradientsManager = () => {
     const { updateProperty, visualizer } = useUpdateAudioMotionAnalyzer();
     const [isAdding, setIsAdding] = useState(false);
     const [editingIndex, setEditingIndex] = useState<null | number>(null);
+    const [isPasting, setIsPasting] = useState(false);
+    const [pasteValue, setPasteValue] = useState('');
     const [newGradient, setNewGradient] = useState<CustomGradient>({
         colorStops: [{ color: '#ff0000', levelEnabled: false, positionEnabled: false }],
         dir: 'v',
@@ -1028,6 +1110,33 @@ const CustomGradientsManager = () => {
     });
 
     const customGradients = visualizer.audiomotionanalyzer.customGradients || [];
+
+    const generateDefaultName = () => {
+        const existingNames = customGradients.map((g) => g.name);
+        const pattern = /^Custom Gradient (\d+)$/i;
+        const numbers = existingNames
+            .map((name) => {
+                const match = name.match(pattern);
+                return match ? parseInt(match[1], 10) : null;
+            })
+            .filter((num): num is number => num !== null);
+
+        if (numbers.length === 0) {
+            return 'Custom Gradient 1';
+        }
+
+        const maxNumber = Math.max(...numbers);
+        return `Custom Gradient ${maxNumber + 1}`;
+    };
+
+    const handleStartAdding = () => {
+        setNewGradient({
+            colorStops: [{ color: '#ff0000', levelEnabled: false, positionEnabled: false }],
+            dir: 'v',
+            name: generateDefaultName(),
+        });
+        setIsAdding(true);
+    };
 
     const handleAddGradient = () => {
         if (!newGradient.name.trim()) return;
@@ -1173,6 +1282,76 @@ const CustomGradientsManager = () => {
         setNewGradient({ ...newGradient, colorStops: updatedColorStops });
     };
 
+    const handleCopyGradient = async (gradient: CustomGradient) => {
+        try {
+            const gradientJson = JSON.stringify(gradient, null, 2);
+            await navigator.clipboard.writeText(gradientJson);
+            toast.success({
+                message: t('visualizer.configCopied'),
+            });
+        } catch {
+            toast.error({
+                message: t('visualizer.configCopyFailed'),
+            });
+        }
+    };
+
+    const handlePasteGradient = () => {
+        if (!pasteValue.trim()) return;
+
+        try {
+            const parsed = JSON.parse(pasteValue.trim());
+
+            // Validate that it's a valid gradient object
+            if (
+                typeof parsed !== 'object' ||
+                parsed === null ||
+                Array.isArray(parsed) ||
+                !parsed.colorStops ||
+                !Array.isArray(parsed.colorStops) ||
+                parsed.colorStops.length === 0
+            ) {
+                throw new Error('Invalid gradient format');
+            }
+
+            // Generate a unique name if the pasted gradient has a name that already exists
+            let gradientName = parsed.name || generateDefaultName();
+            const existingNames = customGradients.map((g) => g.name);
+            if (existingNames.includes(gradientName)) {
+                const pattern = /^(.+?)(\s+\((\d+)\))?$/;
+                const match = gradientName.match(pattern);
+                const baseName = match ? match[1] : gradientName;
+                let counter = 1;
+                while (existingNames.includes(`${baseName} (${counter})`)) {
+                    counter++;
+                }
+                gradientName = `${baseName} (${counter})`;
+            }
+
+            const pastedGradient: CustomGradient = {
+                colorStops: parsed.colorStops.map((stop: any) => ({
+                    color: stop.color || '#ff0000',
+                    level: stop.level,
+                    levelEnabled: stop.levelEnabled || false,
+                    pos: stop.pos,
+                    positionEnabled: stop.positionEnabled || false,
+                })),
+                dir: parsed.dir || 'v',
+                name: gradientName,
+            };
+
+            setNewGradient(pastedGradient);
+            setPasteValue('');
+            setIsPasting(false);
+            setIsAdding(true);
+            setEditingIndex(null);
+        } catch {
+            toast.error({
+                message: t('visualizer.configPasteFailed'),
+            });
+        }
+    };
+
     return (
         <Fieldset
             legend={
@@ -1195,32 +1374,71 @@ const CustomGradientsManager = () => {
                     <Stack gap="sm">
                         {customGradients.map((gradient, index) => (
                             <Group grow key={index}>
-                                <Text size="sm" style={{ flex: 1 }}>
-                                    {gradient.name}
-                                </Text>
-                                <Button
-                                    onClick={() => handleEditGradient(index)}
-                                    size="xs"
-                                    variant="default"
-                                >
-                                    {t('common.edit', { postProcess: 'titleCase' })}
-                                </Button>
-                                <Button
-                                    onClick={() => handleDeleteGradient(index)}
-                                    size="xs"
-                                    variant="subtle"
-                                >
-                                    {t('common.delete', { postProcess: 'titleCase' })}
-                                </Button>
+                                <Group grow>
+                                    <Text size="sm">{gradient.name}</Text>
+                                </Group>
+                                <Group justify="flex-end">
+                                    <Button
+                                        onClick={() => handleCopyGradient(gradient)}
+                                        size="xs"
+                                        variant="subtle"
+                                    >
+                                        {t('visualizer.copyConfiguration')}
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleEditGradient(index)}
+                                        size="xs"
+                                        variant="default"
+                                    >
+                                        {t('common.edit', { postProcess: 'titleCase' })}
+                                    </Button>
+                                    <Button
+                                        onClick={() => handleDeleteGradient(index)}
+                                        size="xs"
+                                        variant="state-error"
+                                    >
+                                        {t('common.delete', { postProcess: 'titleCase' })}
+                                    </Button>
+                                </Group>
                             </Group>
                         ))}
                     </Stack>
                 )}
 
-                {!isAdding ? (
-                    <Button onClick={() => setIsAdding(true)} size="sm" variant="outline">
-                        {t('visualizer.addCustomGradient')}
-                    </Button>
+                {!isAdding && !isPasting ? (
+                    <Group>
+                        <Button onClick={handleStartAdding} size="sm" variant="outline">
+                            {t('visualizer.addCustomGradient')}
+                        </Button>
+                        <Button onClick={() => setIsPasting(true)} size="sm" variant="outline">
+                            {t('visualizer.pasteGradient', { postProcess: 'titleCase' })}
+                        </Button>
+                    </Group>
+                ) : isPasting ? (
+                    <Stack>
+                        <Textarea
+                            autosize
+                            label={t('visualizer.pasteGradient', { postProcess: 'titleCase' })}
+                            maxRows={10}
+                            minRows={5}
+                            onChange={(e) => setPasteValue(e.currentTarget.value)}
+                            placeholder={t('visualizer.pasteGradientPlaceholder')}
+                            spellCheck={false}
+                            value={pasteValue}
+                        />
+                        <Group>
+                            <Button onClick={() => setIsPasting(false)} variant="subtle">
+                                {t('common.cancel', { postProcess: 'titleCase' })}
+                            </Button>
+                            <Button
+                                disabled={!pasteValue.trim()}
+                                onClick={handlePasteGradient}
+                                variant="filled"
+                            >
+                                {t('common.add', { postProcess: 'titleCase' })}
+                            </Button>
+                        </Group>
+                    </Stack>
                 ) : (
                     <>
                         <Divider />
@@ -1375,36 +1593,6 @@ const ColorSettings = () => {
     const isGradientLeftDisabled = visualizer.audiomotionanalyzer.channelLayout === 'single';
     const isGradientRightDisabled = visualizer.audiomotionanalyzer.channelLayout === 'single';
 
-    const getColorModeKey = (value: string) => {
-        const colorModeMap: Record<string, string> = {
-            'bar-index': 'barIndex',
-            'bar-level': 'barLevel',
-            gradient: 'gradient',
-        };
-        return colorModeMap[value] || 'gradient';
-    };
-
-    const translatedColorModeOptions = useMemo(
-        () =>
-            colorModeOptions.map((option) => {
-                const value = option.value || 'gradient';
-                return {
-                    label: t(`visualizer.options.colorMode.${getColorModeKey(value)}`),
-                    value: value as string,
-                };
-            }),
-        [t],
-    );
-
-    const translatedGradientOptions = useMemo(
-        () =>
-            gradientOptions.map((option) => ({
-                label: t(`visualizer.options.gradient.${option.value}`),
-                value: option.value as string,
-            })),
-        [t],
-    );
-
     const allGradientOptions = useMemo(
         () => [
             {
@@ -1416,10 +1604,10 @@ const ColorSettings = () => {
             },
             {
                 group: t('visualizer.builtIn'),
-                items: translatedGradientOptions,
+                items: gradientOptions,
             },
         ],
-        [t, translatedGradientOptions, visualizer.audiomotionanalyzer.customGradients],
+        [t, visualizer.audiomotionanalyzer.customGradients],
     );
 
     return (
@@ -1427,7 +1615,7 @@ const ColorSettings = () => {
             <Stack>
                 <Group grow>
                     <VisualizerSelect
-                        data={translatedColorModeOptions}
+                        data={colorModeOptions}
                         defaultValue={visualizer.audiomotionanalyzer.colorMode}
                         label={t('visualizer.colorMode')}
                         onChange={(e) =>
@@ -1881,7 +2069,7 @@ const ButterchurnGeneralSettings = () => {
     const { updateProperty, visualizer } = useUpdateButterchurn();
 
     const presetOptions = useMemo(() => {
-        const presets = butterchurnPresets.getPresets();
+        const presets = butterchurnPresets;
         return Object.keys(presets).map((presetName) => ({
             label: presetName,
             value: presetName,
@@ -1937,7 +2125,7 @@ const ButterChurnCycleSettings = () => {
     const { updateProperty, visualizer } = useUpdateButterchurn();
 
     const presetOptions = useMemo(() => {
-        const presets = butterchurnPresets.getPresets();
+        const presets = butterchurnPresets;
         return Object.keys(presets).map((presetName) => ({
             label: presetName,
             value: presetName,

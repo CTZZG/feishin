@@ -80,11 +80,7 @@ export const useAppStore = createWithEqualityFn<AppSlice>()(
                     },
                     setPageSidebar: (key, value) => {
                         set((state) => {
-                            if (value) {
-                                state.pageSidebar[key] = value;
-                            } else {
-                                delete state.pageSidebar[key];
-                            }
+                            state.pageSidebar[key] = value;
                         });
                     },
                     setPrivateMode: (privateMode) => {

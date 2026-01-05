@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo } from 'react';
 
 import { DraggableItems } from '/@/renderer/features/settings/components/general/draggable-items';
 import {
@@ -17,40 +17,17 @@ const HOME_ITEMS: Array<[string, string]> = [
     [HomeItem.MOST_PLAYED, 'page.home.mostPlayed'],
 ];
 
-export const HomeSettings = () => {
+export const HomeSettings = memo(() => {
     const { homeItems } = useGeneralSettings();
     const { setHomeItems } = useSettingsStoreActions();
-
-    const mergedHomeItems = useMemo(() => {
-        const settingsMap = new Map(
-            homeItems.map((item) => [item.id, item as SortableItem<HomeItem>]),
-        );
-
-        const merged = homeItems.map((item) => ({
-            ...item,
-            id: item.id as HomeItem,
-        }));
-
-        HOME_ITEMS.forEach(([itemId]) => {
-            const homeItemId = itemId as HomeItem;
-            if (!settingsMap.has(homeItemId)) {
-                merged.push({
-                    disabled: true,
-                    id: homeItemId,
-                });
-            }
-        });
-
-        return merged;
-    }, [homeItems]);
 
     return (
         <DraggableItems
             description="setting.homeConfiguration"
             itemLabels={HOME_ITEMS}
+            items={homeItems as SortableItem<HomeItem>[]}
             setItems={setHomeItems}
-            settings={mergedHomeItems}
             title="setting.homeConfiguration"
         />
     );
-};
+});

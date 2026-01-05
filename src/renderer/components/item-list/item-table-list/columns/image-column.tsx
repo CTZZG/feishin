@@ -83,9 +83,10 @@ export const ImageColumn = (props: ItemTableListInnerColumn) => {
                             [styles.imageContainerWithAspectRatio]:
                                 props.size === 'default' || props.size === 'large',
                         })}
-                        id={item?.id}
+                        id={item?.imageId}
                         itemType={item?._itemType}
                         src={item?.imageUrl}
+                        type="table"
                     />
                     {isHovered && (
                         <div
@@ -125,6 +126,8 @@ export const ImageColumn = (props: ItemTableListInnerColumn) => {
             <div
                 className={clsx(styles.imageContainer, {
                     [styles.compactImageContainer]: props.size === 'compact',
+                    [styles.skeletonWithAspectRatio]:
+                        props.size === 'default' || props.size === 'large',
                 })}
             >
                 <Skeleton containerClassName={styles.skeleton} />

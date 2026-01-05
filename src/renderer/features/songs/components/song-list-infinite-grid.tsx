@@ -45,7 +45,7 @@ export const SongListInfiniteGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.SONG, ItemListKey.SONG);
+    const rows = useGridRows(LibraryItem.SONG, ItemListKey.SONG, size);
 
     return (
         <ItemGridList

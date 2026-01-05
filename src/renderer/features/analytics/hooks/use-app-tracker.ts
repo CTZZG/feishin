@@ -208,8 +208,21 @@ const getSettingsProperties = (): SettingsProperties => {
 
 const getServer = (): 'unknown' | ServerType => {
     const auth = useAuthStore.getState();
+
     const currentServer = auth.currentServer;
-    return currentServer?.type || 'unknown';
+
+    if (currentServer) {
+        return currentServer.type;
+    }
+
+    const serverList = auth.serverList;
+    const server = Object.values(serverList)[0];
+
+    if (server) {
+        return server.type;
+    }
+
+    return 'unknown';
 };
 
 export const useAppTracker = () => {
@@ -221,6 +234,18 @@ export const useAppTracker = () => {
         if (!window.umami || isAnalyticsDisabled()) {
             return;
         }
+
+        const waitForServer = async (): Promise<void> => {
+            if (useAuthStore.getState().currentServer) {
+                return;
+            }
+
+            const pollInterval = 1000 * 60;
+
+            while (!useAuthStore.getState().currentServer) {
+                await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            }
+        };
 
         const getProperties = () => {
             const platform = getPlatform();
@@ -285,8 +310,10 @@ export const useAppTracker = () => {
 
         // Check immediately on mount
         if (!hasRunOnMountRef.current) {
+            waitForServer().then(() => {
+                checkAndTrack();
+            });
             hasRunOnMountRef.current = true;
-            checkAndTrack();
         }
 
         const interval = setInterval(checkAndTrack, 1000 * 60 * 60);
@@ -300,9 +327,11 @@ const appTrackerMutation = mutationOptions({
     mutationFn: (properties: AppTrackerProperties) => {
         try {
             window.umami?.track((props) => ({
-                ...props,
                 data: properties,
+                language: props.language,
                 name: 'app',
+                screen: props.screen,
+                website: props.website,
             }));
             return Promise.resolve();
         } catch (error) {

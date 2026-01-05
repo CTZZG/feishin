@@ -202,6 +202,7 @@ export const ListConfigTable = ({
 }) => {
     return (
         <Table
+            onClick={(e) => e.stopPropagation()}
             style={{ borderRadius: '1rem' }}
             styles={{ th: { backgroundColor: 'initial', padding: 'var(--theme-spacing-md) 0' } }}
             variant="vertical"

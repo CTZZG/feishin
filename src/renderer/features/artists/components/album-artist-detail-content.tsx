@@ -1,8 +1,14 @@
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import {
+    useQuery,
+    useQueryClient,
+    useSuspenseQuery,
+    UseSuspenseQueryResult,
+} from '@tanstack/react-query';
 import { LayoutGroup, motion } from 'motion/react';
+import { Suspense } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createSearchParams, generatePath, Link, useParams } from 'react-router';
+import { createSearchParams, generatePath, Link, useLocation, useParams } from 'react-router';
 
 import styles from './album-artist-detail-content.module.css';
 
@@ -16,7 +22,6 @@ import { SONG_TABLE_COLUMNS } from '/@/renderer/components/item-list/item-table-
 import { ItemTableList } from '/@/renderer/components/item-list/item-table-list/item-table-list';
 import { ItemTableListColumn } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
 import { ItemControls } from '/@/renderer/components/item-list/types';
-import { albumQueries } from '/@/renderer/features/albums/api/album-api';
 import { artistsQueries } from '/@/renderer/features/artists/api/artists-api';
 import { AlbumArtistGridCarousel } from '/@/renderer/features/artists/components/album-artist-grid-carousel';
 import { useIsPlayerFetching, usePlayer } from '/@/renderer/features/player/context/player-context';
@@ -38,15 +43,22 @@ import { useGenreRoute } from '/@/renderer/hooks/use-genre-route';
 import { AppRoute } from '/@/renderer/router/routes';
 import {
     ArtistItem,
+    ArtistReleaseTypeItem,
     useAppStore,
     useCurrentServer,
     useCurrentServerId,
     usePlayerSong,
 } from '/@/renderer/store';
-import { useGeneralSettings, useSettingsStore } from '/@/renderer/store/settings.store';
+import {
+    useArtistItems,
+    useArtistRadioCount,
+    useArtistReleaseTypeItems,
+    useExternalLinks,
+    useSettingsStore,
+} from '/@/renderer/store/settings.store';
 import { titleCase } from '/@/renderer/utils';
 import { sanitize } from '/@/renderer/utils/sanitize';
-import { sortAlbumList } from '/@/shared/api/utils';
+import { SEPARATOR_STRING, sortAlbumList } from '/@/shared/api/utils';
 import { ActionIcon, ActionIconGroup } from '/@/shared/components/action-icon/action-icon';
 import { Badge } from '/@/shared/components/badge/badge';
 import { Button } from '/@/shared/components/button/button';
@@ -66,6 +78,7 @@ import {
     Album,
     AlbumArtist,
     AlbumArtistDetailResponse,
+    AlbumListResponse,
     AlbumListSort,
     LibraryItem,
     RelatedArtist,
@@ -213,7 +226,7 @@ interface AlbumArtistMetadataTopSongsProps {
     routeId: string;
 }
 
-const AlbumArtistMetadataTopSongs = ({
+const AlbumArtistMetadataTopSongsContent = ({
     detailQuery,
     routeId,
 }: AlbumArtistMetadataTopSongsProps) => {
@@ -225,15 +238,22 @@ const AlbumArtistMetadataTopSongs = ({
     const currentSong = usePlayerSong();
     const player = usePlayer();
     const serverId = useCurrentServerId();
+    const server = useCurrentServer();
 
-    const topSongsQuery = useSuspenseQuery(
-        artistsQueries.topSongs({
-            query: { artist: detailQuery.data?.name || '', artistId: routeId },
+    const canStartQuery = server?.type === ServerType.JELLYFIN || !!detailQuery.data?.name;
+
+    const topSongsQuery = useQuery({
+        ...artistsQueries.topSongs({
+            query: {
+                artist: detailQuery.data?.name || '',
+                artistId: routeId,
+            },
             serverId: serverId,
         }),
-    );
+        enabled: canStartQuery,
+    });
 
-    const songs = useMemo(() => topSongsQuery?.data?.items || [], [topSongsQuery?.data?.items]);
+    const songs = useMemo(() => topSongsQuery.data?.items || [], [topSongsQuery.data?.items]);
 
     const columns = useMemo(() => {
         return tableConfig?.columns || [];
@@ -272,6 +292,10 @@ const AlbumArtistMetadataTopSongs = ({
             },
         };
     }, [player]);
+
+    if (topSongsQuery.isLoading || !topSongsQuery.data) {
+        return null;
+    }
 
     if (!topSongsQuery?.data?.items?.length) return null;
 
@@ -400,6 +424,26 @@ const AlbumArtistMetadataTopSongs = ({
                 )}
             </Stack>
         </section>
+    );
+};
+
+const AlbumArtistMetadataTopSongs = ({
+    detailQuery,
+    routeId,
+}: AlbumArtistMetadataTopSongsProps) => {
+    const server = useCurrentServer();
+
+    const location = useLocation();
+    const artistName = location.state?.item?.name || detailQuery.data?.name;
+
+    const canStartQuery = server?.type === ServerType.JELLYFIN || !!artistName;
+
+    return (
+        <Suspense fallback={null}>
+            {canStartQuery ? (
+                <AlbumArtistMetadataTopSongsContent detailQuery={detailQuery} routeId={routeId} />
+            ) : null}
+        </Suspense>
     );
 };
 
@@ -542,9 +586,18 @@ const AlbumArtistMetadataSimilarArtists = ({
     );
 };
 
-export const AlbumArtistDetailContent = () => {
-    const { artistItems, artistRadioCount, externalLinks, lastFM, musicBrainz } =
-        useGeneralSettings();
+interface AlbumArtistDetailContentProps {
+    albumsQuery: UseSuspenseQueryResult<AlbumListResponse, Error>;
+    detailQuery: UseSuspenseQueryResult<AlbumArtistDetailResponse, Error>;
+}
+
+export const AlbumArtistDetailContent = ({
+    albumsQuery,
+    detailQuery,
+}: AlbumArtistDetailContentProps) => {
+    const artistItems = useArtistItems();
+    const artistRadioCount = useArtistRadioCount();
+    const { externalLinks, lastFM, musicBrainz } = useExternalLinks();
     const { albumArtistId, artistId } = useParams() as {
         albumArtistId?: string;
         artistId?: string;
@@ -565,13 +618,6 @@ export const AlbumArtistDetailContent = () => {
 
         return [enabled, order];
     }, [artistItems]);
-
-    const detailQuery = useSuspenseQuery(
-        artistsQueries.albumArtistDetail({
-            query: { id: routeId },
-            serverId: server?.id,
-        }),
-    );
 
     const artistDiscographyLink = useMemo(
         () =>
@@ -661,7 +707,7 @@ export const AlbumArtistDetailContent = () => {
                         </Grid.Col>
                     )}
                     <Grid.Col order={itemOrder.recentAlbums} span={12}>
-                        <ArtistAlbums />
+                        <ArtistAlbums albumsQuery={albumsQuery} />
                     </Grid.Col>
                     {enabledItem.similarArtists && (
                         <Grid.Col order={itemOrder.similarArtists} span={12}>
@@ -854,6 +900,8 @@ const AlbumSection = ({ albums, controls, cq, releaseType, rows, title }: AlbumS
 
 type GroupingType = 'all' | 'primary';
 
+const PRIMARY_RELEASE_TYPES = ['album', 'broadcast', 'ep', 'other', 'single'];
+
 const groupAlbumsByReleaseType = (
     albums: Album[],
     routeId: string,
@@ -887,13 +935,21 @@ const groupAlbumsByReleaseType = (
                 // Group by all release types
                 const releaseTypes = album.releaseTypes || [];
                 if (releaseTypes.length > 0) {
-                    releaseTypes.forEach((type) => {
-                        const normalizedType = type.toLowerCase();
-                        if (!acc[normalizedType]) {
-                            acc[normalizedType] = [];
-                        }
-                        acc[normalizedType].push(album);
-                    });
+                    // Sort release types: primaries first (alphabetically), then secondaries (alphabetically)
+                    const normalizedTypes = releaseTypes.map((type) => type.toLowerCase());
+                    const primaryTypes = normalizedTypes
+                        .filter((type) => PRIMARY_RELEASE_TYPES.includes(type))
+                        .sort();
+                    const secondaryTypes = normalizedTypes
+                        .filter((type) => !PRIMARY_RELEASE_TYPES.includes(type))
+                        .sort();
+                    const sortedTypes = [...primaryTypes, ...secondaryTypes];
+
+                    const combinedKey = sortedTypes.join('/');
+                    if (!acc[combinedKey]) {
+                        acc[combinedKey] = [];
+                    }
+                    acc[combinedKey].push(album);
                 } else {
                     // If no release types, use "album" as fallback
                     const albumKey = 'album';
@@ -998,9 +1054,34 @@ const groupAlbumsByReleaseType = (
     return grouped;
 };
 
-const ArtistAlbums = () => {
+const releaseTypeToEnumMap: Record<string, ArtistReleaseTypeItem> = {
+    album: ArtistReleaseTypeItem.RELEASE_TYPE_ALBUM,
+    'appears-on': ArtistReleaseTypeItem.APPEARS_ON,
+    audiobook: ArtistReleaseTypeItem.RELEASE_TYPE_AUDIOBOOK,
+    'audio drama': ArtistReleaseTypeItem.RELEASE_TYPE_AUDIO_DRAMA,
+    broadcast: ArtistReleaseTypeItem.RELEASE_TYPE_BROADCAST,
+    compilation: ArtistReleaseTypeItem.RELEASE_TYPE_COMPILATION,
+    demo: ArtistReleaseTypeItem.RELEASE_TYPE_DEMO,
+    'dj-mix': ArtistReleaseTypeItem.RELEASE_TYPE_DJ_MIX,
+    ep: ArtistReleaseTypeItem.RELEASE_TYPE_EP,
+    'field recording': ArtistReleaseTypeItem.RELEASE_TYPE_FIELD_RECORDING,
+    interview: ArtistReleaseTypeItem.RELEASE_TYPE_INTERVIEW,
+    live: ArtistReleaseTypeItem.RELEASE_TYPE_LIVE,
+    'mixtape/street': ArtistReleaseTypeItem.RELEASE_TYPE_MIXTAPE_STREET,
+    other: ArtistReleaseTypeItem.RELEASE_TYPE_OTHER,
+    remix: ArtistReleaseTypeItem.RELEASE_TYPE_REMIX,
+    single: ArtistReleaseTypeItem.RELEASE_TYPE_SINGLE,
+    soundtrack: ArtistReleaseTypeItem.RELEASE_TYPE_SOUNDTRACK,
+    spokenword: ArtistReleaseTypeItem.RELEASE_TYPE_SPOKENWORD,
+};
+
+interface ArtistAlbumsProps {
+    albumsQuery: UseSuspenseQueryResult<AlbumListResponse, Error>;
+}
+
+const ArtistAlbums = ({ albumsQuery }: ArtistAlbumsProps) => {
     const { t } = useTranslation();
-    const serverId = useCurrentServerId();
+    const artistReleaseTypeItems = useArtistReleaseTypeItems();
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm] = useDebouncedValue(searchTerm, 300);
     const albumArtistDetailSort = useAppStore((state) => state.albumArtistDetailSort);
@@ -1014,19 +1095,6 @@ const ArtistAlbums = () => {
         artistId?: string;
     };
     const routeId = (artistId || albumArtistId) as string;
-
-    const albumsQuery = useSuspenseQuery(
-        albumQueries.list({
-            query: {
-                artistIds: [routeId],
-                limit: -1,
-                sortBy: AlbumListSort.RELEASE_DATE,
-                sortOrder: SortOrder.DESC,
-                startIndex: 0,
-            },
-            serverId,
-        }),
-    );
 
     const rows = useGridRows(LibraryItem.ALBUM, ItemListKey.ALBUM);
     const controls = useDefaultItemListControls();
@@ -1046,121 +1114,195 @@ const ArtistAlbums = () => {
     }, [filteredAndSortedAlbums, routeId, groupingType]);
 
     const releaseTypeEntries = useMemo(() => {
-        const priorityOrder = [
-            'album',
-            'ep',
-            'single',
-            'broadcast',
-            'other',
-            'compilation',
-            'appears-on',
-        ];
+        const enabledReleaseTypeEnums = new Set(
+            artistReleaseTypeItems.filter((item) => !item.disabled).map((item) => item.id),
+        );
+
+        const priorityMap = new Map<string, number>();
+        artistReleaseTypeItems
+            .filter((item) => !item.disabled)
+            .forEach((item, index) => {
+                const releaseTypeKey = Object.keys(releaseTypeToEnumMap).find(
+                    (key) => releaseTypeToEnumMap[key] === item.id,
+                );
+                if (releaseTypeKey) {
+                    priorityMap.set(releaseTypeKey, index);
+                }
+            });
+
+        const getDisplayNameForType = (releaseType: string): string => {
+            switch (releaseType) {
+                case 'album':
+                    return t('releaseType.primary.album', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'appears-on':
+                    return t('page.albumArtistDetail.appearsOn', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'audiobook':
+                    return t('releaseType.secondary.audiobook', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'audio drama':
+                    return t('releaseType.secondary.audioDrama', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'broadcast':
+                    return t('releaseType.primary.broadcast', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'compilation':
+                    return t('releaseType.secondary.compilation', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'demo':
+                    return t('releaseType.secondary.demo', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'dj-mix':
+                    return t('releaseType.secondary.djMix', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'ep':
+                    return t('releaseType.primary.ep', {
+                        postProcess: 'upperCase',
+                    });
+                case 'field recording':
+                    return t('releaseType.secondary.fieldRecording', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'interview':
+                    return t('releaseType.secondary.interview', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'live':
+                    return t('releaseType.secondary.live', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'mixtape/street':
+                    return t('releaseType.secondary.mixtape', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'other':
+                    return t('releaseType.primary.other', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'remix':
+                    return t('releaseType.secondary.remix', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'single':
+                    return t('releaseType.primary.single', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'soundtrack':
+                    return t('releaseType.secondary.soundtrack', {
+                        postProcess: 'sentenceCase',
+                    });
+                case 'spokenword':
+                    return t('releaseType.secondary.spokenWord', {
+                        postProcess: 'sentenceCase',
+                    });
+                default:
+                    return titleCase(releaseType);
+            }
+        };
+
         const getPriority = (releaseType: string) => {
-            const index = priorityOrder.indexOf(releaseType);
-            return index === -1 ? 999 : index;
+            if (releaseType.includes('/')) {
+                const types = releaseType.split('/');
+                // Check if there's a primary type in the joined types
+                const primaryTypes = types.filter((type) => PRIMARY_RELEASE_TYPES.includes(type));
+
+                if (primaryTypes.length > 0) {
+                    // Use the primary type's priority (first primary if multiple)
+                    const primaryPriority = priorityMap.get(primaryTypes[0]) ?? 999;
+                    return primaryPriority;
+                } else {
+                    // Only secondary types - use minimum priority from settings
+                    const priorities = types
+                        .map((type) => priorityMap.get(type) ?? 999)
+                        .filter((p) => p !== 999);
+                    return priorities.length > 0 ? Math.min(...priorities) : 999;
+                }
+            }
+            return priorityMap.get(releaseType) ?? 999;
+        };
+
+        const getSecondaryTypePriorityKey = (releaseType: string): string => {
+            if (releaseType.includes('/')) {
+                const types = releaseType.split('/');
+                const secondaryTypes = types.filter(
+                    (type) => !PRIMARY_RELEASE_TYPES.includes(type),
+                );
+
+                if (secondaryTypes.length > 0) {
+                    const priorities = secondaryTypes
+                        .map((type) => priorityMap.get(type) ?? 999)
+                        .filter((p) => p !== 999)
+                        .sort((a, b) => a - b);
+
+                    // Create a comparison key from sorted priorities
+                    return priorities.map((p) => String(p).padStart(3, '0')).join(',');
+                }
+            }
+            return '';
+        };
+
+        const isReleaseTypeEnabled = (releaseType: string): boolean => {
+            if (releaseType.includes('/')) {
+                const types = releaseType.split('/');
+                return types.some((type) => {
+                    const enumValue = releaseTypeToEnumMap[type];
+                    return enumValue ? enabledReleaseTypeEnums.has(enumValue) : false;
+                });
+            }
+            const enumValue = releaseTypeToEnumMap[releaseType];
+            return enumValue ? enabledReleaseTypeEnums.has(enumValue) : false;
         };
 
         return Object.entries(albumsByReleaseType)
+            .filter(([releaseType]) => isReleaseTypeEnabled(releaseType))
             .map(([releaseType, albums]) => {
                 let displayName: React.ReactNode | string;
-                switch (releaseType) {
-                    case 'album':
-                        displayName = t('releaseType.primary.album', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'appears-on':
-                        displayName = t('page.albumArtistDetail.appearsOn', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'audiobook':
-                        displayName = t('releaseType.secondary.audiobook', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'audio drama':
-                        displayName = t('releaseType.secondary.audioDrama', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'broadcast':
-                        displayName = t('releaseType.primary.broadcast', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'compilation':
-                        displayName = t('releaseType.secondary.compilation', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'demo':
-                        displayName = t('releaseType.secondary.demo', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'dj-mix':
-                        displayName = t('releaseType.secondary.djMix', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'ep':
-                        displayName = t('releaseType.primary.ep', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'field recording':
-                        displayName = t('releaseType.secondary.fieldRecording', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'interview':
-                        displayName = t('releaseType.secondary.interview', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'live':
-                        displayName = t('releaseType.secondary.live', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'mixtape/street':
-                        displayName = t('releaseType.secondary.mixtape', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'other':
-                        displayName = t('releaseType.primary.other', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'remix':
-                        displayName = t('releaseType.secondary.remix', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'single':
-                        displayName = t('releaseType.primary.single', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'soundtrack':
-                        displayName = t('releaseType.secondary.soundtrack', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    case 'spokenword':
-                        displayName = t('releaseType.secondary.spokenWord', {
-                            postProcess: 'sentenceCase',
-                        });
-                        break;
-                    default:
-                        displayName = titleCase(releaseType);
+
+                if (releaseType.includes('/')) {
+                    const types = releaseType.split('/');
+                    const displayNames = types.map((type) => getDisplayNameForType(type));
+                    displayName = displayNames.join(SEPARATOR_STRING);
+                } else {
+                    displayName = getDisplayNameForType(releaseType);
                 }
+
                 return { albums, displayName, releaseType };
             })
-            .sort((a, b) => getPriority(a.releaseType) - getPriority(b.releaseType));
-    }, [albumsByReleaseType, t]);
+            .sort((a, b) => {
+                const priorityA = getPriority(a.releaseType);
+                const priorityB = getPriority(b.releaseType);
+
+                // First sort by priority
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+
+                // If priorities are equal, use weighted ordering for combined release types
+                const isCombinedA = a.releaseType.includes('/');
+                const isCombinedB = b.releaseType.includes('/');
+
+                if (isCombinedA && isCombinedB) {
+                    const secondaryKeyA = getSecondaryTypePriorityKey(a.releaseType);
+                    const secondaryKeyB = getSecondaryTypePriorityKey(b.releaseType);
+
+                    if (secondaryKeyA && secondaryKeyB) {
+                        return secondaryKeyA.localeCompare(secondaryKeyB);
+                    }
+                }
+
+                // Fallback to alphabetical for non-combined types or if weighted comparison isn't applicable
+                return a.releaseType.localeCompare(b.releaseType);
+            });
+    }, [albumsByReleaseType, artistReleaseTypeItems, t]);
 
     const cq = useContainerQuery({
         '2xl': 1280,
@@ -1183,10 +1325,6 @@ const ArtistAlbums = () => {
             },
         ],
     ]);
-
-    if (releaseTypeEntries.length === 0) {
-        return null;
-    }
 
     return (
         <Stack gap="md">
@@ -1230,23 +1368,25 @@ const ArtistAlbums = () => {
                 />
                 <GroupingTypeSelector />
             </Group>
-            <div className={styles.albumSectionContainer} ref={cq.ref}>
-                {cq.isCalculated && (
-                    <LayoutGroup>
-                        {releaseTypeEntries.map(({ albums, displayName, releaseType }) => (
-                            <AlbumSection
-                                albums={albums}
-                                controls={controls}
-                                cq={cq}
-                                key={releaseType}
-                                releaseType={releaseType}
-                                rows={rows}
-                                title={displayName}
-                            />
-                        ))}
-                    </LayoutGroup>
-                )}
-            </div>
+            {releaseTypeEntries.length > 0 && (
+                <div className={styles.albumSectionContainer} ref={cq.ref}>
+                    {cq.isCalculated && (
+                        <LayoutGroup>
+                            {releaseTypeEntries.map(({ albums, displayName, releaseType }) => (
+                                <AlbumSection
+                                    albums={albums}
+                                    controls={controls}
+                                    cq={cq}
+                                    key={releaseType}
+                                    releaseType={releaseType}
+                                    rows={rows}
+                                    title={displayName}
+                                />
+                            ))}
+                        </LayoutGroup>
+                    )}
+                </div>
+            )}
         </Stack>
     );
 };

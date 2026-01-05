@@ -97,8 +97,9 @@
 
 .title {
     display: flex;
-    margin: var(--theme-spacing-sm) 0;
+    margin: 0;
     font-size: clamp(1.75rem, 3dvw, 2.75rem);
+    font-weight: 800;
     line-height: 1.2;
 }
 

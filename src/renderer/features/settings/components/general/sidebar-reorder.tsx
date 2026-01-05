@@ -3,24 +3,26 @@ import { useMemo } from 'react';
 import { DraggableItems } from '/@/renderer/features/settings/components/general/draggable-items';
 import {
     sidebarItems as defaultSidebarItems,
+    SidebarItem,
+    SidebarItemType,
     useGeneralSettings,
     useSettingsStoreActions,
 } from '/@/renderer/store';
 
 const SIDEBAR_ITEMS: Array<[string, string]> = [
-    ['Albums', 'page.sidebar.albums'],
-    ['Artists', 'page.sidebar.albumArtists'],
-    ['Artists-all', 'page.sidebar.artists'],
-    ['Favorites', 'page.sidebar.favorites'],
-    ['Folders', 'page.sidebar.folders'],
-    ['Genres', 'page.sidebar.genres'],
-    ['Home', 'page.sidebar.home'],
-    ['Now Playing', 'page.sidebar.nowPlaying'],
-    ['Playlists', 'page.sidebar.playlists'],
-    ['Radio', 'page.sidebar.radio'],
-    ['Search', 'page.sidebar.search'],
-    ['Settings', 'page.sidebar.settings'],
-    ['Tracks', 'page.sidebar.tracks'],
+    [SidebarItem.ALBUMS, 'page.sidebar.albums'],
+    [SidebarItem.ARTISTS, 'page.sidebar.albumArtists'],
+    [SidebarItem.ARTISTS_ALL, 'page.sidebar.artists'],
+    [SidebarItem.FAVORITES, 'page.sidebar.favorites'],
+    [SidebarItem.FOLDERS, 'page.sidebar.folders'],
+    [SidebarItem.GENRES, 'page.sidebar.genres'],
+    [SidebarItem.HOME, 'page.sidebar.home'],
+    [SidebarItem.NOW_PLAYING, 'page.sidebar.nowPlaying'],
+    [SidebarItem.PLAYLISTS, 'page.sidebar.playlists'],
+    [SidebarItem.RADIO, 'page.sidebar.radio'],
+    [SidebarItem.SEARCH, 'page.sidebar.search'],
+    [SidebarItem.SETTINGS, 'page.sidebar.settings'],
+    [SidebarItem.TRACKS, 'page.sidebar.tracks'],
 ];
 
 export const SidebarReorder = () => {
@@ -48,15 +50,20 @@ export const SidebarReorder = () => {
             }
         });
 
-        return merged;
+        // Remove any duplicates
+        const uniqueMerged = merged.filter(
+            (item, index, self) => index === self.findIndex((t) => t.id === item.id),
+        );
+
+        return uniqueMerged;
     }, [sidebarItems]);
 
     return (
         <DraggableItems
             description="setting.sidebarCollapsedNavigation"
             itemLabels={SIDEBAR_ITEMS}
+            items={mergedSidebarItems as unknown as SidebarItemType[]}
             setItems={setSidebarItems}
-            settings={mergedSidebarItems}
             title="setting.sidebarConfiguration"
         />
     );

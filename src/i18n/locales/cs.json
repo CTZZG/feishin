@@ -360,7 +360,22 @@
         "imageResolution_optionHeader": "záhlaví",
         "imageResolution_optionFullScreenPlayer": "přehrávač na celé obrazovce",
         "combinedLyricsAndVisualizer_description": "spojit texty a vizualizér do jednoho panelu",
-        "combinedLyricsAndVisualizer": "spojit texty a vizualizér v postranní liště přehrávače"
+        "combinedLyricsAndVisualizer": "spojit texty a vizualizér v postranní liště přehrávače",
+        "showRatings_description": "ovládá, zda se funkce hodnocení pomocí hvězdiček objeví v rozhraní",
+        "showRatings": "zobrazit hodnocení pomocí hvězdiček",
+        "artistReleaseTypeConfiguration": "nastavení typu vydání umělce",
+        "artistReleaseTypeConfiguration_description": "nastavit, jaké typy vydání a v jakém pořadí jsou zobrazeny na stránce umělce alba",
+        "mpvExtraParameters": "extra parametry mpv",
+        "mpvExtraParameters_description": "další argumenty, které předat přehrávači mpv",
+        "hotkey_listNavigateToPage": "navigace na stránku položky v seznamu",
+        "hotkey_listPlayDefault": "přehrání v seznamu",
+        "hotkey_listPlayLast": "přehrání poslední položky v seznamu",
+        "hotkey_listPlayNext": "přehrání další položky v seznamu",
+        "hotkey_listPlayNow": "okamžité přehrání v seznamu",
+        "pathReplace": "nahrazení cesty k souborům",
+        "pathReplace_description": "nahradit výchozí cestu k souborům vašeho serveru",
+        "pathReplace_optionRemovePrefix": "odstranit předponu",
+        "pathReplace_optionAddPrefix": "přidat předponu"
     },
     "action": {
         "editPlaylist": "upravit $t(entity.playlist_one)",
@@ -519,7 +534,9 @@
         "noFilters": "nejsou nastaveny žádné filtry",
         "view": "zobrazit",
         "countSelected": "vybráno {{count}}",
-        "retry": "zkusit znovu"
+        "retry": "zkusit znovu",
+        "mood": "nálada",
+        "example": "příklad"
     },
     "table": {
         "config": {
@@ -865,7 +882,9 @@
             "topSongsFrom": "nejlepší skladby od umělce {{title}}",
             "relatedArtists": "podobní $t(entity.artist_other)",
             "viewAllTracks": "zobrazit všechny $t(entity.track_other)",
-            "viewAll": "zobrazit vše"
+            "viewAll": "zobrazit vše",
+            "groupingTypeAll": "všechny typy vydání",
+            "groupingTypePrimary": "primární typy vydání"
         },
         "itemDetail": {
             "copiedPath": "cesta úspěšně zkopírována",
@@ -920,7 +939,10 @@
             "ignoreCors": "ignorovat CORS $t(common.restartRequired)",
             "error_savePassword": "při ukládání hesla se vyskytla chyba",
             "input_preferInstantMix": "preferovat instantní mix",
-            "input_preferInstantMixDescription": "pro získání podobných skladeb použít pouze instantní mix. užitečné, pokud máte doplňky, které upravují toto chování"
+            "input_preferInstantMixDescription": "pro získání podobných skladeb použít pouze instantní mix. užitečné, pokud máte doplňky, které upravují toto chování",
+            "input_preferRemoteUrl": "preferovat veřejnou adresu url",
+            "input_remoteUrl": "veřejná adresa url",
+            "input_remoteUrlPlaceholder": "volitelné: veřejná adresa url pro externí funkce"
         },
         "addToPlaylist": {
             "success": "přidáno $t(entity.trackWithCount, {\"count\": {{message}} }) do $t(entity.playlistWithCount, {\"count\": {{numOfPlaylists}} })",
@@ -1026,9 +1048,9 @@
         "albumWithCount_one": "{{count}} album",
         "albumWithCount_few": "{{count}} alba",
         "albumWithCount_other": "{{count}} alb",
-        "favorite_one": "oblíbená",
+        "favorite_one": "oblíbený",
         "favorite_few": "oblíbené",
-        "favorite_other": "oblíbených",
+        "favorite_other": "oblíbené",
         "artistWithCount_one": "{{count}} umělec",
         "artistWithCount_few": "{{count}} umělci",
         "artistWithCount_other": "{{count}} umělců",
@@ -1115,7 +1137,7 @@
         "minuteShort": "min.",
         "secondShort": "s",
         "hourShort": "h.",
-        "dayShort": "den"
+        "dayShort": "d."
     },
     "visualizer": {
         "visualizerType": "Typ vizualizéru",
@@ -1125,7 +1147,7 @@
         "ignoredPresets": "Ignorované předvolby",
         "selectedPresets": "Vybrané předvolby",
         "randomizeNextPreset": "Náhodně vybrat další předvolbu",
-        "blendTime": "Prolnout čas",
+        "blendTime": "Čas prolnutí",
         "presets": "Předvolby",
         "selectPreset": "Vybrat předvolbu",
         "applyPreset": "Použít předvolbu",
@@ -1217,18 +1239,6 @@
         "noteLabels": "Štítky not",
         "showScaleY": "Zobrazit osu Y",
         "options": {
-            "mode": {
-                "bars": "[0] Sloupce",
-                "circle": "[1] Kruh",
-                "wave": "[2] Vlna",
-                "rainbow": "[3] Duha",
-                "rings": "[4] Prstence",
-                "mirror": "[5] Zrcadlo",
-                "line": "[6] Linka",
-                "particles": "[7] Částice",
-                "fullOctave": "[8] Plná oktáva / 10 pásem",
-                "outlineBars": "[10] Obrysové sloupce"
-            },
             "colorMode": {
                 "gradient": "Přechod",
                 "barIndex": "Index sloupce",
@@ -1248,10 +1258,11 @@
                 "dualVertical": "Duální vertikální"
             },
             "frequencyScale": {
-                "bark": "Bark",
-                "linear": "Lineární",
-                "log": "Log",
-                "mel": "Mel"
+                "bark": "Barkova stupnice",
+                "linear": "Lineární stupnice",
+                "log": "Logaritmická stupnice",
+                "mel": "Melová stupnice",
+                "none": "Žádný"
             },
             "weightingFilter": {
                 "none": "Žádný",
@@ -1260,7 +1271,21 @@
                 "c": "C",
                 "d": "D",
                 "z": "Z"
+            },
+            "mode": {
+                "0": "[0] Diskrétní frekvence",
+                "1": "[1] 1/24 oktávy / 240 pásem",
+                "2": "[2] 1/12 oktávy / 120 pásem",
+                "3": "[3] 1/8 oktávy / 80 pásem",
+                "4": "[4] 1/6 oktávy / 60 pásem",
+                "5": "[5] 1/4 oktávy / 40 pásem",
+                "6": "[6] 1/3 oktávy / 30 pásem",
+                "7": "[7] Polovina oktávy / 20 pásem",
+                "8": "[8] Celá oktáva / 10 pásem",
+                "10": "[10] Linka / Graf oblasti"
             }
-        }
+        },
+        "pasteGradient": "Vložit přechod",
+        "pasteGradientPlaceholder": "Sem vložte JSON přechodu…"
     }
 }

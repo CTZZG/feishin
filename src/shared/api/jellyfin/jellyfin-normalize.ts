@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { jfType } from '/@/shared/api/jellyfin/jellyfin-types';
+import { replacePathPrefix } from '/@/shared/api/utils';
 import {
     Album,
     AlbumArtist,
@@ -105,9 +106,38 @@ const getPlaylistImageId = (item: z.infer<typeof jfType._response.playlist>): nu
     return null;
 };
 
+const getArtists = (
+    item: z.infer<typeof jfType._response.song>,
+    participants?: null | Record<string, RelatedArtist[]>,
+): RelatedArtist[] => {
+    if (!item?.ArtistItems?.length && !item.AlbumArtists && !participants) {
+        return [];
+    }
+
+    const result: RelatedArtist[] = [];
+
+    (item?.ArtistItems?.length ? item.ArtistItems : item.AlbumArtists)?.forEach((entry) => {
+        result.push({
+            id: entry.Id,
+            imageId: null,
+            imageUrl: null,
+            name: entry.Name,
+            userFavorite: false,
+            userRating: null,
+        });
+    });
+
+    if (participants?.['Remixer']) {
+        result.push(...participants['Remixer']);
+    }
+
+    return result;
+};
 const normalizeSong = (
     item: z.infer<typeof jfType._response.song>,
     server: null | ServerListItem,
+    pathReplace?: string,
+    pathReplaceWith?: string,
 ): Song => {
     let bitRate = 0;
     let channels: null | number = null;
@@ -140,11 +170,17 @@ const normalizeSong = (
         console.warn('Jellyfin song retrieved with no media sources', item);
     }
 
+    const participants = getPeople(item);
+
+    const artists = getArtists(item, participants);
+
+    console.log('artists', artists);
     return {
         _itemType: LibraryItem.SONG,
         _serverId: server?.id || '',
         _serverType: ServerType.JELLYFIN,
         album: item.Album,
+        albumArtistName: item.AlbumArtist || '',
         albumArtists: item.AlbumArtists?.map((entry) => ({
             id: entry.Id,
             imageId: entry.Id,
@@ -154,17 +190,8 @@ const normalizeSong = (
             userRating: null,
         })),
         albumId: item.AlbumId || `dummy/${item.Id}`,
-        artistName: item?.ArtistItems?.[0]?.Name || item?.AlbumArtists?.[0]?.Name,
-        artists: (item?.ArtistItems?.length ? item.ArtistItems : item.AlbumArtists)?.map(
-            (entry) => ({
-                id: entry.Id,
-                imageId: null,
-                imageUrl: null,
-                name: entry.Name,
-                userFavorite: false,
-                userRating: null,
-            }),
-        ),
+        artistName: item?.ArtistItems?.map((entry) => entry.Name).join(', ') || '',
+        artists,
         bitDepth: null,
         bitRate,
         bpm: null,
@@ -206,17 +233,18 @@ const normalizeSong = (
         mbzRecordingId: null,
         mbzTrackId: item.ProviderIds?.MusicBrainzTrack || null,
         name: item.Name,
-        participants: getPeople(item),
-        path,
+        participants,
+        path: replacePathPrefix(path || '', pathReplace, pathReplaceWith),
         peak: null,
         playCount: (item.UserData && item.UserData.PlayCount) || 0,
         playlistItemId: item.PlaylistItemId,
-        releaseDate: item.PremiereDate ? item.PremiereDate : null,
+        releaseDate: item.PremiereDate || null,
         releaseYear: item.ProductionYear || null,
         sampleRate,
         size,
         tags: getTags(item),
         trackNumber: item.IndexNumber,
+        trackSubtitle: null,
         updatedAt: item.DateCreated,
         userFavorite: (item.UserData && item.UserData.IsFavorite) || false,
         userRating: null,
@@ -231,7 +259,7 @@ const normalizeAlbum = (
         _itemType: LibraryItem.ALBUM,
         _serverId: server?.id || '',
         _serverType: ServerType.JELLYFIN,
-        albumArtist: item.AlbumArtist,
+        albumArtistName: item.AlbumArtist,
         albumArtists:
             item.AlbumArtists.map((entry) => ({
                 id: entry.Id,
@@ -274,11 +302,13 @@ const normalizeAlbum = (
         lastPlayedAt: null,
         mbzId: item.ProviderIds?.MusicBrainzAlbum || null,
         name: item.Name,
-        originalDate: null,
+        originalDate: item.PremiereDate || null,
+        originalYear: item.ProductionYear || null,
         participants: getPeople(item),
         playCount: item.UserData?.PlayCount || 0,
         recordLabels: item.Studios?.map((entry) => entry.Name) || [],
         releaseDate: item.PremiereDate || null,
+        releaseType: null,
         releaseTypes: [],
         releaseYear: item.ProductionYear || null,
         size: null,

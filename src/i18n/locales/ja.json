@@ -11,10 +11,10 @@
         "skip_back": "前へスキップ",
         "favorite": "お気に入り",
         "next": "次へ",
-        "shuffle": "シャッフル",
+        "shuffle": "再生 (シャッフル)",
         "playbackFetchNoResults": "曲が見つかりません",
         "playbackFetchInProgress": "曲を読み込み中…",
-        "addNext": "次へ追加",
+        "addNext": "次",
         "playbackSpeed": "再生速度",
         "playbackFetchCancel": "処理に時間がかかります… 通知を閉じるとキャンセルします",
         "play": "再生",
@@ -25,12 +25,18 @@
         "queue_moveToTop": "選択項目を一番下に移動",
         "queue_moveToBottom": "選択項目を先頭に移動",
         "shuffle_off": "シャッフル無効",
-        "addLast": "最後へ追加",
+        "addLast": "最後",
         "mute": "ミュート",
         "skip_forward": "次へスキップ",
         "pause": "一時停止",
         "playSimilarSongs": "似たような曲を再生する",
-        "viewQueue": "キューを表示する"
+        "viewQueue": "キューを表示する",
+        "lyrics": "歌詞",
+        "queueType": "キュータイプ",
+        "queueType_default": "デフォルト",
+        "queueType_priority": "優先度",
+        "restoreQueueFromServer": "サーバーからキューを復元",
+        "saveQueueToServer": "サーバーにキューを保存"
     },
     "setting": {
         "crossfadeStyle_description": "オーディオプレーヤーが使用するクロスフェードのスタイルを選択します",
@@ -208,8 +214,8 @@
         "musicbrainz": "MusicBrainz リンクを表示する",
         "neteaseTranslation_description": "有効にすると、利用可能な場合は NetEase から翻訳された歌詞を取得して表示します",
         "neteaseTranslation": "NetEase 翻訳歌詞を有効にする",
-        "passwordStore_description": "使用するパスワード/シークレットストア。パスワードの保存に問題がある場合はこれを変更してください",
-        "passwordStore": "パスワード/シークレットストア",
+        "passwordStore_description": "使用するパスワード / シークレットストア。パスワードの保存に問題がある場合はこれを変更してください",
+        "passwordStore": "パスワード / シークレットストア",
         "playerbarOpenDrawer_description": "プレーヤーバーをクリックすると全画面プレーヤーが開きます",
         "preferLocalLyrics_description": "利用可能な場合は、リモート歌詞よりもローカル歌詞を優先します",
         "preferLocalLyrics": "ローカル歌詞を優先する",
@@ -296,7 +302,33 @@
         "exportImportSettings_notValidJSON": "渡されたファイルは有効な JSON ではありません",
         "exportImportSettings_importSuccess": "設定が正常にインポートされました!",
         "exportImportSettings_importModalTitle": "Feishin 設定をインポート",
-        "exportImportSettings_importBtn": "設定をインポート"
+        "exportImportSettings_importBtn": "設定をインポート",
+        "autoDJ_description": "類似の曲を自動でキューに追加します",
+        "autoDJ": "自動 DJ",
+        "autoDJ_itemCount_description": "自動 DJ が有効なときにキューに追加しようとした曲数",
+        "autoDJ_itemCount": "曲数",
+        "autoDJ_timing": "タイミング",
+        "autoDJ_timing_description": "自動 DJ が作動するまでのキューに残っている曲数",
+        "analyticsDisable": "使用状況に基づく分析のオプトアウト",
+        "analyticsDisable_description": "匿名化された利用データは、アプリケーションの改善のために開発者に送信されます",
+        "useThemeAccentColor": "テーマのアクセントカラーを使用",
+        "useThemeAccentColor_description": "カスタムアクセントカラーの代わりに、選択したテーマで定義されたプライマリカラーを使用します",
+        "artistReleaseTypeConfiguration": "アーティストリリースタイプの設定",
+        "artistReleaseTypeConfiguration_description": "アルバムアーティストページでどのリリースタイプをどのような順序で表示するかを設定します",
+        "followCurrentSong": "現在の曲をフォロー",
+        "followCurrentSong_description": "再生キューを現在再生中の曲まで自動的にスクロールします",
+        "logLevel": "ログレベル",
+        "logLevel_description": "表示するログの最小レベルを設定します。debug はすべてのログを表示し、error はエラーのみを表示します",
+        "logLevel_optionDebug": "debug",
+        "logLevel_optionError": "error",
+        "logLevel_optionInfo": "info",
+        "logLevel_optionWarn": "warn",
+        "playerFilters": "キューから曲をフィルタリング",
+        "playerFilters_description": "以下の基準に基づいて曲をキューに追加しないようにします",
+        "artistRadioCount": "アーティスト / トラックのラジオカウント",
+        "artistRadioCount_description": "アーティストラジオとトラックラジオで取得する曲数を設定します",
+        "imageResolution": "画像の解像度",
+        "imageResolution_description": "アプリ内で使用される画像の解像度。値を 0 に設定すると、デフォルトでネイティブ画像解像度が適用されます"
     },
     "action": {
         "editPlaylist": "$t(entity.playlist_one) を編集",
@@ -326,7 +358,15 @@
         "shuffle": "シャッフル",
         "shuffleAll": "すべてシャッフル",
         "shuffleSelected": "選択した曲をシャッフル",
-        "viewMore": "さらに表示"
+        "viewMore": "さらに表示",
+        "createRadioStation": "$t(entity.radioStation_one) を作成",
+        "deleteRadioStation": "$t(entity.radioStation_one) を削除",
+        "selectAll": "すべて選択",
+        "moveUp": "上に移動",
+        "moveDown": "下に移動",
+        "holdToMoveToTop": "押し続けると一番上に移動します",
+        "holdToMoveToBottom": "押し続けると一番下に移動します",
+        "openApplicationDirectory": "アプリケーションディレクトリを開く"
     },
     "common": {
         "backward": "戻る",
@@ -429,7 +469,14 @@
         "doNotShowAgain": "再度表示しない",
         "externalLinks": "外部リンク",
         "sort": "分類",
-        "gridRows": "グリッド行"
+        "gridRows": "グリッド行",
+        "countSelected": "{{count}} 個選択されました",
+        "view": "表示",
+        "noFilters": "フィルターが設定されていません",
+        "retry": "再試行",
+        "itemsMore": "{{count}} 個以上",
+        "faster": "より速く",
+        "slower": "より遅く"
     },
     "table": {
         "config": {
@@ -476,7 +523,12 @@
                 "year": "$t(common.year)",
                 "albumArtist": "$t(entity.albumArtist_one)",
                 "codec": "$t(common.codec)",
-                "songCount": "$t(entity.track_other)"
+                "songCount": "$t(entity.track_other)",
+                "albumCount": "$t(entity.album_other)",
+                "bitDepth": "$t(common.bitDepth)",
+                "genreBadge": "$t(entity.genre_one) (バッジ)",
+                "image": "画像",
+                "sampleRate": "$t(common.sampleRate)"
             }
         },
         "column": {
@@ -503,7 +555,9 @@
             "discNumber": "ディスク",
             "channels": "$t(common.channel_other)",
             "size": "$t(common.size)",
-            "codec": "$t(common.codec)"
+            "codec": "$t(common.codec)",
+            "bitDepth": "$t(common.bitDepth)",
+            "sampleRate": "$t(common.sampleRate)"
         }
     },
     "error": {
@@ -530,7 +584,12 @@
         "networkError": "ネットワークエラーが発生しました",
         "notificationDenied": "通知の許可が拒否されました。この設定は効果がありません",
         "openError": "ファイルを開けませんでした",
-        "badValue": "無効なオプション「{{value}}」。この値は存在しません"
+        "badValue": "無効なオプション「{{value}}」。この値は存在しません",
+        "multipleServerSaveQueueError": "再生キューに現在のサーバーに存在しない曲が 1 曲以上あります。これはサポートされていません",
+        "noNetwork": "サーバーが利用できません",
+        "noNetworkDescription": "このサーバーに接続できませんでした",
+        "saveQueueFailed": "キューを保存できませんでした",
+        "settingsSyncError": "レンダラーとメインプロセスの設定に矛盾が見つかりました。変更を適用するにはアプリケーションを再起動してください"
     },
     "filter": {
         "mostPlayed": "最も多く再生",
@@ -591,7 +650,9 @@
             "artists": "$t(entity.artist_other)",
             "albumArtists": "$t(entity.albumArtist_other)",
             "myLibrary": "マイライブラリ",
-            "shared": "$t(entity.playlist_other) を共有"
+            "shared": "$t(entity.playlist_other) を共有",
+            "radio": "$t(entity.radioStation_other)",
+            "favorites": "$t(entity.favorite_other)"
         },
         "fullscreenPlayer": {
             "config": {
@@ -628,7 +689,11 @@
             "goBack": "戻る",
             "goForward": "進む",
             "privateModeOff": "プライベートモードをオフにする",
-            "privateModeOn": "プライベートモードをオンにする"
+            "privateModeOn": "プライベートモードをオンにする",
+            "selectMusicFolder": "音楽フォルダを選択",
+            "noMusicFolder": "音楽フォルダを選択",
+            "commandPalette": "コマンドパレットを開く",
+            "multipleMusicFolders": "{{count}} 個の音楽フォルダが選択されました"
         },
         "contextMenu": {
             "addToPlaylist": "$t(action.addToPlaylist)",
@@ -654,7 +719,9 @@
             "goToAlbum": "$t(entity.album_one) に移動",
             "goToAlbumArtist": "$t(entity.albumArtist_one) に移動",
             "showDetails": "情報を取得する",
-            "playShuffled": "$t(player.shuffle)"
+            "playShuffled": "$t(player.shuffle)",
+            "moveItems": "$t(action.moveItems)",
+            "goTo": "移動"
         },
         "home": {
             "mostPlayed": "最も多く再生",
@@ -662,7 +729,8 @@
             "title": "$t(common.home)",
             "explore": "ライブラリから検索",
             "recentlyPlayed": "最近の再生",
-            "recentlyReleased": "最近のリリース"
+            "recentlyReleased": "最近のリリース",
+            "genres": "$t(entity.genre_other)"
         },
         "albumDetail": {
             "moreFromArtist": "$t(entity.artist_one) の他の項目",
@@ -674,7 +742,24 @@
             "generalTab": "一般",
             "hotkeysTab": "ホットキー",
             "windowTab": "ウィンドウ",
-            "advanced": "高度"
+            "advanced": "高度",
+            "analytics": "分析",
+            "updates": "更新",
+            "cache": "キャッシュ",
+            "application": "アプリケーション",
+            "queryBuilder": "クエリビルダー",
+            "theme": "テーマ",
+            "controls": "コントロール",
+            "sidebar": "サイドバー",
+            "remote": "リモート",
+            "exportImport": "インポート / エクスポート",
+            "scrobble": "Scrobble",
+            "audio": "オーディオ",
+            "lyrics": "歌詞",
+            "lyricsDisplay": "歌詞表示",
+            "transcoding": "トランスコーディング",
+            "discord": "Discord",
+            "logger": "ロガー"
         },
         "albumArtistList": {
             "title": "$t(entity.albumArtist_other)"
@@ -714,7 +799,9 @@
             "topSongsFrom": "{{title}} からの人気曲",
             "viewAll": "すべて表示",
             "viewAllTracks": "$t(entity.track_other) をすべて表示",
-            "relatedArtists": "関連の $t(entity.artist_other)"
+            "relatedArtists": "関連の $t(entity.artist_other)",
+            "groupingTypeAll": "すべてのリリースタイプ",
+            "groupingTypePrimary": "主なリリースタイプ"
         },
         "manageServers": {
             "title": "サーバーの管理",
@@ -731,6 +818,15 @@
         },
         "playlist": {
             "reorder": "ID によるソート時のみ並べ替えが可能です"
+        },
+        "radioList": {
+            "title": "ラジオ局"
+        },
+        "favorites": {
+            "title": "$t(entity.favorite_other)"
+        },
+        "folderList": {
+            "title": "$t(entity.folder_other)"
         }
     },
     "form": {
@@ -787,7 +883,8 @@
         "editPlaylist": {
             "title": "$t(entity.playlist_one) を編集",
             "publicJellyfinNote": "Jellyfin では、何らかの理由でプレイリストが公開されているかどうかが表示されません。公開されたままにしたい場合は、以下の項目を選択してください",
-            "success": "$t(entity.playlist_one) が正常に更新されました"
+            "success": "$t(entity.playlist_one) が正常に更新されました",
+            "editNote": "大規模なプレイリストの場合、手動編集は推奨されません。既存のプレイリストを上書きすることでデータ損失が発生するリスクを許容しますか?"
         },
         "shareItem": {
             "allowDownloading": "ダウンロードを許可",
@@ -805,6 +902,29 @@
         "largeFetchConfirmation": {
             "title": "キューにアイテムを追加する",
             "description": "このアクションは、現在のフィルターされたビュー内のすべてのアイテムを追加します"
+        },
+        "createRadioStation": {
+            "success": "ラジオ局が正常に作成されました",
+            "title": "ラジオ局を作成",
+            "input_homepageUrl": "ホームページ URL",
+            "input_name": "名前",
+            "input_streamUrl": "Stream URL"
+        },
+        "lyricsExport": {
+            "export": "歌詞をエクスポート",
+            "input_synced": "同期歌詞をエクスポート",
+            "input_offset": "$t(setting.lyricOffset)"
+        },
+        "shuffleAll": {
+            "title": "ランダムに再生",
+            "input_genre": "$t(entity.genre_one)",
+            "input_limit": "曲が多すぎます",
+            "input_minYear": "年から",
+            "input_maxYear": "年まで",
+            "input_played_optionAll": "すべてのトラック",
+            "input_played_optionUnplayed": "未再生のトラックのみ",
+            "input_played_optionPlayed": "再生されたトラックのみ",
+            "input_played": "再生フィルター"
         }
     },
     "entity": {
@@ -825,7 +945,8 @@
         "genreWithCount_other": "{{count}} 個のジャンル",
         "trackWithCount_other": "{{count}} 個のトラック",
         "play_other": "{{count}} 回再生",
-        "song_other": "曲"
+        "song_other": "曲",
+        "radioStation_other": "ラジオ局"
     },
     "dragDropZone": {
         "error_oneFileOnly": "1 つのファイルのみ選択してください",
@@ -848,5 +969,15 @@
             "demo": "デモ",
             "soundtrack": "サウンドトラック"
         }
+    },
+    "datetime": {
+        "minuteShort": "分",
+        "secondShort": "秒",
+        "hourShort": "時間",
+        "dayShort": "日"
+    },
+    "queryBuilder": {
+        "standardTags": "標準タグ",
+        "customTags": "カスタムタグ"
     }
 }

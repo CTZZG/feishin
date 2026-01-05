@@ -21,19 +21,13 @@ import { searchLibraryItems } from '/@/renderer/features/shared/utils';
 import { useContainerQuery } from '/@/renderer/hooks';
 import { AppRoute } from '/@/renderer/router/routes';
 import { useCurrentServer, usePlayerSong } from '/@/renderer/store';
-import { useGeneralSettings, useSettingsStore } from '/@/renderer/store/settings.store';
-import {
-    formatDateAbsoluteUTC,
-    formatDurationString,
-    formatSizeString,
-    titleCase,
-} from '/@/renderer/utils';
+import { useExternalLinks, useSettingsStore } from '/@/renderer/store/settings.store';
+import { sentenceCase, titleCase } from '/@/renderer/utils';
 import { replaceURLWithHTMLLinks } from '/@/renderer/utils/linkify';
 import { normalizeReleaseTypes } from '/@/renderer/utils/normalize-release-types';
 import { sortSongList } from '/@/shared/api/utils';
 import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
 import { Checkbox } from '/@/shared/components/checkbox/checkbox';
-import { Flex } from '/@/shared/components/flex/flex';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
 import { Pill, PillLink } from '/@/shared/components/pill/pill';
@@ -55,89 +49,83 @@ import {
 } from '/@/shared/types/domain-types';
 import { ItemListKey, ListDisplayType, Play } from '/@/shared/types/types';
 
+const MetadataPillGroup = ({
+    items,
+    title,
+}: {
+    items: undefined | { id: string; value: ReactNode | string | undefined }[];
+    title: string;
+}) => {
+    if (!items || items.length === 0) return null;
+
+    return (
+        <Stack align="center" className={styles.metadataPillGroup} gap="xs">
+            <Text fw={600} isNoSelect size="sm" tt="uppercase">
+                {title}
+            </Text>
+            <div className={styles['pill-group-wrapper']}>
+                <Pill.Group>
+                    {items.map((tag, index) => (
+                        <Pill key={`item-${tag.id}-${index}`} size="md">
+                            {tag.value}
+                        </Pill>
+                    ))}
+                </Pill.Group>
+            </div>
+        </Stack>
+    );
+};
+
 interface AlbumMetadataTagsProps {
     album: Album | undefined;
 }
 
+const MOOD_TAG = 'mood';
+const RELEASE_COUNTRY_TAG = 'releasecountry';
+const RELEASE_STATUS_TAG = 'releasestatus';
+
 const AlbumMetadataTags = ({ album }: AlbumMetadataTagsProps) => {
     const { t } = useTranslation();
 
-    const metadataItems = useMemo(() => {
+    const defaultTagItems = useMemo(() => {
         if (!album) return [];
-
-        const originalDifferentFromRelease =
-            album.originalDate && album.originalDate !== album.releaseDate;
-
-        const releasePrefix = originalDifferentFromRelease
-            ? t('page.albumDetail.released', { postProcess: 'sentenceCase' })
-            : '♫';
 
         const releaseTypes = normalizeReleaseTypes(album.releaseTypes ?? [], t).map((type) => ({
             id: type,
             value: titleCase(type),
         }));
 
+        const releaseCountries =
+            album.tags?.[RELEASE_COUNTRY_TAG]?.map((country) => ({
+                id: country,
+                value: country,
+            })) || [];
+
+        const releaseStatuses =
+            album.tags?.[RELEASE_STATUS_TAG]?.map((status) => ({
+                id: status,
+                value: status,
+            })) || [];
+
+        const recordLabels =
+            album.recordLabels?.map((label) => ({
+                id: label,
+                value: label,
+            })) || [];
+
         const items: Array<{ id: string; value: ReactNode | string | undefined }> = [];
 
-        if (originalDifferentFromRelease && album.originalDate) {
-            items.push({
-                id: 'originalDate',
-                value: `♫ ${formatDateAbsoluteUTC(album.originalDate)}`,
-            });
-        }
-
-        items.push(...releaseTypes);
-
         items.push(
+            ...releaseTypes,
             {
                 id: 'isCompilation',
                 value: album?.isCompilation
                     ? t('filter.isCompilation', { postProcess: 'sentenceCase' })
                     : undefined,
             },
-            {
-                id: 'releaseDate',
-                value: album.releaseDate
-                    ? `${releasePrefix} ${formatDateAbsoluteUTC(album.releaseDate)}`
-                    : undefined,
-            },
-            {
-                id: 'releaseYear',
-                value: album.releaseDate
-                    ? undefined
-                    : album.releaseYear
-                      ? album.releaseYear.toString()
-                      : undefined,
-            },
-            {
-                id: 'songCount',
-                value: album.songCount
-                    ? t('entity.trackWithCount', {
-                          count: album.songCount,
-                      })
-                    : undefined,
-            },
-            {
-                id: 'duration',
-                value: album.duration ? (
-                    <Flex align="center" gap="xs">
-                        <Icon icon="duration" size="md" /> {formatDurationString(album.duration)}
-                    </Flex>
-                ) : undefined,
-            },
-            {
-                id: 'size',
-                value: album.size ? formatSizeString(album.size) : undefined,
-            },
-            {
-                id: 'playCount',
-                value:
-                    typeof album.playCount === 'number'
-                        ? t('entity.play', {
-                              count: album.playCount,
-                          })
-                        : undefined,
-            },
+            ...releaseCountries,
+            ...releaseStatuses,
+            ...recordLabels,
             {
                 id: 'explicitStatus',
                 value:
@@ -147,31 +135,32 @@ const AlbumMetadataTags = ({ album }: AlbumMetadataTagsProps) => {
                           ? t('common.clean', { postProcess: 'sentenceCase' })
                           : undefined,
             },
-
-            {
-                id: 'version',
-                value: album.version || undefined,
-            },
         );
 
         return items.filter((item) => item.value);
     }, [album, t]);
 
-    if (metadataItems.length === 0) return null;
+    const moodTagItems = useMemo(() => {
+        if (!album) return [];
+
+        return album.tags?.[MOOD_TAG]?.map((tag) => ({
+            id: tag,
+            value: tag,
+        }));
+    }, [album]);
 
     return (
-        <Stack gap="xs">
-            <Text fw={600} isNoSelect size="sm" tt="uppercase">
-                {t('common.tags', { postProcess: 'sentenceCase' })}
-            </Text>
-            <Pill.Group>
-                {metadataItems.map((item, index) => (
-                    <Pill key={`item-${item.id}-${index}`} size="md">
-                        {item.value}
-                    </Pill>
-                ))}
-            </Pill.Group>
-        </Stack>
+        <>
+            <MetadataPillGroup
+                items={defaultTagItems}
+                title={t('common.tags', { postProcess: 'sentenceCase' })}
+            />
+
+            <MetadataPillGroup
+                items={moodTagItems}
+                title={t('common.mood', { postProcess: 'sentenceCase' })}
+            />
+        </>
     );
 };
 
@@ -208,38 +197,38 @@ const AlbumMetadataGenres = ({ genres }: AlbumMetadataGenresProps) => {
     );
 };
 
-interface AlbumMetadataArtistsProps {
-    artists?: Array<{ id: string; name: string }>;
-}
+// interface AlbumMetadataArtistsProps {
+//     artists?: Array<{ id: string; name: string }>;
+// }
 
-const AlbumMetadataArtists = ({ artists }: AlbumMetadataArtistsProps) => {
-    const { t } = useTranslation();
+// const AlbumMetadataArtists = ({ artists }: AlbumMetadataArtistsProps) => {
+//     const { t } = useTranslation();
 
-    if (!artists || artists.length === 0) return null;
+//     if (!artists || artists.length === 0) return null;
 
-    return (
-        <Stack gap="xs">
-            <Text fw={600} isNoSelect size="sm" tt="uppercase">
-                {t('entity.albumArtist', {
-                    count: artists.length,
-                })}
-            </Text>
-            <Pill.Group>
-                {artists.map((artist) => (
-                    <PillLink
-                        key={`artist-${artist.id}`}
-                        size="md"
-                        to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL, {
-                            albumArtistId: artist.id,
-                        })}
-                    >
-                        {artist.name}
-                    </PillLink>
-                ))}
-            </Pill.Group>
-        </Stack>
-    );
-};
+//     return (
+//         <Stack gap="xs">
+//             <Text fw={600} isNoSelect size="sm" tt="uppercase">
+//                 {t('entity.albumArtist', {
+//                     count: artists.length,
+//                 })}
+//             </Text>
+//             <Pill.Group>
+//                 {artists.map((artist) => (
+//                     <PillLink
+//                         key={`artist-${artist.id}`}
+//                         size="md"
+//                         to={generatePath(AppRoute.LIBRARY_ALBUM_ARTISTS_DETAIL, {
+//                             albumArtistId: artist.id,
+//                         })}
+//                     >
+//                         {artist.name}
+//                     </PillLink>
+//                 ))}
+//             </Pill.Group>
+//         </Stack>
+//     );
+// };
 
 interface AlbumMetadataExternalLinksProps {
     albumArtist?: string;
@@ -269,7 +258,7 @@ const AlbumMetadataExternalLinks = ({
                     postProcess: 'sentenceCase',
                 })}
             </Text>
-            <Group gap="sm">
+            <Group className={styles.externalLinksGroup} gap="sm">
                 {lastFM && (
                     <ActionIcon
                         component="a"
@@ -323,42 +312,59 @@ export const AlbumDetailContent = () => {
     );
 
     const { ref, ...cq } = useContainerQuery();
-    const { externalLinks, lastFM, musicBrainz } = useGeneralSettings();
+    const { externalLinks, lastFM, musicBrainz } = useExternalLinks();
 
-    const carousels = [
-        {
-            excludeIds: detailQuery?.data?.id ? [detailQuery.data.id] : undefined,
-            isHidden: !detailQuery?.data?.albumArtists?.[0]?.id,
-            query: {
-                artistIds: detailQuery?.data?.albumArtists.length
-                    ? [detailQuery?.data?.albumArtists[0].id]
-                    : undefined,
+    const genreCarousels = useMemo(() => {
+        const genreLimit = 2;
+        const selectedGenres = detailQuery?.data?.genres?.slice(0, genreLimit);
+
+        if (!selectedGenres || selectedGenres.length === 0) return [];
+
+        return selectedGenres
+            .map((genre) => {
+                const uniqueId = `moreFromGenre-${genre.id}`;
+                return {
+                    enableRefresh: true,
+                    excludeIds: detailQuery?.data?.id ? [detailQuery.data.id] : undefined,
+                    isHidden: !genre,
+                    query: {
+                        genreIds: [genre.id],
+                    },
+                    rowCount: 1,
+                    sortBy: AlbumListSort.RANDOM,
+                    sortOrder: SortOrder.ASC,
+                    title: sentenceCase(
+                        t('page.albumDetail.moreFromGeneric', {
+                            item: genre.name,
+                        }),
+                    ),
+                    uniqueId,
+                };
+            })
+            .filter((carousel) => !carousel.isHidden);
+    }, [detailQuery.data, t]);
+
+    const carousels = useMemo(() => {
+        const moreFromArtistUniqueId = 'moreFromArtist';
+        return [
+            {
+                enableRefresh: false,
+                excludeIds: detailQuery?.data?.id ? [detailQuery.data.id] : undefined,
+                isHidden: !detailQuery?.data?.albumArtists?.[0]?.id,
+                query: {
+                    artistIds: detailQuery?.data?.albumArtists.length
+                        ? [detailQuery?.data?.albumArtists[0].id]
+                        : undefined,
+                },
+                rowCount: 1,
+                sortBy: AlbumListSort.YEAR,
+                sortOrder: SortOrder.DESC,
+                title: t('page.albumDetail.moreFromArtist', { postProcess: 'sentenceCase' }),
+                uniqueId: moreFromArtistUniqueId,
             },
-            rowCount: 1,
-            sortBy: AlbumListSort.YEAR,
-            sortOrder: SortOrder.DESC,
-            title: t('page.albumDetail.moreFromArtist', { postProcess: 'sentenceCase' }),
-            uniqueId: 'moreFromArtist',
-        },
-        {
-            enableRefresh: true,
-            excludeIds: detailQuery?.data?.id ? [detailQuery.data.id] : undefined,
-            isHidden: !detailQuery?.data?.genres?.[0],
-            query: {
-                genreIds: detailQuery?.data?.genres.length
-                    ? [detailQuery?.data?.genres[0].id]
-                    : undefined,
-            },
-            rowCount: 1,
-            sortBy: AlbumListSort.RANDOM,
-            sortOrder: SortOrder.ASC,
-            title: `${t('page.albumDetail.moreFromGeneric', {
-                item: '',
-                postProcess: 'sentenceCase',
-            })} ${detailQuery?.data?.genres?.[0]?.name}`,
-            uniqueId: 'relatedGenres',
-        },
-    ];
+            ...genreCarousels,
+        ];
+    }, [detailQuery.data, genreCarousels, t]);
 
     const comment = detailQuery?.data?.comment;
 
@@ -382,19 +388,17 @@ export const AlbumDetailContent = () => {
                         )}
                     </div>
                     <div className={styles.metadataColumn}>
-                        <Stack gap="2xl">
-                            <AlbumMetadataArtists artists={detailQuery?.data?.albumArtists} />
-                            <AlbumMetadataGenres genres={detailQuery?.data?.genres} />
-                            <AlbumMetadataTags album={detailQuery?.data} />
-                            <AlbumMetadataExternalLinks
-                                albumArtist={detailQuery?.data?.albumArtist}
-                                albumName={detailQuery?.data?.name}
-                                externalLinks={externalLinks}
-                                lastFM={lastFM}
-                                mbzId={mbzId || undefined}
-                                musicBrainz={musicBrainz}
-                            />
-                        </Stack>
+                        {/* <AlbumMetadataArtists artists={detailQuery?.data?.albumArtists} /> */}
+                        <AlbumMetadataGenres genres={detailQuery?.data?.genres} />
+                        <AlbumMetadataTags album={detailQuery?.data} />
+                        <AlbumMetadataExternalLinks
+                            albumArtist={detailQuery?.data?.albumArtistName}
+                            albumName={detailQuery?.data?.name}
+                            externalLinks={externalLinks}
+                            lastFM={lastFM}
+                            mbzId={mbzId || undefined}
+                            musicBrainz={musicBrainz}
+                        />
                     </div>
                 </div>
                 {labels && (

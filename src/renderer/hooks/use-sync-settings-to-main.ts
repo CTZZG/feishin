@@ -49,6 +49,10 @@ export const useSyncSettingsToMain = () => {
                 rendererValue: any;
             }> = [
                 {
+                    mainStoreKey: 'lyrics',
+                    rendererValue: settings.lyrics.sources,
+                },
+                {
                     mainStoreKey: 'window_window_bar_style',
                     rendererValue: settings.window.windowBarStyle,
                 },

@@ -26,7 +26,9 @@
             "viewDiscography": "Mosta la discografia",
             "topSongs": "millors cançons",
             "topSongsFrom": "les millors cançons de {{title}}",
-            "viewAll": "mostra-ho tot"
+            "viewAll": "mostra-ho tot",
+            "groupingTypeAll": "tots els tipus de llançaments",
+            "groupingTypePrimary": "tipus principals de llançament"
         },
         "albumArtistList": {
             "title": "$t(entity.albumArtist_other)"
@@ -162,7 +164,8 @@
             "transcoding": "transcodificació",
             "discord": "discord",
             "logger": "registres",
-            "playerFilters": "filtres de reproducció"
+            "playerFilters": "filtres de reproducció",
+            "lyricsDisplay": "mostra la lletra"
         },
         "globalSearch": {
             "commands": {
@@ -306,7 +309,8 @@
         "gridRows": "files de la quadrícula",
         "tableColumns": "columnes de la taula",
         "itemsMore": "{{count}} més",
-        "countSelected": "{{count}} seleccionats"
+        "countSelected": "{{count}} seleccionats",
+        "retry": "reintenta"
     },
     "entity": {
         "album_one": "àlbum",
@@ -466,6 +470,11 @@
         },
         "saveQueue": {
             "success": "cua de reproducció desada al servidor"
+        },
+        "lyricsExport": {
+            "export": "exporta la lletra",
+            "input_synced": "exporta la lletra sincronitzada",
+            "input_offset": "$t(setting.lyricOffset)"
         }
     },
     "action": {
@@ -814,7 +823,20 @@
         "queryBuilderCustomFields": "camps personalitzats",
         "queryBuilderCustomFields_description": "afegeix camps personalitzats pel constructor de consultes",
         "useThemeAccentColor": "fes servir el color d'accent del tema",
-        "useThemeAccentColor_description": "fes servir el color primari definit pel tema seleccionat en comptes del color d'accent personalitzat"
+        "useThemeAccentColor_description": "fes servir el color primari definit pel tema seleccionat en comptes del color d'accent personalitzat",
+        "artistRadioCount_description": "estableix el número de cançons per cercar per la ràdio d'artista i pista",
+        "artistRadioCount": "recompte de ràdios d'artista o pista",
+        "imageResolution": "resolució d'imatge",
+        "imageResolution_description": "la resolució per les imatges que s'utilitzen a l'aplicació. un valor de 0 equival a la resolució nativa de la imatge",
+        "imageResolution_optionTable": "taula",
+        "imageResolution_optionItemCard": "targeta d'element",
+        "imageResolution_optionSidebar": "tauler lateral",
+        "imageResolution_optionHeader": "encapçalament",
+        "imageResolution_optionFullScreenPlayer": "reproductor de pantalla completa",
+        "showRatings_description": "controla si es mostren les estrelles de valoració a la interfície",
+        "showRatings": "mostra la valoració d'estrelles",
+        "combinedLyricsAndVisualizer_description": "combina la lletra i el visualitzador en un sol tauler",
+        "combinedLyricsAndVisualizer": "combina la lletra i el visualitzador al tauler lateral del reproductor"
     },
     "table": {
         "column": {
@@ -1005,7 +1027,9 @@
         "queueType_priority": "prioritat",
         "lyrics": "lletra",
         "restoreQueueFromServer": "restaura la cua del servidor",
-        "saveQueueToServer": "desa la cua al servidor"
+        "saveQueueToServer": "desa la cua al servidor",
+        "artistRadio": "ràdio de l'artista",
+        "trackRadio": "ràdio de la pista"
     },
     "error": {
         "credentialsRequired": "credencials requerides",
@@ -1034,7 +1058,9 @@
         "endpointNotImplementedError": "el punt final {{endpoint}} no està implementat per {{serverType}}",
         "multipleServerSaveQueueError": "la cua de reproducció té una o més cançons que no són del servidor actual, cosa que no és compatible",
         "saveQueueFailed": "error en desar la cua",
-        "settingsSyncError": "hi ha discrepàncies entre la configuració del renderitzador i el procés principal. reinicieu l'aplicació per aplicar els canvis"
+        "settingsSyncError": "hi ha discrepàncies entre la configuració del renderitzador i el procés principal. reinicieu l'aplicació per aplicar els canvis",
+        "noNetwork": "servidor no disponible",
+        "noNetworkDescription": "no s'ha pogut connectar amb el servidor"
     },
     "releaseType": {
         "primary": {
@@ -1094,5 +1120,139 @@
         "secondShort": "s",
         "hourShort": "h",
         "dayShort": "d"
+    },
+    "visualizer": {
+        "visualizerType": "tipus de visualitzador",
+        "cyclePresets": "opcions preconfigurades",
+        "cycleTime": "duració d'un cicle (segons)",
+        "includeAllPresets": "inclou totes les opcions predeterminades",
+        "ignoredPresets": "ignora les opcions predeterminades",
+        "selectedPresets": "opcions predeterminades seleccionades",
+        "randomizeNextPreset": "tria la següent opcions predeterminada a l'atzar",
+        "blendTime": "duració de la mescla",
+        "presets": "opcions predeterminades",
+        "selectPreset": "selecciona una opció predeterminada",
+        "applyPreset": "aplica l'opció predeterminada",
+        "saveAsPreset": "desa com a opció predeterminada",
+        "updatePreset": "actualitza l'opció predeterminada",
+        "copyConfiguration": "copia la configuració",
+        "pasteConfiguration": "enganxa la configuració",
+        "pasteConfigurationPlaceholder": "enganxa la configuració JSON aquí...",
+        "pasteFromClipboard": "enganxa des del portaretalls",
+        "applyConfiguration": "aplica la configuració",
+        "configCopied": "configuració copiada al portaretalls",
+        "configCopyFailed": "error en copiar la configuració",
+        "configPasted": "configuració aplicada correctament",
+        "configPasteFailed": "Error en aplicar la configuració. Reviseu-ne el format.",
+        "configPasteReadFailed": "Error en llegir del portaretalls",
+        "presetName": "Nom de l'opció predeterminada",
+        "presetNamePlaceholder": "Escriviu el nom de l'opció predeterminada",
+        "general": "General",
+        "mode": "Mode",
+        "mode1To8": "Mode 1 - 8",
+        "mode10": "Mode 10",
+        "barSpace": "Espai entre barres",
+        "lineWidth": "Amplitud de línia",
+        "fillAlpha": "Omplir alfa",
+        "channelLayout": "Disseny del canal",
+        "maxFPS": "FPS màxims",
+        "opacity": "Opacitat",
+        "customGradients": "Degradats personalitzats",
+        "addCustomGradient": "Afegeix un degradat personalitzat",
+        "gradientName": "Nom del degradat",
+        "gradientNamePlaceholder": "Nom del degradat",
+        "vertical": "Vertical",
+        "horizontal": "Horitzontal",
+        "colorStops": "Parades de color",
+        "addColor": "Afegeix el color",
+        "position": "Posició",
+        "level": "Nivell",
+        "remove": "Elimina",
+        "custom": "Personalitzat",
+        "builtIn": "Integrat",
+        "colors": "Colors",
+        "colorMode": "Mode de color",
+        "gradient": "Degradat",
+        "gradientLeft": "Esquerra del degradat",
+        "gradientRight": "Dreta del degradat",
+        "fft": "FFT",
+        "fftSize": "Mida del FFT",
+        "smoothing": "Suavitzador",
+        "frequencyRangeAndScaling": "Escala i rang de freqüència",
+        "minimumFrequency": "Freqüència mínima",
+        "maximumFrequency": "Freqüència màxima",
+        "frequencyScale": "Escala de freqüència",
+        "sensitivity": "Sensibilitat",
+        "weightingFilter": "Filtre de pes",
+        "minimumDecibels": "Decibels mínims",
+        "maximumDecibels": "Decibels màxims",
+        "linearAmplitude": "Amplitud lineal",
+        "linearBoost": "Augment lineal",
+        "peakBehavior": "Comportament del pic",
+        "showPeaks": "Mostra els pics",
+        "fadePeaks": "Pics de fosa",
+        "peakLine": "Línea del pic",
+        "gravity": "Gravetat",
+        "peakFadeTime": "Temps de fosa del pic (ms)",
+        "peakHoldTime": "Temps d'espera del pic (ms)",
+        "radialSpectrum": "Espectre radial",
+        "radial": "Radial",
+        "radialInvert": "Invertir el radial",
+        "spinSpeed": "Velocitat de gir",
+        "radius": "Radi",
+        "reflexMirror": "Mirall del reflex",
+        "reflexFit": "Ajustament del reflex",
+        "reflexRatio": "Proporció del reflex",
+        "reflexAlpha": "Alfa del reflex",
+        "reflexBrightness": "Brillantor del reflex",
+        "mirror": "Mirall",
+        "miscellaneousSettings": "Configuració miscel·lànea",
+        "alphaBars": "Barres alfa",
+        "ansiBands": "Bandes ANSI",
+        "ledBars": "Barres LED",
+        "trueLeds": "LEDs reals",
+        "lumiBars": "Barres Lumi",
+        "outlineBars": "Barres de vora",
+        "roundBars": "Barres arrodonides",
+        "lowResolution": "Baixa resolució",
+        "splitGradient": "Degradat dividit",
+        "showFPS": "Mostra els FPS",
+        "showScaleX": "Mostra l'escala X",
+        "noteLabels": "Etiquetes de nota",
+        "showScaleY": "Mostra l'escala Y",
+        "options": {
+            "colorMode": {
+                "gradient": "Degradat",
+                "barIndex": "Índex de barra",
+                "barLevel": "Nivell de barra"
+            },
+            "gradient": {
+                "classic": "Classic",
+                "prism": "Prisme",
+                "rainbow": "Arc de Sant Martí",
+                "steelblue": "Blau d'acer",
+                "orangered": "Vermell ataronjat"
+            },
+            "channelLayout": {
+                "single": "Únic",
+                "dualCombined": "Dual-Combinat",
+                "dualHorizontal": "Dual-Horitzontal",
+                "dualVertical": "Dual-Vertical"
+            },
+            "frequencyScale": {
+                "bark": "Bark",
+                "linear": "Lineal",
+                "log": "Registre",
+                "mel": "Mel"
+            },
+            "weightingFilter": {
+                "none": "Cap",
+                "a": "A",
+                "b": "B",
+                "c": "C",
+                "d": "D",
+                "z": "Z"
+            }
+        }
     }
 }

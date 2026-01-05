@@ -124,6 +124,8 @@ export const useCurrentServer = () =>
             musicFolderId: state.currentServer?.musicFolderId,
             name: state.currentServer?.name,
             preferInstantMix: state.currentServer?.preferInstantMix,
+            preferRemoteUrl: state.currentServer?.preferRemoteUrl,
+            remoteUrl: state.currentServer?.remoteUrl,
             savePassword: state.currentServer?.savePassword,
             type: state.currentServer?.type,
             url: state.currentServer?.url,

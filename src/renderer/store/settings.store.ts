@@ -1,4 +1,6 @@
 import isElectron from 'is-electron';
+import mergeWith from 'lodash/mergeWith';
+import { nanoid } from 'nanoid';
 import { generatePath } from 'react-router';
 import { z } from 'zod';
 import { devtools, persist } from 'zustand/middleware';
@@ -17,6 +19,7 @@ import {
     PLAYLIST_TABLE_COLUMNS,
     SONG_TABLE_COLUMNS,
 } from '/@/renderer/components/item-list/item-table-list/default-columns';
+import { audiomotionanalyzerPresets } from '/@/renderer/features/visualizer/components/audiomotionanalyzer/presets';
 import { AppRoute } from '/@/renderer/router/routes';
 import { mergeOverridingColumns } from '/@/renderer/store/utils';
 import { FontValueSchema } from '/@/renderer/types/fonts';
@@ -41,6 +44,26 @@ type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
+const deepMergeIntoState = <T extends Record<string, any>>(
+    state: T,
+    updates: DeepPartial<T>,
+): void => {
+    // Skip 'actions' property
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { actions, ...updatesWithoutActions } = updates as any;
+
+    // Use mergeWith to replace arrays instead of merging them by index
+    mergeWith(state, updatesWithoutActions, (_objValue, srcValue) => {
+        // If source value is an array, replace the entire array instead of merging
+        if (Array.isArray(srcValue)) {
+            return srcValue;
+        }
+
+        // Default merge behavior
+        return undefined;
+    });
+};
+
 const HomeItemSchema = z.enum([
     'genres',
     'mostPlayed',
@@ -56,6 +79,27 @@ const ArtistItemSchema = z.enum([
     'recentAlbums',
     'similarArtists',
     'topSongs',
+]);
+
+const ArtistReleaseTypeItemSchema = z.enum([
+    'releaseTypeAlbum',
+    'releaseTypeEp',
+    'releaseTypeSingle',
+    'releaseTypeBroadcast',
+    'releaseTypeOther',
+    'releaseTypeCompilation',
+    'appearsOn',
+    'releaseTypeAudioDrama',
+    'releaseTypeAudiobook',
+    'releaseTypeDemo',
+    'releaseTypeDjMix',
+    'releaseTypeFieldRecording',
+    'releaseTypeInterview',
+    'releaseTypeLive',
+    'releaseTypeMixtapeStreet',
+    'releaseTypeRemix',
+    'releaseTypeSoundtrack',
+    'releaseTypeSpokenWord',
 ]);
 
 const BindingActionsSchema = z.enum([
@@ -93,6 +137,11 @@ const BindingActionsSchema = z.enum([
     'volumeUp',
     'zoomIn',
     'zoomOut',
+    'listPlayDefault',
+    'listPlayNow',
+    'listPlayNext',
+    'listPlayLast',
+    'listNavigateToPage',
 ]);
 
 const DiscordDisplayTypeSchema = z.enum(['artist', 'feishin', 'song']);
@@ -292,6 +341,7 @@ const AudioMotionAnalyzerSettingsSchema = z.object({
     peakLine: z.boolean(),
     presets: z.array(
         z.object({
+            id: z.string(),
             name: z.string(),
             value: z.any(),
         }),
@@ -350,6 +400,7 @@ export const GeneralSettingsSchema = z.object({
     artistBackgroundBlur: z.number(),
     artistItems: z.array(SortableItemSchema(ArtistItemSchema)),
     artistRadioCount: z.number(),
+    artistReleaseTypeItems: z.array(SortableItemSchema(ArtistReleaseTypeItemSchema)),
     buttonSize: z.number(),
     combinedLyricsAndVisualizer: z.boolean(),
     disabledContextMenu: z.record(z.string(), z.boolean()),
@@ -372,6 +423,8 @@ export const GeneralSettingsSchema = z.object({
     musicBrainz: z.boolean(),
     nativeAspectRatio: z.boolean(),
     passwordStore: z.string().optional(),
+    pathReplace: z.string(),
+    pathReplaceWith: z.string(),
     playButtonBehavior: z.nativeEnum(Play),
     playerbarOpenDrawer: z.boolean(),
     playerbarSlider: PlayerbarSliderSchema,
@@ -588,6 +641,27 @@ export enum ArtistItem {
     TOP_SONGS = 'topSongs',
 }
 
+export enum ArtistReleaseTypeItem {
+    APPEARS_ON = 'appearsOn',
+    RELEASE_TYPE_ALBUM = 'releaseTypeAlbum',
+    RELEASE_TYPE_AUDIO_DRAMA = 'releaseTypeAudioDrama',
+    RELEASE_TYPE_AUDIOBOOK = 'releaseTypeAudiobook',
+    RELEASE_TYPE_BROADCAST = 'releaseTypeBroadcast',
+    RELEASE_TYPE_COMPILATION = 'releaseTypeCompilation',
+    RELEASE_TYPE_DEMO = 'releaseTypeDemo',
+    RELEASE_TYPE_DJ_MIX = 'releaseTypeDjMix',
+    RELEASE_TYPE_EP = 'releaseTypeEp',
+    RELEASE_TYPE_FIELD_RECORDING = 'releaseTypeFieldRecording',
+    RELEASE_TYPE_INTERVIEW = 'releaseTypeInterview',
+    RELEASE_TYPE_LIVE = 'releaseTypeLive',
+    RELEASE_TYPE_MIXTAPE_STREET = 'releaseTypeMixtapeStreet',
+    RELEASE_TYPE_OTHER = 'releaseTypeOther',
+    RELEASE_TYPE_REMIX = 'releaseTypeRemix',
+    RELEASE_TYPE_SINGLE = 'releaseTypeSingle',
+    RELEASE_TYPE_SOUNDTRACK = 'releaseTypeSoundtrack',
+    RELEASE_TYPE_SPOKENWORD = 'releaseTypeSpokenWord',
+}
+
 export enum BarAlign {
     BOTTOM = 'bottom',
     CENTER = 'center',
@@ -604,6 +678,11 @@ export enum BindingActions {
     FAVORITE_PREVIOUS_REMOVE = 'favoritePreviousRemove',
     FAVORITE_PREVIOUS_TOGGLE = 'favoritePreviousToggle',
     GLOBAL_SEARCH = 'globalSearch',
+    LIST_NAVIGATE_TO_PAGE = 'listNavigateToPage',
+    LIST_PLAY_DEFAULT = 'listPlayDefault',
+    LIST_PLAY_LAST = 'listPlayLast',
+    LIST_PLAY_NEXT = 'listPlayNext',
+    LIST_PLAY_NOW = 'listPlayNow',
     LOCAL_SEARCH = 'localSearch',
     MUTE = 'volumeMute',
     NAVIGATE_HOME = 'navigateHome',
@@ -663,6 +742,22 @@ export enum PlayerbarSliderType {
     WAVEFORM = 'waveform',
 }
 
+export enum SidebarItem {
+    ALBUMS = 'Albums',
+    ARTISTS = 'Artists',
+    ARTISTS_ALL = 'Artists-all',
+    FAVORITES = 'Favorites',
+    FOLDERS = 'Folders',
+    GENRES = 'Genres',
+    HOME = 'Home',
+    NOW_PLAYING = 'Now Playing',
+    PLAYLISTS = 'Playlists',
+    RADIO = 'Radio',
+    SEARCH = 'Search',
+    SETTINGS = 'Settings',
+    TRACKS = 'Tracks',
+}
+
 export type DataGridProps = {
     itemGap: 'lg' | 'md' | 'sm' | 'xl' | 'xs';
     itemsPerRow: number;
@@ -691,11 +786,12 @@ export interface SettingsSlice extends z.infer<typeof SettingsStateSchema> {
         reset: () => void;
         resetSampleRate: () => void;
         setArtistItems: (item: SortableItem<ArtistItem>[]) => void;
+        setArtistReleaseTypeItems: (item: SortableItem<ArtistReleaseTypeItem>[]) => void;
         setGenreBehavior: (target: GenreTarget) => void;
         setHomeItems: (item: SortableItem<HomeItem>[]) => void;
         setList: (type: ItemListKey, data: DeepPartial<ItemListSettings>) => void;
         setPlaybackFilters: (filters: PlayerFilter[]) => void;
-        setSettings: (data: Partial<SettingsState>) => void;
+        setSettings: (data: DeepPartial<SettingsState>) => void;
         setSidebarItems: (items: SidebarItemType[]) => void;
         setTable: (type: ItemListKey, data: DataTableProps) => void;
         setTranscodingConfig: (config: TranscodingConfig) => void;
@@ -708,7 +804,7 @@ export type SidebarItemType = z.infer<typeof SidebarItemTypeSchema>;
 
 export type SideQueueType = z.infer<typeof SideQueueTypeSchema>;
 
-export type SortableItem<T> = {
+export type SortableItem<T extends string> = {
     disabled: boolean;
     id: T;
 };
@@ -803,6 +899,11 @@ const artistItems = Object.values(ArtistItem).map((item) => ({
     id: item,
 }));
 
+const artistReleaseTypeItems = Object.values(ArtistReleaseTypeItem).map((item) => ({
+    disabled: false,
+    id: item,
+}));
+
 // Determines the default/initial windowBarStyle value based on the current platform.
 const getPlatformDefaultWindowBarStyle = (): Platform => {
     if (utils?.isWindows()) {
@@ -855,6 +956,7 @@ const initialState: SettingsState = {
         artistBackgroundBlur: 3,
         artistItems,
         artistRadioCount: 20,
+        artistReleaseTypeItems,
         buttonSize: 15,
         combinedLyricsAndVisualizer: false,
         disabledContextMenu: {},
@@ -877,6 +979,8 @@ const initialState: SettingsState = {
         musicBrainz: true,
         nativeAspectRatio: false,
         passwordStore: undefined,
+        pathReplace: '',
+        pathReplaceWith: '',
         playButtonBehavior: Play.NOW,
         playerbarOpenDrawer: false,
         playerbarSlider: {
@@ -920,6 +1024,11 @@ const initialState: SettingsState = {
             favoritePreviousRemove: { allowGlobal: true, hotkey: '', isGlobal: false },
             favoritePreviousToggle: { allowGlobal: true, hotkey: '', isGlobal: false },
             globalSearch: { allowGlobal: false, hotkey: 'mod+k', isGlobal: false },
+            listNavigateToPage: { allowGlobal: false, hotkey: 'mod+g', isGlobal: false },
+            listPlayDefault: { allowGlobal: false, hotkey: 'enter', isGlobal: false },
+            listPlayLast: { allowGlobal: false, hotkey: '', isGlobal: false },
+            listPlayNext: { allowGlobal: false, hotkey: '', isGlobal: false },
+            listPlayNow: { allowGlobal: false, hotkey: '', isGlobal: false },
             localSearch: { allowGlobal: false, hotkey: 'mod+f', isGlobal: false },
             navigateHome: { allowGlobal: false, hotkey: '', isGlobal: false },
             next: { allowGlobal: true, hotkey: '', isGlobal: false },
@@ -1234,7 +1343,25 @@ const initialState: SettingsState = {
                 itemGap: 'sm',
                 itemsPerRow: 6,
                 itemsPerRowEnabled: false,
-                rows: [],
+                rows: pickGridRows({
+                    alignLeftColumns: [TableColumn.TITLE, TableColumn.ARTIST],
+                    columns: PLAYLIST_SONG_TABLE_COLUMNS,
+                    enabledColumns: [TableColumn.TITLE, TableColumn.ARTIST],
+                    pickColumns: [
+                        TableColumn.TITLE,
+                        TableColumn.ARTIST,
+                        TableColumn.DURATION,
+                        TableColumn.YEAR,
+                        TableColumn.BIT_RATE,
+                        TableColumn.BPM,
+                        TableColumn.CODEC,
+                        TableColumn.DATE_ADDED,
+                        TableColumn.GENRE,
+                        TableColumn.LAST_PLAYED,
+                        TableColumn.RELEASE_DATE,
+                        TableColumn.TRACK_NUMBER,
+                    ],
+                }),
                 size: 'default',
             },
             itemsPerPage: 100,
@@ -1427,50 +1554,50 @@ const initialState: SettingsState = {
         audiomotionanalyzer: {
             alphaBars: false,
             ansiBands: false,
-            barSpace: 0,
+            barSpace: 0.7,
             channelLayout: 'single',
             colorMode: 'gradient',
             customGradients: [],
             fadePeaks: true,
-            fftSize: 8192,
-            fillAlpha: 1,
+            fftSize: 16384,
+            fillAlpha: 0,
             frequencyScale: 'log',
             gradient: 'prism',
             gravity: 11,
-            ledBars: true,
+            ledBars: false,
             linearAmplitude: false,
             linearBoost: 4,
-            lineWidth: 0,
+            lineWidth: 1.9,
             loRes: false,
             lumiBars: false,
             maxDecibels: -25,
             maxFPS: 0,
-            maxFreq: 8000,
+            maxFreq: 22050,
             minDecibels: -85,
             minFreq: 20,
             mirror: 0,
-            mode: 5,
+            mode: 10,
             noteLabels: false,
             opacity: 1,
             outlineBars: false,
             peakFadeTime: 900,
             peakHoldTime: 500,
             peakLine: true,
-            presets: [],
+            presets: audiomotionanalyzerPresets,
             radial: false,
             radialInvert: false,
             radius: 0.7,
-            reflexAlpha: 0.5,
+            reflexAlpha: 0.1,
             reflexBright: 1,
             reflexFit: false,
-            reflexRatio: 0,
+            reflexRatio: 0.5,
             roundBars: false,
             showFPS: false,
             showPeaks: false,
-            showScaleX: true,
+            showScaleX: false,
             showScaleY: false,
-            smoothing: 0.7,
-            spinSpeed: 0.5,
+            smoothing: 0.6,
+            spinSpeed: 0,
             splitGradient: false,
             trueLeds: false,
             volume: 1,
@@ -1514,12 +1641,18 @@ const getInitialState = (): SettingsState => {
         id: item,
     }));
 
+    const freshArtistReleaseTypeItems = Object.values(ArtistReleaseTypeItem).map((item) => ({
+        disabled: false,
+        id: item,
+    }));
+
     // Deep clone using JSON to ensure all nested objects/arrays are fresh copies
     const clonedState = JSON.parse(JSON.stringify(initialState)) as SettingsState;
 
     // Replace arrays that need fresh references
     clonedState.general.homeItems = freshHomeItems;
     clonedState.general.artistItems = freshArtistItems;
+    clonedState.general.artistReleaseTypeItems = freshArtistReleaseTypeItems;
     clonedState.general.sidebarItems = JSON.parse(
         JSON.stringify(sidebarItems),
     ) as SidebarItemType[];
@@ -1533,7 +1666,7 @@ const getInitialState = (): SettingsState => {
 export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
     persist(
         devtools(
-            immer((set, get) => ({
+            immer((set) => ({
                 actions: {
                     reset: () => {
                         const freshState = getInitialState();
@@ -1574,6 +1707,11 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                             state.general.artistItems = items;
                         });
                     },
+                    setArtistReleaseTypeItems: (items: SortableItem<ArtistReleaseTypeItem>[]) => {
+                        set((state) => {
+                            state.general.artistReleaseTypeItems = items;
+                        });
+                    },
                     setGenreBehavior: (target: GenreTarget) => {
                         set((state) => {
                             state.general.genreTarget = target;
@@ -1609,7 +1747,9 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                         });
                     },
                     setSettings: (data) => {
-                        set({ ...get(), ...data });
+                        set((state) => {
+                            deepMergeIntoState(state, data);
+                        });
                     },
                     setSidebarItems: (items: SidebarItemType[]) => {
                         set((state) => {
@@ -1800,10 +1940,29 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     }
                 }
 
+                if (version <= 19) {
+                    // Add IDs to presets that don't have them
+                    if (
+                        state.visualizer?.audiomotionanalyzer?.presets &&
+                        Array.isArray(state.visualizer.audiomotionanalyzer.presets)
+                    ) {
+                        state.visualizer.audiomotionanalyzer.presets =
+                            state.visualizer.audiomotionanalyzer.presets.map((preset) => {
+                                if (!preset.id) {
+                                    return {
+                                        ...preset,
+                                        id: nanoid(),
+                                    };
+                                }
+                                return preset;
+                            });
+                    }
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 19,
+            version: 20,
         },
     ),
 );
@@ -1866,11 +2025,128 @@ export const useListSettings = (type: ItemListKey) =>
         shallow,
     ) as ItemListSettings;
 
-export const usePrimaryColor = () => useSettingsStore((store) => store.general.accent);
+export const usePrimaryColor = () => useSettingsStore((store) => store.general.accent, shallow);
 
-export const usePlayerbarSlider = () => useSettingsStore((store) => store.general.playerbarSlider);
+export const usePlayerbarSlider = () =>
+    useSettingsStore((store) => store.general.playerbarSlider, shallow);
 
-export const useGenreTarget = () => useSettingsStore((store) => store.general.genreTarget);
+export const useGenreTarget = () => useSettingsStore((store) => store.general.genreTarget, shallow);
+
+export const useLanguage = () => useSettingsStore((state) => state.general.language, shallow);
+
+export const useAccent = () => useSettingsStore((state) => state.general.accent, shallow);
+
+export const useNativeAspectRatio = () =>
+    useSettingsStore((state) => state.general.nativeAspectRatio, shallow);
+
+export const useButtonSize = () => useSettingsStore((state) => state.general.buttonSize, shallow);
+
+export const useSkipButtons = () => useSettingsStore((state) => state.general.skipButtons, shallow);
+
+export const useImageRes = () => useSettingsStore((state) => state.general.imageRes, shallow);
+
+export const useVolumeWidth = () => useSettingsStore((state) => state.general.volumeWidth, shallow);
+
+export const useFollowCurrentSong = () =>
+    useSettingsStore((state) => state.general.followCurrentSong, shallow);
+
+export const useThemeSettings = () =>
+    useSettingsStore(
+        (state) => ({
+            followSystemTheme: state.general.followSystemTheme,
+            theme: state.general.theme,
+            themeDark: state.general.themeDark,
+            themeLight: state.general.themeLight,
+            useThemeAccentColor: state.general.useThemeAccentColor,
+        }),
+        shallow,
+    );
+
+export const useSideQueueType = () =>
+    useSettingsStore((state) => state.general.sideQueueType, shallow);
+
+export const useVolumeWheelStep = () =>
+    useSettingsStore((state) => state.general.volumeWheelStep, shallow);
+
+export const useSidebarPlaylistList = () =>
+    useSettingsStore((state) => state.general.sidebarPlaylistList, shallow);
+
+export const useSidebarItems = () =>
+    useSettingsStore((state) => state.general.sidebarItems, shallow);
+
+export const useSidebarCollapsedNavigation = () =>
+    useSettingsStore((state) => state.general.sidebarCollapsedNavigation, shallow);
+
+export const usePlayerbarOpenDrawer = () =>
+    useSettingsStore((state) => state.general.playerbarOpenDrawer, shallow);
+
+export const useShowRatings = () => useSettingsStore((state) => state.general.showRatings, shallow);
+
+export const useArtistRadioCount = () =>
+    useSettingsStore((state) => state.general.artistRadioCount, shallow);
+
+export const useArtistBackground = () =>
+    useSettingsStore(
+        (state) => ({
+            artistBackground: state.general.artistBackground,
+            artistBackgroundBlur: state.general.artistBackgroundBlur,
+        }),
+        shallow,
+    );
+
+export const useAlbumBackground = () =>
+    useSettingsStore(
+        (state) => ({
+            albumBackground: state.general.albumBackground,
+            albumBackgroundBlur: state.general.albumBackgroundBlur,
+        }),
+        shallow,
+    );
+
+export const useExternalLinks = () =>
+    useSettingsStore(
+        (state) => ({
+            externalLinks: state.general.externalLinks,
+            lastFM: state.general.lastFM,
+            musicBrainz: state.general.musicBrainz,
+        }),
+        shallow,
+    );
+
+export const useHomeFeature = () => useSettingsStore((state) => state.general.homeFeature, shallow);
+
+export const useHomeItems = () => useSettingsStore((state) => state.general.homeItems, shallow);
+
+export const useArtistItems = () => useSettingsStore((state) => state.general.artistItems, shallow);
+
+export const useArtistReleaseTypeItems = () =>
+    useSettingsStore((state) => state.general.artistReleaseTypeItems, shallow);
+
+export const useZoomFactor = () => useSettingsStore((state) => state.general.zoomFactor, shallow);
+
+export const usePathReplace = () =>
+    useSettingsStore(
+        (state) => ({
+            pathReplace: state.general.pathReplace,
+            pathReplaceWith: state.general.pathReplaceWith,
+        }),
+        shallow,
+    );
+
+export const useLastfmApiKey = () =>
+    useSettingsStore((state) => state.general.lastfmApiKey, shallow);
+
+export const useSidebarPanelOrder = () =>
+    useSettingsStore((state) => state.general.sidebarPanelOrder, shallow);
+
+export const useCombinedLyricsAndVisualizer = () =>
+    useSettingsStore((state) => state.general.combinedLyricsAndVisualizer, shallow);
+
+export const useShowLyricsInSidebar = () =>
+    useSettingsStore((state) => state.general.showLyricsInSidebar, shallow);
+
+export const useShowVisualizerInSidebar = () =>
+    useSettingsStore((state) => state.general.showVisualizerInSidebar, shallow);
 
 export const useAutoDJSettings = () => useSettingsStore((store) => store.autoDJ, shallow);
 

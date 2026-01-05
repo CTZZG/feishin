@@ -5,6 +5,7 @@ import qs from 'qs';
 import { z } from 'zod';
 
 import i18n from '/@/i18n/i18n';
+import { getServerUrl } from '/@/renderer/utils/normalize-server-url';
 import { ssType } from '/@/shared/api/subsonic/subsonic-types';
 import { hasFeature } from '/@/shared/api/utils';
 import { toast } from '/@/shared/components/toast/toast';
@@ -398,7 +399,8 @@ export const ssApiClient = (args: {
             const { params, path: api } = parsePath(path);
 
             if (server) {
-                baseUrl = `${server.url}/rest`;
+                const serverUrl = getServerUrl(server);
+                baseUrl = serverUrl ? `${serverUrl}/rest` : undefined;
                 const token = server.credential;
                 const params = token.split(/&?\w=/gm);
 

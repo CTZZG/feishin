@@ -55,7 +55,7 @@ export const AlbumListPaginatedGrid = ({
         enabled: saveScrollOffset,
     });
 
-    const rows = useGridRows(LibraryItem.ALBUM, ItemListKey.ALBUM);
+    const rows = useGridRows(LibraryItem.ALBUM, ItemListKey.ALBUM, size);
 
     return (
         <ItemListWithPagination

@@ -99,13 +99,18 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
     const { addServer, setCurrentServer } = useAuthStoreActions();
     const { servers: discovered } = useAutodiscovery();
 
+    const isServerLock = Boolean(window.SERVER_LOCK) || false;
+    const legacyAuthDefault = isServerLock ? Boolean(window.LEGACY_AUTHENTICATION) || false : false;
+
     const form = useForm({
         initialValues: {
-            legacyAuth: false,
+            legacyAuth: legacyAuthDefault,
             name:
                 (localSettings ? localSettings.env.SERVER_NAME : window.SERVER_NAME) || 'My Server',
             password: '',
             preferInstantMix: undefined,
+            preferRemoteUrl: false,
+            remoteUrl: '',
             savePassword: undefined,
             type:
                 (localSettings
@@ -115,9 +120,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
             username: '',
         },
     });
-
-    // server lock for web is only true if lock is true *and* all other properties are set
-    const isServerLock = Boolean(window.SERVER_LOCK) || false;
 
     const isSubmitDisabled = !form.values.name || !form.values.url || !form.values.username;
 
@@ -169,6 +171,14 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
 
             if (values.savePassword !== undefined) {
                 serverItem.savePassword = values.savePassword;
+            }
+
+            if (values.remoteUrl?.trim()) {
+                serverItem.remoteUrl = values.remoteUrl.trim().replace(/\/$/, '');
+            }
+
+            if (values.preferRemoteUrl !== undefined) {
+                serverItem.preferRemoteUrl = values.preferRemoteUrl;
             }
 
             if (data.ndCredential !== undefined) {
@@ -253,6 +263,29 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         />
                     </Group>
                     <TextInput
+                        disabled={isServerLock}
+                        label={t('form.addServer.input', {
+                            context: 'remoteUrl',
+                            postProcess: 'titleCase',
+                        })}
+                        placeholder={t('form.addServer.input', {
+                            context: 'remoteUrlPlaceholder',
+                            postProcess: 'sentenceCase',
+                        })}
+                        {...form.getInputProps('remoteUrl')}
+                    />
+                    {form.values.remoteUrl && (
+                        <Checkbox
+                            label={t('form.addServer.input', {
+                                context: 'preferRemoteUrl',
+                                postProcess: 'titleCase',
+                            })}
+                            {...form.getInputProps('preferRemoteUrl', {
+                                type: 'checkbox',
+                            })}
+                        />
+                    )}
+                    <TextInput
                         label={t('form.addServer.input', {
                             context: 'username',
                             postProcess: 'titleCase',
@@ -280,6 +313,7 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                     )}
                     {form.values.type === ServerType.SUBSONIC && (
                         <Checkbox
+                            disabled={isServerLock}
                             label={t('form.addServer.input', {
                                 context: 'legacyAuthentication',
                                 postProcess: 'titleCase',

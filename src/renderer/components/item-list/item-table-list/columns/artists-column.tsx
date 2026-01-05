@@ -10,11 +10,12 @@ import {
     ItemTableListInnerColumn,
     TableColumnContainer,
 } from '/@/renderer/components/item-list/item-table-list/item-table-list-column';
+import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { AppRoute } from '/@/renderer/router/routes';
 import { Text } from '/@/shared/components/text/text';
-import { RelatedAlbumArtist } from '/@/shared/types/domain-types';
+import { LibraryItem, RelatedAlbumArtist, Song } from '/@/shared/types/domain-types';
 
-const ArtistsColumn = (props: ItemTableListInnerColumn) => {
+const AlbumArtistsColumn = (props: ItemTableListInnerColumn) => {
     const row: RelatedAlbumArtist[] | undefined = (props.data as any[])[props.rowIndex]?.[
         props.columns[props.columnIndex].id
     ];
@@ -65,6 +66,47 @@ const ArtistsColumn = (props: ItemTableListInnerColumn) => {
     return <ColumnSkeletonVariable {...props} />;
 };
 
-export const ArtistsColumnMemo = memo(ArtistsColumn);
+const SongArtistsColumn = (props: ItemTableListInnerColumn) => {
+    const row: Song | undefined = (props.data as (Song | undefined)[])[props.rowIndex];
+
+    if (row) {
+        return (
+            <TableColumnContainer {...props}>
+                <div
+                    className={clsx(styles.artistsContainer, {
+                        [styles.compact]: props.size === 'compact',
+                        [styles.large]: props.size === 'large',
+                    })}
+                >
+                    <JoinedArtists
+                        artistName={row.artistName}
+                        artists={row.artists}
+                        linkProps={{ fw: 400, isMuted: true }}
+                        rootTextProps={{ fw: 400, isMuted: true, size: 'sm' }}
+                    />
+                </div>
+            </TableColumnContainer>
+        );
+    }
+
+    if (row === null) {
+        return <ColumnNullFallback {...props} />;
+    }
+
+    return <ColumnSkeletonVariable {...props} />;
+};
+
+const BaseArtistsColumn = (props: ItemTableListInnerColumn) => {
+    const { itemType } = props;
+
+    switch (itemType) {
+        case LibraryItem.ALBUM:
+            return <AlbumArtistsColumn {...props} />;
+        default:
+            return <SongArtistsColumn {...props} />;
+    }
+};
+
+const ArtistsColumnMemo = memo(BaseArtistsColumn);
 
 export { ArtistsColumnMemo as ArtistsColumn };

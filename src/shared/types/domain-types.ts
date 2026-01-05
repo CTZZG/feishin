@@ -26,7 +26,7 @@ import {
     NDUserListSort,
 } from '/@/shared/api/navidrome/navidrome-types';
 import { ServerFeatures } from '/@/shared/types/features-types';
-import { PlayerRepeat, PlayerShuffle, PlayerStatus, PlayerStyle } from '/@/shared/types/types';
+import { PlayerStatus } from '/@/shared/types/types';
 
 export enum LibraryItem {
     ALBUM = 'album',
@@ -66,20 +66,13 @@ export type AnyLibraryItems =
 export interface PlayerData {
     currentSong: QueueSong | undefined;
     index: number;
-    muted: boolean;
     nextSong: QueueSong | undefined;
     num: 1 | 2;
     player1: QueueSong | undefined;
     player2: QueueSong | undefined;
     previousSong: QueueSong | undefined;
-    queue: QueueData;
     queueLength: number;
-    repeat: PlayerRepeat;
-    shuffle: PlayerShuffle;
-    speed: number;
     status: PlayerStatus;
-    transitionType: PlayerStyle;
-    volume: number;
 }
 
 export interface QueueData {
@@ -100,6 +93,8 @@ export type ServerListItem = {
     musicFolderId?: string[];
     name: string;
     preferInstantMix?: boolean;
+    preferRemoteUrl?: boolean;
+    remoteUrl?: string;
     savePassword?: boolean;
     type: ServerType;
     url: string;
@@ -185,7 +180,7 @@ export type Album = {
     _itemType: LibraryItem.ALBUM;
     _serverId: string;
     _serverType: ServerType;
-    albumArtist: string;
+    albumArtistName: string;
     albumArtists: RelatedArtist[];
     artists: RelatedArtist[];
     comment: null | string;
@@ -201,10 +196,12 @@ export type Album = {
     mbzId: null | string;
     name: string;
     originalDate: null | string;
+    originalYear: null | number;
     participants: null | Record<string, RelatedArtist[]>;
     playCount: null | number;
     recordLabels: string[];
     releaseDate: null | string;
+    releaseType: null | string;
     releaseTypes: string[];
     releaseYear: null | number;
     size: null | number;
@@ -238,15 +235,8 @@ export type AlbumArtist = {
     userRating: null | number;
 };
 
-export type Artist = {
+export type Artist = Omit<AlbumArtist, '_itemType'> & {
     _itemType: LibraryItem.ARTIST;
-    _serverId: string;
-    _serverType: ServerType;
-    biography: null | string;
-    createdAt: string;
-    id: string;
-    name: string;
-    updatedAt: string;
 };
 
 export type AuthenticationResponse = {
@@ -384,6 +374,7 @@ export type Song = {
     _serverId: string;
     _serverType: ServerType;
     album: null | string;
+    albumArtistName: string;
     albumArtists: RelatedArtist[];
     albumId: string;
     artistName: string;
@@ -421,6 +412,7 @@ export type Song = {
     size: number;
     tags: null | Record<string, string[]>;
     trackNumber: number;
+    trackSubtitle: null | string;
     updatedAt: string;
     userFavorite: boolean;
     userRating: null | number;
@@ -431,6 +423,10 @@ type BaseEndpointArgs = {
         server?: null | ServerListItemWithCredential;
         serverId: string;
         signal?: AbortSignal;
+    };
+    context?: {
+        pathReplace?: string;
+        pathReplaceWith?: string;
     };
 };
 
@@ -1531,6 +1527,7 @@ export type GetQueueResponse = {
 };
 
 export type ImageArgs = BaseEndpointArgs & {
+    baseUrl?: string;
     query: ImageQuery;
 };
 
@@ -1783,5 +1780,9 @@ type BaseEndpointArgsWithServer = {
         server: null | ServerListItemWithCredential;
         serverId: string;
         signal?: AbortSignal;
+    };
+    context?: {
+        pathReplace?: string;
+        pathReplaceWith?: string;
     };
 };

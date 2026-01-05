@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 
 import styles from './library-header.module.css';
 
+import { getItemImageUrl, ItemImage } from '/@/renderer/components/item-image/item-image';
 import { useIsPlayerFetching } from '/@/renderer/features/player/context/player-context';
 import {
     PlayLastTextButton,
@@ -22,7 +23,7 @@ import { Button } from '/@/shared/components/button/button';
 import { Center } from '/@/shared/components/center/center';
 import { Group } from '/@/shared/components/group/group';
 import { Icon } from '/@/shared/components/icon/icon';
-import { Image } from '/@/shared/components/image/image';
+import { BaseImage } from '/@/shared/components/image/image';
 import { Rating } from '/@/shared/components/rating/rating';
 import { Spinner } from '/@/shared/components/spinner/spinner';
 import { Text } from '/@/shared/components/text/text';
@@ -34,7 +35,13 @@ interface LibraryHeaderProps {
     containerClassName?: string;
     imagePlaceholderUrl?: null | string;
     imageUrl?: null | string;
-    item: { route: string; type: LibraryItem };
+    item: {
+        children?: ReactNode;
+        imageId?: null | string;
+        imageUrl?: null | string;
+        route: string;
+        type?: LibraryItem;
+    };
     loading?: boolean;
     title: string;
 }
@@ -51,7 +58,7 @@ export const LibraryHeader = forwardRef(
             setIsImageError(true);
         };
 
-        const itemTypeString = () => {
+        const itemTypeString = (): string => {
             switch (item.type) {
                 case LibraryItem.ALBUM:
                     return t('entity.album', { count: 1 });
@@ -69,39 +76,57 @@ export const LibraryHeader = forwardRef(
         };
 
         const openImage = useCallback(() => {
-            if (imageUrl && !isImageError) {
-                const fullSized = imageUrl.replace(/&?(size|width|height)=\d+/, '');
+            const imageId = item.imageId;
+            const itemType = item.type as LibraryItem;
 
-                openModal({
-                    children: (
-                        <Center
-                            onClick={() => closeAllModals()}
-                            style={{
-                                cursor: 'pointer',
-                                height: 'calc(100vh - 80px)',
-                                width: '100%',
-                            }}
-                        >
-                            <img
-                                alt="cover"
-                                src={fullSized}
-                                style={{
-                                    maxHeight: '100%',
-                                    maxWidth: '100%',
-                                }}
-                            />
-                        </Center>
-                    ),
-                    fullScreen: true,
-                });
+            if (!imageId || !itemType) {
+                return;
             }
-        }, [imageUrl, isImageError]);
+
+            const imageUrl = getItemImageUrl({
+                id: imageId,
+                itemType,
+            });
+
+            if (!imageUrl) {
+                console.error('No image URL found');
+                return;
+            }
+
+            openModal({
+                children: (
+                    <Center
+                        onClick={() => closeAllModals()}
+                        style={{
+                            cursor: 'pointer',
+                            height: 'calc(100vh - 80px)',
+                            width: '100%',
+                        }}
+                    >
+                        <BaseImage
+                            alt="cover"
+                            src={imageUrl}
+                            style={{
+                                maxHeight: '100%',
+                                maxWidth: '100%',
+                                objectFit: 'contain',
+                            }}
+                            unloaderIcon="emptyImage"
+                        />
+                    </Center>
+                ),
+                fullScreen: true,
+            });
+        }, [item.imageId, item.type]);
 
         return (
             <div className={clsx(styles.libraryHeader, containerClassName)} ref={ref}>
                 <div
                     className={styles.imageSection}
-                    onClick={() => openImage()}
+                    onClick={() => {
+                        console.log('openImage');
+                        openImage();
+                    }}
                     onKeyDown={(event) =>
                         [' ', 'Enter', 'Spacebar'].includes(event.key) && openImage()
                     }
@@ -110,31 +135,35 @@ export const LibraryHeader = forwardRef(
                     tabIndex={0}
                 >
                     {!isImageError && (
-                        <Image
-                            alt="cover"
+                        <ItemImage
                             className={styles.image}
                             containerClassName={styles.image}
-                            key={imageUrl}
-                            loading="eager"
+                            id={item.imageId}
+                            itemType={item.type as LibraryItem}
                             onError={onImageError}
                             src={imageUrl || ''}
+                            type="header"
                         />
                     )}
                 </div>
                 {title && (
                     <div className={styles.metadataSection}>
-                        <Text
-                            className={styles.itemType}
-                            component={Link}
-                            fw={600}
-                            isLink
-                            size="md"
-                            style={{}}
-                            to={item.route}
-                            tt="uppercase"
-                        >
-                            {itemTypeString()}
-                        </Text>
+                        {item.children ? (
+                            <div className={styles.itemType}>{item.children}</div>
+                        ) : (
+                            <Text
+                                className={styles.itemType}
+                                component={Link}
+                                fw={600}
+                                isLink
+                                size="md"
+                                to={item.route}
+                                tt="uppercase"
+                            >
+                                {itemTypeString()}
+                            </Text>
+                        )}
+
                         <h1
                             className={styles.title}
                             style={{
@@ -151,8 +180,43 @@ export const LibraryHeader = forwardRef(
     },
 );
 
+const isAsianCharacter = (char: string): boolean => {
+    const codePoint = char.codePointAt(0);
+
+    if (!codePoint) return false;
+
+    // CJK Unified Ideographs: U+4E00–U+9FFF
+    if (codePoint >= 0x4e00 && codePoint <= 0x9fff) return true;
+
+    // Hiragana: U+3040–U+309F
+    if (codePoint >= 0x3040 && codePoint <= 0x309f) return true;
+
+    // Katakana: U+30A0–U+30FF
+    if (codePoint >= 0x30a0 && codePoint <= 0x30ff) return true;
+
+    // CJK Extension A: U+3400–U+4DBF
+    if (codePoint >= 0x3400 && codePoint <= 0x4dbf) return true;
+
+    // CJK Compatibility Ideographs: U+F900–U+FAFF
+    if (codePoint >= 0xf900 && codePoint <= 0xfaff) return true;
+
+    // Fullwidth forms (some Asian characters): U+FF00–U+FFEF
+    // Only count fullwidth letters/numbers as Asian
+    if (codePoint >= 0xff01 && codePoint <= 0xff5e) return true;
+
+    return false;
+};
+
+const calculateWeightedLength = (str: string): number => {
+    let length = 0;
+    for (const char of str) {
+        length += isAsianCharacter(char) ? 2.5 : 1;
+    }
+    return length;
+};
+
 const calculateTitleSize = (title: string) => {
-    const titleLength = title.length;
+    const titleLength = calculateWeightedLength(title);
     let baseSize = '3dvw';
 
     if (titleLength > 20) {
@@ -173,6 +237,18 @@ const calculateTitleSize = (title: string) => {
 
     if (titleLength > 60) {
         baseSize = '1.75dvw';
+    }
+
+    if (titleLength > 70) {
+        baseSize = '1.5dvw';
+    }
+
+    if (titleLength > 80) {
+        baseSize = '1.4dvw';
+    }
+
+    if (titleLength > 90) {
+        baseSize = '1.3dvw';
     }
 
     return `clamp(1.75rem, ${baseSize}, 2.75rem)`;

@@ -1,16 +1,17 @@
 import isElectron from 'is-electron';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { useItemImageUrl } from '/@/renderer/components/item-image/item-image';
+import { getItemImageUrl } from '/@/renderer/components/item-image/item-image';
 import { usePlayerEvents } from '/@/renderer/features/player/audio-player/hooks/use-player-events';
 import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
     usePlaybackSettings,
-    usePlayerSong,
+    usePlayerStore,
     useSettingsStore,
+    useSkipButtons,
     useTimestampStoreBase,
 } from '/@/renderer/store';
-import { LibraryItem } from '/@/shared/types/domain-types';
+import { LibraryItem, QueueSong } from '/@/shared/types/domain-types';
 import { PlayerStatus, PlayerType } from '/@/shared/types/types';
 
 const mediaSession = navigator.mediaSession;
@@ -18,16 +19,8 @@ const mediaSession = navigator.mediaSession;
 export const useMediaSession = () => {
     const { mediaSession: mediaSessionEnabled } = usePlaybackSettings();
     const player = usePlayer();
-    const skip = useSettingsStore((state) => state.general.skipButtons);
+    const skip = useSkipButtons();
     const playbackType = useSettingsStore((state) => state.playback.type);
-    const currentSong = usePlayerSong();
-
-    const imageUrl = useItemImageUrl({
-        id: currentSong?.imageId || undefined,
-        imageUrl: currentSong?.imageUrl,
-        itemType: LibraryItem.SONG,
-        type: 'itemCard',
-    });
 
     const isMediaSessionEnabled = useMemo(() => {
         // Always enable media session on web
@@ -98,6 +91,29 @@ export const useMediaSession = () => {
         };
     }, [player, skip?.skipBackwardSeconds, skip?.skipForwardSeconds, isMediaSessionEnabled]);
 
+    const updateMediaSessionMetadata = useCallback(
+        (song: QueueSong | undefined) => {
+            if (!isMediaSessionEnabled || !song) {
+                return;
+            }
+
+            const imageUrl = getItemImageUrl({
+                id: song?.imageId || undefined,
+                imageUrl: song?.imageUrl,
+                itemType: LibraryItem.SONG,
+                type: 'itemCard',
+            });
+
+            mediaSession.metadata = new MediaMetadata({
+                album: song?.album ?? '',
+                artist: song?.artistName ?? '',
+                artwork: imageUrl ? [{ src: imageUrl, type: 'image/png' }] : [],
+                title: song?.name ?? '',
+            });
+        },
+        [isMediaSessionEnabled],
+    );
+
     usePlayerEvents(
         {
             onCurrentSongChange: (properties) => {
@@ -105,13 +121,15 @@ export const useMediaSession = () => {
                     return;
                 }
 
-                const song = properties.song;
-                mediaSession.metadata = new MediaMetadata({
-                    album: song?.album ?? '',
-                    artist: song?.artistName ?? '',
-                    artwork: imageUrl ? [{ src: imageUrl, type: 'image/png' }] : [],
-                    title: song?.name ?? '',
-                });
+                updateMediaSessionMetadata(properties.song);
+            },
+            onPlayerRepeated: () => {
+                if (!isMediaSessionEnabled) {
+                    return;
+                }
+
+                const currentSong = usePlayerStore.getState().getCurrentSong();
+                updateMediaSessionMetadata(currentSong);
             },
             onPlayerStatus: (properties) => {
                 if (!isMediaSessionEnabled) {
@@ -122,6 +140,6 @@ export const useMediaSession = () => {
                 mediaSession.playbackState = status === PlayerStatus.PLAYING ? 'playing' : 'paused';
             },
         },
-        [isMediaSessionEnabled, mediaSession, imageUrl],
+        [isMediaSessionEnabled, mediaSession],
     );
 };

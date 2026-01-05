@@ -54,6 +54,7 @@ const LoginRoute = () => {
     const serverType = window.SERVER_TYPE ? toServerType(window.SERVER_TYPE) : null;
     const serverName = window.SERVER_NAME || '';
     const serverUrl = window.SERVER_URL || '';
+    const legacyAuth = isServerLock ? Boolean(window.LEGACY_AUTHENTICATION) || false : false;
 
     const config = [
         {
@@ -124,7 +125,7 @@ const LoginRoute = () => {
             const data: AuthenticationResponse | undefined = await authFunction(
                 serverUrl,
                 {
-                    legacy: false,
+                    legacy: legacyAuth,
                     password: values.password,
                     username: values.username,
                 },

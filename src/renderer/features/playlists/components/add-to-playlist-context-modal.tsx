@@ -565,11 +565,12 @@ const PlaylistTableItem = memo(
                     <Grid.Col span="content">
                         <Flex align="center" justify="center" px="sm">
                             <ItemImage
-                                id={item.id}
+                                id={item.imageId}
                                 imageContainerProps={{
                                     className: styles.imageContainer,
                                 }}
                                 itemType={LibraryItem.PLAYLIST}
+                                type="table"
                             />
                         </Flex>
                     </Grid.Col>

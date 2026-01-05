@@ -19,6 +19,7 @@ import { Play } from '/@/shared/types/types';
 interface LibraryCommandItemProps {
     disabled?: boolean;
     id: string;
+    imageId: null | string;
     imageUrl: null | string;
     isHighlighted?: boolean;
     itemType: LibraryItem;
@@ -30,6 +31,7 @@ interface LibraryCommandItemProps {
 export const LibraryCommandItem = ({
     disabled,
     id,
+    imageId,
     imageUrl,
     isHighlighted,
     itemType,
@@ -99,9 +101,10 @@ export const LibraryCommandItem = ({
                         alt="cover"
                         className={styles.image}
                         height={40}
-                        id={id}
+                        id={imageId}
                         itemType={itemType}
                         src={imageUrl}
+                        type="table"
                         width={40}
                     />
                 </div>
