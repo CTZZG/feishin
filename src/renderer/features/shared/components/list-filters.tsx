@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useListContext } from '/@/renderer/context/list-context';
+import { EmbyAlbumFilters } from '/@/renderer/features/albums/components/emby-album-filters';
 import { JellyfinAlbumFilters } from '/@/renderer/features/albums/components/jellyfin-album-filters';
 import { NavidromeAlbumFilters } from '/@/renderer/features/albums/components/navidrome-album-filters';
 import { SubsonicAlbumFilters } from '/@/renderer/features/albums/components/subsonic-album-filters';
@@ -9,6 +10,7 @@ import { useAlbumListFilters } from '/@/renderer/features/albums/hooks/use-album
 import { ComponentErrorBoundary } from '/@/renderer/features/shared/components/component-error-boundary';
 import { FilterButton } from '/@/renderer/features/shared/components/filter-button';
 import { SaveAsCollectionButton } from '/@/renderer/features/shared/components/save-as-collection-button';
+import { EmbySongFilters } from '/@/renderer/features/songs/components/emby-song-filters';
 import { JellyfinSongFilters } from '/@/renderer/features/songs/components/jellyfin-song-filters';
 import { NavidromeSongFilters } from '/@/renderer/features/songs/components/navidrome-song-filters';
 import { SubsonicSongFilters } from '/@/renderer/features/songs/components/subsonic-song-filters';
@@ -179,6 +181,10 @@ export const ListFiltersTitle = ({ itemType }: ListFiltersTitleProps) => {
 };
 
 const FILTERS = {
+    [ServerType.EMBY]: {
+        [LibraryItem.ALBUM]: EmbyAlbumFilters,
+        [LibraryItem.SONG]: EmbySongFilters,
+    },
     [ServerType.JELLYFIN]: {
         [LibraryItem.ALBUM]: JellyfinAlbumFilters,
         [LibraryItem.SONG]: JellyfinSongFilters,

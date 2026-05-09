@@ -10,6 +10,7 @@ import {
     isLegacyAuth,
     isServerLock,
 } from '/@/renderer/features/action-required/utils/window-properties';
+import EmbyIcon from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinIcon from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeIcon from '/@/renderer/features/servers/assets/navidrome.png';
 import SubsonicIcon from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -40,12 +41,14 @@ import { ServerType, toServerType } from '/@/shared/types/types';
 const localSettings = isElectron() ? window.api.localSettings : null;
 
 const SERVER_ICONS: Record<ServerType, string> = {
+    [ServerType.EMBY]: EmbyIcon,
     [ServerType.JELLYFIN]: JellyfinIcon,
     [ServerType.NAVIDROME]: NavidromeIcon,
     [ServerType.SUBSONIC]: SubsonicIcon,
 };
 
 const SERVER_NAMES: Record<ServerType, string> = {
+    [ServerType.EMBY]: 'Emby',
     [ServerType.JELLYFIN]: 'Jellyfin',
     [ServerType.NAVIDROME]: 'Navidrome',
     [ServerType.SUBSONIC]: 'OpenSubsonic',

@@ -1,4 +1,5 @@
 import i18n from '/@/i18n/i18n';
+import { EmbyController } from '/@/renderer/api/emby/emby-controller';
 import { JellyfinController } from '/@/renderer/api/jellyfin/jellyfin-controller';
 import { NavidromeController } from '/@/renderer/api/navidrome/navidrome-controller';
 import { SubsonicController } from '/@/renderer/api/subsonic/subsonic-controller';
@@ -15,12 +16,14 @@ import {
 } from '/@/shared/types/domain-types';
 
 type ApiController = {
+    emby: InternalControllerEndpoint;
     jellyfin: InternalControllerEndpoint;
     navidrome: InternalControllerEndpoint;
     subsonic: InternalControllerEndpoint;
 };
 
 const endpoints: ApiController = {
+    emby: EmbyController,
     jellyfin: JellyfinController,
     navidrome: NavidromeController,
     subsonic: SubsonicController,

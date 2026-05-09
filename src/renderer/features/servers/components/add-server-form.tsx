@@ -9,6 +9,7 @@ import {
     isLegacyAuth,
     isServerLock,
 } from '/@/renderer/features/action-required/utils/window-properties';
+import EmbyIcon from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinIcon from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeIcon from '/@/renderer/features/servers/assets/navidrome.png';
 import SubsonicIcon from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -71,6 +72,10 @@ function useAutodiscovery() {
 }
 
 const SERVER_TYPES: Record<ServerType, ServerDetails> = {
+    [ServerType.EMBY]: {
+        icon: EmbyIcon,
+        name: 'Emby',
+    },
     [ServerType.JELLYFIN]: {
         icon: JellyfinIcon,
         name: 'Jellyfin',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import styles from './server-selector.module.css';
 
+import EmbyLogo from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinLogo from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeLogo from '/@/renderer/features/servers/assets/navidrome.png';
 import OpenSubsonicLogo from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -60,7 +61,9 @@ export const ServerSelector = () => {
             ? NavidromeLogo
             : currentServer.type === ServerType.JELLYFIN
               ? JellyfinLogo
-              : OpenSubsonicLogo;
+              : currentServer.type === ServerType.EMBY
+                ? EmbyLogo
+                : OpenSubsonicLogo;
 
     return (
         <DropdownMenu offset={0} position="right-start" withinPortal={false}>

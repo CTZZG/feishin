@@ -294,6 +294,58 @@ export const CLIENT_SIDE_ALBUM_FILTERS = [
 const ALBUM_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.albumArtist', { postProcess: 'titleCase' }),
+            value: AlbumListSort.ALBUM_ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.id', { postProcess: 'titleCase' }),
+            value: AlbumListSort.ID,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.communityRating', { postProcess: 'titleCase' }),
+            value: AlbumListSort.COMMUNITY_RATING,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.criticRating', { postProcess: 'titleCase' }),
+            value: AlbumListSort.CRITIC_RATING,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: AlbumListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.playCount', { postProcess: 'titleCase' }),
+            value: AlbumListSort.PLAY_COUNT,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RECENTLY_ADDED,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyPlayed', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RECENTLY_PLAYED,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.releaseDate', { postProcess: 'titleCase' }),
+            value: AlbumListSort.RELEASE_DATE,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -460,6 +512,73 @@ const ALBUM_LIST_FILTERS: Partial<
 const SONG_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.album', { postProcess: 'titleCase' }),
+            value: SongListSort.ALBUM,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.albumArtist', { postProcess: 'titleCase' }),
+            value: SongListSort.ALBUM_ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.artist', { postProcess: 'titleCase' }),
+            value: SongListSort.ARTIST,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.duration', { postProcess: 'titleCase' }),
+            value: SongListSort.DURATION,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.id', { postProcess: 'titleCase' }),
+            value: SongListSort.ID,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: SongListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: SongListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.playCount', { postProcess: 'titleCase' }),
+            value: SongListSort.PLAY_COUNT,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.rating', { postProcess: 'titleCase' }),
+            value: SongListSort.RATING,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: SongListSort.RECENTLY_ADDED,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyPlayed', { postProcess: 'titleCase' }),
+            value: SongListSort.RECENTLY_PLAYED,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.releaseDate', { postProcess: 'titleCase' }),
+            value: SongListSort.RELEASE_DATE,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.releaseYear', { postProcess: 'titleCase' }),
+            value: SongListSort.YEAR,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -606,6 +725,14 @@ const SONG_LIST_FILTERS: Partial<
 const FOLDER_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.id', { postProcess: 'titleCase' }),
+            value: SongListSort.ID,
+        },
+        ...(SONG_LIST_FILTERS[ServerType.EMBY] || []),
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -635,6 +762,17 @@ const FOLDER_LIST_FILTERS: Partial<
 const PLAYLIST_SONG_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.playlistOrder', {
+                defaultValue: 'Playlist order',
+                postProcess: 'titleCase',
+            }),
+            value: SongListSort.LIST_ITEM_ORDER,
+        },
+        ...CLIENT_SIDE_SONG_FILTERS,
+    ],
     [ServerType.JELLYFIN]: CLIENT_SIDE_SONG_FILTERS,
     [ServerType.NAVIDROME]: CLIENT_SIDE_SONG_FILTERS,
     [ServerType.SUBSONIC]: CLIENT_SIDE_SONG_FILTERS,
@@ -643,6 +781,23 @@ const PLAYLIST_SONG_LIST_FILTERS: Partial<
 const ALBUM_ARTIST_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: AlbumArtistListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: AlbumArtistListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: AlbumArtistListSort.RECENTLY_ADDED,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -729,6 +884,23 @@ const ALBUM_ARTIST_LIST_FILTERS: Partial<
 const ARTIST_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: ArtistListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.random', { postProcess: 'titleCase' }),
+            value: ArtistListSort.RANDOM,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyAdded', { postProcess: 'titleCase' }),
+            value: ArtistListSort.RECENTLY_ADDED,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -815,6 +987,13 @@ const ARTIST_LIST_FILTERS: Partial<
 const GENRE_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: GenreListSort.NAME,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,
@@ -841,6 +1020,18 @@ const GENRE_LIST_FILTERS: Partial<
 const PLAYLIST_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: PlaylistListSort.NAME,
+        },
+        {
+            defaultOrder: SortOrder.DESC,
+            name: i18n.t('filter.recentlyUpdated', { postProcess: 'titleCase' }),
+            value: PlaylistListSort.UPDATED_AT,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.DESC,
@@ -902,6 +1093,18 @@ const PLAYLIST_LIST_FILTERS: Partial<
 const RADIO_LIST_FILTERS: Partial<
     Record<ServerType, Array<{ defaultOrder: SortOrder; name: string; value: string }>>
 > = {
+    [ServerType.EMBY]: [
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.id', { postProcess: 'titleCase' }),
+            value: RadioListSort.ID,
+        },
+        {
+            defaultOrder: SortOrder.ASC,
+            name: i18n.t('filter.name', { postProcess: 'titleCase' }),
+            value: RadioListSort.NAME,
+        },
+    ],
     [ServerType.JELLYFIN]: [
         {
             defaultOrder: SortOrder.ASC,

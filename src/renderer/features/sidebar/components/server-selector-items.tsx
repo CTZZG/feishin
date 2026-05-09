@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import { isServerLock } from '/@/renderer/features/action-required/utils/window-properties';
+import EmbyLogo from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinLogo from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeLogo from '/@/renderer/features/servers/assets/navidrome.png';
 import OpenSubsonicLogo from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -105,7 +106,9 @@ export const ServerSelectorItems = () => {
                         ? NavidromeLogo
                         : server.type === ServerType.JELLYFIN
                           ? JellyfinLogo
-                          : OpenSubsonicLogo;
+                          : server.type === ServerType.EMBY
+                            ? EmbyLogo
+                            : OpenSubsonicLogo;
 
                 return (
                     <DropdownMenu.Item
