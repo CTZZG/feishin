@@ -1,0 +1,126 @@
+name: Package All Platforms (Manual)
+
+on:
+    workflow_dispatch:
+
+env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    NODE_VERSION: 24
+    PNPM_VERSION: 10
+
+permissions:
+    contents: read
+
+jobs:
+    package:
+        name: Package ${{ matrix.name }}
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: Windows x64
+                      os: windows-2025-vs2026
+                      command: pnpm run package:win:pr
+                      artifact: win-x64
+                    - name: Windows arm64
+                      os: windows-2025-vs2026
+                      command: pnpm run package:win-arm64:pr
+                      artifact: win-arm64
+                    - name: macOS
+                      os: macos-26
+                      command: pnpm run package:mac:pr
+                      artifact: macos
+                    - name: Linux x64
+                      os: ubuntu-latest
+                      command: pnpm run package:linux:pr
+                      artifact: linux-x64
+                    - name: Linux arm64
+                      os: ubuntu-latest
+                      command: pnpm run package:linux-arm64:pr
+                      artifact: linux-arm64
+
+        steps:
+            - name: Checkout git repo
+              uses: actions/checkout@v6
+
+            - name: Install PNPM
+              uses: pnpm/action-setup@v6
+              with:
+                  version: ${{ env.PNPM_VERSION }}
+
+            - name: Install Node
+              uses: actions/setup-node@v6
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Get app version
+              shell: bash
+              run: |
+                  APP_VERSION="$(node -p "require('./package.json').version")"
+                  echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+
+            - name: Build package (Windows)
+              if: runner.os == 'Windows'
+              shell: pwsh
+              env:
+                  PACKAGE_COMMAND: ${{ matrix.command }}
+              run: |
+                  $ErrorActionPreference = 'Stop'
+
+                  for ($attempt = 1; $attempt -le 3; $attempt++) {
+                      try {
+                          Invoke-Expression $env:PACKAGE_COMMAND
+                          exit 0
+                      } catch {
+                          if ($attempt -eq 3) {
+                              throw
+                          }
+
+                          pnpm cache delete
+                          Start-Sleep -Seconds 15
+                      }
+                  }
+
+            - name: Build package (Unix)
+              if: runner.os != 'Windows'
+              shell: bash
+              env:
+                  PACKAGE_COMMAND: ${{ matrix.command }}
+              run: |
+                  for attempt in 1 2 3; do
+                      if eval "$PACKAGE_COMMAND"; then
+                          exit 0
+                      fi
+
+                      status=$?
+                      if [ "$attempt" -eq 3 ]; then
+                          exit "$status"
+                      fi
+
+                      pnpm cache delete || true
+                      sleep 15
+                  done
+
+            - name: Upload packaged artifacts
+              uses: actions/upload-artifact@v7
+              with:
+                  name: Feishin-v${{ env.APP_VERSION }}-${{ matrix.artifact }}
+                  if-no-files-found: error
+                  retention-days: 14
+                  path: |
+                      dist/*.AppImage
+                      dist/*.blockmap
+                      dist/*.deb
+                      dist/*.dmg
+                      dist/*.exe
+                      dist/*.msi
+                      dist/*.rpm
+                      dist/*.tar.xz
+                      dist/*.yml
+                      dist/*.zip
