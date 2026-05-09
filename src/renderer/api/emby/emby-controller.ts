@@ -799,15 +799,8 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('Failed to get playlist song list');
         }
 
-        const items = await Promise.all(
-            res.body.Items.map((item) =>
-                embyNormalize.songWithArtistFallback(
-                    item,
-                    apiClientProps.server!,
-                    '',
-                    embyApiClient(apiClientProps as any),
-                ),
-            ),
+        const items = res.body.Items.map((item) =>
+            embyNormalize.song(item, apiClientProps.server!, ''),
         );
 
         return {
@@ -1043,16 +1036,8 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('Failed to get song list');
         }
 
-        const items = await Promise.all(
-            res.body.Items.map((item) =>
-                embyNormalize.songWithArtistFallback(
-                    item,
-                    apiClientProps.server as any,
-                    '',
-                    embyApiClient(apiClientProps as any),
-                    query.imageSize,
-                ),
-            ),
+        const items = res.body.Items.map((item) =>
+            embyNormalize.song(item, apiClientProps.server as any, '', query.imageSize),
         );
 
         return {
@@ -1067,7 +1052,7 @@ export const EmbyController: EmbyControllerEndpoint = {
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
     getStreamUrl: async ({ apiClientProps: { server }, query }) => {
-        const { bitrate, format, id, transcode } = query;
+        const { bitrate, format, id } = query;
         const serverUrl = getServerUrl(server);
         const deviceId = server?.id || '';
 
@@ -1075,20 +1060,13 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('No server credential found');
         }
 
-        if (!transcode) {
-            const params = new URLSearchParams({ api_key: server.credential });
-
-            return `${serverUrl}/Items/${id}/Download?${params.toString()}`;
-        }
-
-        const realFormat = format || 'mp3';
         const params = new URLSearchParams({
             api_key: server.credential,
-            AudioCodec: realFormat,
+            AudioCodec: format || 'aac',
             Container: 'opus,mp3,aac,m4a,m4b,flac,wav,ogg',
             DeviceId: deviceId,
             MaxStreamingBitrate: String(bitrate ? bitrate * 1000 : 140000000),
-            TranscodingContainer: realFormat,
+            TranscodingContainer: format || 'mp3',
             TranscodingProtocol: 'http',
             UserId: server.userId || '',
         });

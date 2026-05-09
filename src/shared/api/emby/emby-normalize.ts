@@ -181,86 +181,21 @@ const normalizeSong = (
     };
 };
 
-const normalizeSongWithArtistFallback = async (
-    item: z.infer<typeof embyType._response.song>,
-    server: null | ServerListItemWithCredential,
-    deviceId: string,
-    apiClient: any,
-    imageSize?: number,
-): Promise<Song> => {
-    const song = normalizeSong(item, server, deviceId, imageSize);
-
-    // 如果前两级都没有获取到图片，尝试第三级：歌手封面
-    if (!song.imageUrl && item.ArtistItems && item.ArtistItems.length > 0) {
-        try {
-            const firstArtist = item.ArtistItems[0];
-
-            const artistRes = await apiClient.getAlbumArtistDetail({
-                params: {
-                    id: firstArtist.Id,
-                    userId: server?.userId || '',
-                },
-                query: {
-                    Fields: 'ImageTags',
-                },
-            });
-
-            if (artistRes.status === 200 && artistRes.body.ImageTags?.Primary) {
-                const artistImageUrl = getImageUrl({
-                    baseUrl: server?.url || '',
-                    imageType: 'Primary',
-                    itemId: firstArtist.Id,
-                    size: imageSize || 100,
-                    tag: artistRes.body.ImageTags.Primary,
-                });
-                song.imageUrl = artistImageUrl;
-            }
-        } catch {
-            // 歌手封面获取失败时不影响其他功能，静默处理
-        }
-    }
-
-    return song;
-};
-
 const normalizeAlbum = async (
     item: z.infer<typeof embyType._response.album>,
     server: null | ServerListItemWithCredential,
-    apiClient: any,
-    apiClientProps: { server?: null | ServerListItemWithCredential },
+    _apiClient: any,
+    _apiClientProps: { server?: null | ServerListItemWithCredential },
     imageSize?: number,
 ): Promise<Album> => {
     const deviceId = server?.id || '';
-    let imageUrl = getImageUrl({
+    const imageUrl = getImageUrl({
         baseUrl: server?.url || '',
         imageType: 'Primary',
         itemId: item.Id,
         size: imageSize || 300,
         tag: item.ImageTags?.Primary,
     });
-
-    if (!imageUrl) {
-        const res = await apiClient.getSongList({
-            query: {
-                Fields: 'ImageTags',
-                IncludeItemTypes: 'Audio',
-                Limit: 1,
-                ParentId: item.Id,
-                UserId: apiClientProps.server?.userId,
-            },
-        });
-
-        if (res.status === 200 && res.body.Items.length > 0) {
-            const firstSong = res.body.Items[0];
-            imageUrl = getImageUrl({
-                baseUrl: server?.url || '',
-                imageType: 'Primary',
-                itemId: firstSong.Id,
-                size: imageSize || 300,
-                tag: firstSong.ImageTags?.Primary,
-            });
-        }
-    }
 
     return {
         _itemType: LibraryItem.ALBUM,
@@ -460,5 +395,4 @@ export const embyNormalize = {
     musicFolder: normalizeMusicFolder,
     playlist: normalizePlaylist,
     song: normalizeSong,
-    songWithArtistFallback: normalizeSongWithArtistFallback,
 };
