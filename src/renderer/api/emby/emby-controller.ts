@@ -66,7 +66,10 @@ const getEmbyImageRequest = ({
     return {
         cacheKey: ['emby', server.id, baseUrl || '', id, size || ''].join(':'),
         headers: { 'X-Emby-Authorization': createAuthHeader(server) },
-        url: `${url}/Items/${id}/Images/Primary?quality=96${size ? `&width=${size}` : ''}`,
+        url:
+            `${url}/Items/${id}/Images/Primary?quality=96` +
+            (size ? `&width=${size}` : '') +
+            (server.credential ? `&api_key=${encodeURIComponent(server.credential)}` : ''),
     };
 };
 
@@ -223,6 +226,7 @@ export const EmbyController: EmbyControllerEndpoint = {
             },
             query: {
                 Fields: 'Genres,Overview',
+                ImageTypeLimit: 1,
                 ParentId: musicLibraryId,
             },
         });
@@ -297,6 +301,7 @@ export const EmbyController: EmbyControllerEndpoint = {
             },
             query: {
                 Fields: 'Genres,DateCreated,ChildCount,MediaSources,Tags',
+                ImageTypeLimit: 1,
             },
         });
 
@@ -341,6 +346,7 @@ export const EmbyController: EmbyControllerEndpoint = {
                     : undefined,
                 Fields: 'ChildCount,DateCreated,MediaSources,ProductionYear,Genres,DatePlayed,Tags,Overview',
                 GenreIds: query.genreIds ? query.genreIds.join(',') : undefined,
+                ImageTypeLimit: 1,
                 IncludeItemTypes: 'MusicAlbum',
                 IsFavorite: query.favorite,
                 Limit: query.limit,
@@ -565,6 +571,7 @@ export const EmbyController: EmbyControllerEndpoint = {
 
         const res = await embyApiClient(apiClientProps as any).getGenreList({
             query: {
+                ImageTypeLimit: 1,
                 ParentId: musicLibraryId,
                 Recursive: true,
                 SearchTerm: query?.searchTerm,
@@ -714,6 +721,9 @@ export const EmbyController: EmbyControllerEndpoint = {
                 id: query.id,
                 userId: apiClientProps.server?.userId,
             },
+            query: {
+                ImageTypeLimit: 1,
+            },
         });
 
         if (res.status !== 200) {
@@ -733,6 +743,7 @@ export const EmbyController: EmbyControllerEndpoint = {
         const res = await embyApiClient(apiClientProps as any).getPlaylistList({
             query: {
                 Fields: 'ChildCount,DateCreated',
+                ImageTypeLimit: 1,
                 IncludeItemTypes: 'Playlist',
                 Limit: query.limit,
                 ParentId: musicLibraryId,

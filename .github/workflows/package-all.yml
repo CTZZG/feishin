@@ -22,24 +22,29 @@ jobs:
                 include:
                     - name: Windows x64
                       os: windows-2025-vs2026
-                      command: pnpm run package:win:pr
+                      command: pnpm run build && pnpm exec electron-builder --win --x64 --publish never
                       artifact: win-x64
+                      artifact_path: dist/*-win-x64.*
                     - name: Windows arm64
                       os: windows-2025-vs2026
-                      command: pnpm run package:win-arm64:pr
+                      command: pnpm run build && pnpm exec electron-builder --win --arm64 --publish never
                       artifact: win-arm64
+                      artifact_path: dist/*-win-arm64.*
                     - name: macOS
                       os: macos-26
                       command: pnpm run package:mac:pr
                       artifact: macos
+                      artifact_path: dist/*-mac-*.*
                     - name: Linux x64
                       os: ubuntu-latest
                       command: pnpm run package:linux:pr
                       artifact: linux-x64
+                      artifact_path: dist/*-linux-x64.*
                     - name: Linux arm64
                       os: ubuntu-latest
                       command: pnpm run package:linux-arm64:pr
                       artifact: linux-arm64
+                      artifact_path: dist/*-linux-arm64.*
 
         steps:
             - name: Checkout git repo
@@ -113,14 +118,4 @@ jobs:
                   name: Feishin-v${{ env.APP_VERSION }}-${{ matrix.artifact }}
                   if-no-files-found: error
                   retention-days: 14
-                  path: |
-                      dist/*.AppImage
-                      dist/*.blockmap
-                      dist/*.deb
-                      dist/*.dmg
-                      dist/*.exe
-                      dist/*.msi
-                      dist/*.rpm
-                      dist/*.tar.xz
-                      dist/*.yml
-                      dist/*.zip
+                  path: ${{ matrix.artifact_path }}

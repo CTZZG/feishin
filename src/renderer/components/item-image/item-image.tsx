@@ -130,17 +130,6 @@ export const useItemImageRequest = (args: UseItemImageUrlProps) => {
     const sizeByType: number | undefined = type ? imageRes[type] : undefined;
 
     return useMemo(() => {
-        if (imageUrl) {
-            return {
-                cacheKey: imageUrl,
-                url: imageUrl,
-            } satisfies ImageRequest;
-        }
-
-        if (!id) {
-            return undefined;
-        }
-
         const targetServerId = args.serverId || serverId;
         let baseUrl: string | undefined;
 
@@ -149,13 +138,26 @@ export const useItemImageRequest = (args: UseItemImageUrlProps) => {
             baseUrl = server?.remoteUrl || server?.url;
         }
 
-        return (
-            api.controller.getImageRequest({
+        if (id) {
+            const request = api.controller.getImageRequest({
                 apiClientProps: { serverId: targetServerId },
                 baseUrl,
                 query: { id, itemType, size: size ?? sizeByType },
-            }) || undefined
-        );
+            });
+
+            if (request) {
+                return request;
+            }
+        }
+
+        if (imageUrl) {
+            return {
+                cacheKey: imageUrl,
+                url: imageUrl,
+            } satisfies ImageRequest;
+        }
+
+        return undefined;
     }, [args.serverId, id, imageUrl, itemType, serverId, size, sizeByType, useRemoteUrl]);
 };
 
@@ -168,17 +170,6 @@ export function getItemImageRequest(args: UseItemImageUrlProps) {
     const imageRes = useSettingsStore.getState().general.imageRes;
     const sizeByType: number | undefined = type ? imageRes[type] : undefined;
 
-    if (imageUrl) {
-        return {
-            cacheKey: imageUrl,
-            url: imageUrl,
-        } satisfies ImageRequest;
-    }
-
-    if (!id) {
-        return undefined;
-    }
-
     let baseUrl: string | undefined;
 
     if (useRemoteUrl) {
@@ -186,13 +177,26 @@ export function getItemImageRequest(args: UseItemImageUrlProps) {
         baseUrl = server?.remoteUrl || server?.url;
     }
 
-    return (
-        api.controller.getImageRequest({
+    if (id) {
+        const request = api.controller.getImageRequest({
             apiClientProps: { serverId },
             baseUrl,
             query: { id, itemType, size: size ?? sizeByType },
-        }) || undefined
-    );
+        });
+
+        if (request) {
+            return request;
+        }
+    }
+
+    if (imageUrl) {
+        return {
+            cacheKey: imageUrl,
+            url: imageUrl,
+        } satisfies ImageRequest;
+    }
+
+    return undefined;
 }
 
 export function getItemImageUrl(args: UseItemImageUrlProps) {

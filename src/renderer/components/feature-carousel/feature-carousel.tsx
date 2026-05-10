@@ -80,6 +80,7 @@ interface CarouselItemProps {
 const CarouselItem = ({ album }: CarouselItemProps) => {
     const imageUrl = useItemImageUrl({
         id: album.imageId || undefined,
+        imageUrl: album.imageUrl,
         itemType: LibraryItem.ALBUM,
         type: 'itemCard',
     });

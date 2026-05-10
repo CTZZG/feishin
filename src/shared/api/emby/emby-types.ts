@@ -66,6 +66,12 @@ const imageTags = z.object({
     Thumb: z.string().optional(),
 });
 
+const primaryImageFields = {
+    ImageTags: imageTags.optional(),
+    PrimaryImageItemId: z.string().nullable().optional(),
+    PrimaryImageTag: z.string().nullable().optional(),
+};
+
 const userData = z.object({
     IsFavorite: z.boolean(),
     PlaybackPositionTicks: z.number().optional(),
@@ -144,7 +150,7 @@ const genericItem = z.object({
 
 const genre = z.object({
     Id: z.string(),
-    ImageTags: imageTags.optional(),
+    ...primaryImageFields,
     Name: z.string(),
     ServerId: z.string(),
     Type: z.string(),
@@ -184,7 +190,7 @@ const musicFolderList = z.object({
 const playlist = z.object({
     ChildCount: z.number().optional(),
     Id: z.string(),
-    ImageTags: imageTags.optional(),
+    ...primaryImageFields,
     Name: z.string(),
     RunTimeTicks: z.number().optional(),
     ServerId: z.string(),
@@ -225,7 +231,7 @@ const song = z.object({
     DatePlayed: z.string().optional(),
     GenreItems: z.array(genericItem).optional(),
     Id: z.string(),
-    ImageTags: imageTags.optional(),
+    ...primaryImageFields,
     IndexNumber: z.number().optional(),
     MediaSources: z.array(mediaSource).optional(),
     Name: z.string(),
@@ -246,7 +252,7 @@ const albumArtist = z.object({
     DateCreated: z.string().optional(),
     GenreItems: z.array(genericItem).optional(),
     Id: z.string(),
-    ImageTags: imageTags.optional(),
+    ...primaryImageFields,
     Name: z.string(),
     Overview: z.string().optional().nullable(),
     RunTimeTicks: z.number().optional(),
@@ -265,7 +271,7 @@ const album = z.object({
     DatePlayed: z.string().optional(),
     GenreItems: z.array(genericItem).optional(),
     Id: z.string(),
-    ImageTags: imageTags.optional(),
+    ...primaryImageFields,
     IsFolder: z.boolean(),
     Name: z.string(),
     PremiereDate: z.string().optional(),

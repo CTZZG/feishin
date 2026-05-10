@@ -67,6 +67,7 @@ interface SingleFeatureCarouselProps {
 const CarouselItem = ({ album }: CarouselItemProps) => {
     const imageUrl = useItemImageUrl({
         id: album.imageId || undefined,
+        imageUrl: album.imageUrl,
         itemType: LibraryItem.ALBUM,
         type: 'itemCard',
     });
@@ -122,6 +123,7 @@ const CarouselItem = ({ album }: CarouselItemProps) => {
                             fetchPriority="high"
                             id={album.imageId}
                             itemType={LibraryItem.ALBUM}
+                            src={imageUrl}
                             type="itemCard"
                         />
                         <div className={styles.playButtonOverlay}>

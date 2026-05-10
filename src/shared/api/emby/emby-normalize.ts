@@ -16,18 +16,37 @@ import {
 type EmbyGenre = z.infer<typeof embyType._response.genre>;
 type EmbyMusicFolder = z.infer<typeof embyType._response.musicFolderList>['Items'][number];
 
-const getImageUrl = (args: {
-    baseUrl: string;
-    imageType: 'Backdrop' | 'Logo' | 'Primary' | 'Thumb';
-    itemId: string;
-    size: number;
-    tag?: null | string;
+const getPrimaryImageId = (item: {
+    Id: string;
+    ImageTags?: { Primary?: null | string };
+    PrimaryImageItemId?: null | string;
+    PrimaryImageTag?: null | string;
 }) => {
-    const { baseUrl, imageType, itemId, size, tag } = args;
-    if (!tag) {
-        return null;
+    if (item.ImageTags?.Primary) {
+        return item.Id;
     }
-    return `${baseUrl}/Items/${itemId}/Images/${imageType}?width=${size}&quality=96&tag=${tag}`;
+
+    if (item.PrimaryImageTag) {
+        return item.PrimaryImageItemId || item.Id;
+    }
+
+    return null;
+};
+
+const getSongImageId = (item: z.infer<typeof embyType._response.song>) => {
+    if (item.ImageTags?.Primary) {
+        return item.Id;
+    }
+
+    if (item.PrimaryImageTag) {
+        return item.PrimaryImageItemId || item.Id;
+    }
+
+    if (item.AlbumPrimaryImageTag && item.AlbumId) {
+        return item.AlbumId;
+    }
+
+    return null;
 };
 
 const extractAudioMetadata = (mediaSources: any[]) => {
@@ -67,40 +86,13 @@ const normalizeSong = (
     item: z.infer<typeof embyType._response.song>,
     server: null | ServerListItemWithCredential,
     _deviceId: string,
-    imageSize?: number,
+    _imageSize?: number,
 ): Song => {
+    void _deviceId;
+    void _imageSize;
+
     const audioMetadata = extractAudioMetadata(item.MediaSources || []);
 
-    // 三级图片回退逻辑
-    const getSongImageUrl = () => {
-        let imageUrl = getImageUrl({
-            baseUrl: server?.url || '',
-            imageType: 'Primary',
-            itemId: item.Id,
-            size: imageSize || 100,
-            tag: item.ImageTags?.Primary,
-        });
-
-        if (imageUrl) {
-            return imageUrl;
-        }
-
-        if (item.AlbumPrimaryImageTag && item.AlbumId) {
-            imageUrl = getImageUrl({
-                baseUrl: server?.url || '',
-                imageType: 'Primary',
-                itemId: item.AlbumId,
-                size: imageSize || 100,
-                tag: item.AlbumPrimaryImageTag,
-            });
-
-            if (imageUrl) {
-                return imageUrl;
-            }
-        }
-
-        return null;
-    };
     return {
         _itemType: LibraryItem.SONG,
         _serverId: server?.id || '',
@@ -149,9 +141,8 @@ const normalizeSong = (
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
-        imageId: null,
-
-        imageUrl: getSongImageUrl(),
+        imageId: getSongImageId(item),
+        imageUrl: null,
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         lyrics: null,
         mbzRecordingId: null,
@@ -189,13 +180,6 @@ const normalizeAlbum = async (
     imageSize?: number,
 ): Promise<Album> => {
     const deviceId = server?.id || '';
-    const imageUrl = getImageUrl({
-        baseUrl: server?.url || '',
-        imageType: 'Primary',
-        itemId: item.Id,
-        size: imageSize || 300,
-        tag: item.ImageTags?.Primary,
-    });
 
     return {
         _itemType: LibraryItem.ALBUM,
@@ -234,9 +218,8 @@ const normalizeAlbum = async (
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
-        imageId: null,
-
-        imageUrl,
+        imageId: getPrimaryImageId(item),
+        imageUrl: null,
         isCompilation: null,
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         mbzId: null,
@@ -272,20 +255,16 @@ const normalizeAlbumArtist = (
         similarArtists?: z.infer<typeof embyType._response.albumArtistList>;
     },
     server: null | ServerListItemWithCredential,
-    imageSize?: number,
+    _imageSize?: number,
 ): AlbumArtist => {
+    void _imageSize;
+
     const similarArtists =
         item.similarArtists?.Items?.filter((entry) => entry.Name !== 'Various Artists').map(
             (entry) => ({
                 id: entry.Id,
-                imageId: null,
-                imageUrl: getImageUrl({
-                    baseUrl: server?.url || '',
-                    imageType: 'Primary',
-                    itemId: entry.Id,
-                    size: imageSize || 300,
-                    tag: entry.ImageTags?.Primary,
-                }),
+                imageId: getPrimaryImageId(entry),
+                imageUrl: null,
                 name: entry.Name,
                 userFavorite: false,
                 userRating: null,
@@ -308,14 +287,8 @@ const normalizeAlbumArtist = (
                 name: entry.Name,
             })) as any) ?? [],
         id: item.Id,
-        imageId: null,
-        imageUrl: getImageUrl({
-            baseUrl: server?.url || '',
-            imageType: 'Primary',
-            itemId: item.Id,
-            size: imageSize || 300,
-            tag: item.ImageTags?.Primary,
-        }),
+        imageId: getPrimaryImageId(item),
+        imageUrl: null,
         lastPlayedAt: null,
         mbz: null,
         name: item.Name,
@@ -330,15 +303,9 @@ const normalizeAlbumArtist = (
 const normalizePlaylist = (
     item: z.infer<typeof embyType._response.playlist>,
     server: null | ServerListItemWithCredential,
-    imageSize?: number,
+    _imageSize?: number,
 ): Playlist => {
-    const imageUrl = getImageUrl({
-        baseUrl: server?.url || '',
-        imageType: 'Primary',
-        itemId: item.Id,
-        size: imageSize || 300,
-        tag: item.ImageTags?.Primary,
-    });
+    void _imageSize;
 
     return {
         _itemType: LibraryItem.PLAYLIST,
@@ -348,8 +315,8 @@ const normalizePlaylist = (
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
         genres: [],
         id: item.Id,
-        imageId: null,
-        imageUrl: imageUrl || null,
+        imageId: getPrimaryImageId(item),
+        imageUrl: null,
         name: item.Name,
         owner: null,
         ownerId: null,
@@ -375,14 +342,8 @@ const normalizeGenre = (item: EmbyGenre, server: null | ServerListItemWithCreden
         _serverType: ServerType.EMBY,
         albumCount: null,
         id: item.Id,
-        imageId: null,
-        imageUrl: getImageUrl({
-            baseUrl: server?.url || '',
-            imageType: 'Primary',
-            itemId: item.Id,
-            size: 200,
-            tag: item.ImageTags?.Primary,
-        }),
+        imageId: getPrimaryImageId(item),
+        imageUrl: null,
         name: item.Name,
         songCount: null,
     };

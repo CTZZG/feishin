@@ -21,6 +21,7 @@ import { useInViewport } from '/@/shared/hooks/use-in-viewport';
 import { ImageRequest } from '/@/shared/types/domain-types';
 
 const loadedImageCacheKeys = new Set<string>();
+const failedImageCacheKeys = new Set<string>();
 
 export interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
     containerClassName?: string;
@@ -83,6 +84,9 @@ export function BaseImage({
     const isInSessionCache = Boolean(
         rawImageRequest?.cacheKey && loadedImageCacheKeys.has(rawImageRequest.cacheKey),
     );
+    const isKnownFailed = Boolean(
+        rawImageRequest?.cacheKey && failedImageCacheKeys.has(rawImageRequest.cacheKey),
+    );
     const [debouncedImageRequest] = useDebouncedValue(rawImageRequest, 100, {
         waitForInitial: true,
     });
@@ -97,6 +101,7 @@ export function BaseImage({
 
     const shouldLoadImage = Boolean(
         effectiveImageRequest &&
+        !isKnownFailed &&
         (!enableViewport || isInSessionCache || inViewport || hasLoadedInInstance),
     );
 
@@ -117,8 +122,17 @@ export function BaseImage({
         }
 
         loadedImageCacheKeys.add(effectiveImageRequest.cacheKey);
+        failedImageCacheKeys.delete(effectiveImageRequest.cacheKey);
         setHasLoadedInInstance(true);
     }, [effectiveImageRequest?.cacheKey, nativeImage.isLoaded]);
+
+    useEffect(() => {
+        if (!nativeImage.isError || !effectiveImageRequest?.cacheKey) {
+            return;
+        }
+
+        failedImageCacheKeys.add(effectiveImageRequest.cacheKey);
+    }, [effectiveImageRequest?.cacheKey, nativeImage.isError]);
 
     return (
         <ImageContainer
@@ -141,7 +155,7 @@ export function BaseImage({
                 />
             ) : !src ? (
                 <ImageUnloader className={className} icon={unloaderIcon} />
-            ) : nativeImage.isError ? (
+            ) : nativeImage.isError || isKnownFailed ? (
                 includeUnloader ? (
                     <ImageUnloader className={className} icon={unloaderIcon} />
                 ) : null
