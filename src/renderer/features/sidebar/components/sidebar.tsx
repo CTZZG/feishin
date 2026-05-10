@@ -167,6 +167,7 @@ const SidebarImage = () => {
 
     const imageUrl = useItemImageUrl({
         id: currentSong?.imageId || undefined,
+        imageUrl: currentSong?.imageUrl,
         itemType: LibraryItem.SONG,
         serverId: currentSong?._serverId,
         type: 'sidebar',

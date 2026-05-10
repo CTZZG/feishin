@@ -98,6 +98,8 @@ export const MobilePlayerbar = () => {
                                             fetchPriority="high"
                                             id={currentSong.imageId}
                                             itemType={LibraryItem.SONG}
+                                            serverId={currentSong._serverId}
+                                            src={currentSong.imageUrl}
                                             type="table"
                                         />
                                     </Tooltip>

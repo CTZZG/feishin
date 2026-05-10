@@ -102,14 +102,18 @@ export const MobileFullscreenPlayerAlbumArt = () => {
 
     const currentImageUrl = useItemImageUrl({
         id: currentSong?.imageId || undefined,
+        imageUrl: currentSong?.imageUrl,
         itemType: LibraryItem.SONG,
+        serverId: currentSong?._serverId,
         size: mainImageDimensions.idealSize,
         type: 'fullScreenPlayer',
     });
 
     const nextImageUrl = useItemImageUrl({
         id: nextSong?.imageId || undefined,
+        imageUrl: nextSong?.imageUrl,
         itemType: LibraryItem.SONG,
+        serverId: nextSong?._serverId,
         size: mainImageDimensions.idealSize,
         type: 'fullScreenPlayer',
     });

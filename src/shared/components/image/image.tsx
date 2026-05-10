@@ -20,8 +20,42 @@ import { useDebouncedValue } from '/@/shared/hooks/use-debounced-value';
 import { useInViewport } from '/@/shared/hooks/use-in-viewport';
 import { ImageRequest } from '/@/shared/types/domain-types';
 
+const FAILED_IMAGE_CACHE_TTL_MS = 60 * 1000;
+
 const loadedImageCacheKeys = new Set<string>();
-const failedImageCacheKeys = new Set<string>();
+const failedImageCacheKeys = new Map<string, number>();
+
+const getImageRequestFailureKey = (request: ImageRequest | undefined) => {
+    if (!request) {
+        return null;
+    }
+
+    return JSON.stringify({
+        cacheKey: request.cacheKey,
+        credentials: request.credentials,
+        headers: request.headers,
+        url: request.url,
+    });
+};
+
+const hasRecentImageFailure = (failureKey: null | string) => {
+    if (!failureKey) {
+        return false;
+    }
+
+    const failedAt = failedImageCacheKeys.get(failureKey);
+
+    if (!failedAt) {
+        return false;
+    }
+
+    if (Date.now() - failedAt > FAILED_IMAGE_CACHE_TTL_MS) {
+        failedImageCacheKeys.delete(failureKey);
+        return false;
+    }
+
+    return true;
+};
 
 export interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
     containerClassName?: string;
@@ -81,17 +115,23 @@ export function BaseImage({
         () => imageRequest ?? (src ? { cacheKey: src, url: src } : undefined),
         [imageRequest, src],
     );
+    const rawImageFailureKey = useMemo(
+        () => getImageRequestFailureKey(rawImageRequest),
+        [rawImageRequest],
+    );
     const isInSessionCache = Boolean(
         rawImageRequest?.cacheKey && loadedImageCacheKeys.has(rawImageRequest.cacheKey),
     );
-    const isKnownFailed = Boolean(
-        rawImageRequest?.cacheKey && failedImageCacheKeys.has(rawImageRequest.cacheKey),
-    );
+    const isKnownFailed = hasRecentImageFailure(rawImageFailureKey);
     const [debouncedImageRequest] = useDebouncedValue(rawImageRequest, 100, {
         waitForInitial: true,
     });
     const effectiveImageRequest =
         isInSessionCache || !enableDebounce ? rawImageRequest : debouncedImageRequest;
+    const effectiveImageFailureKey = useMemo(
+        () => getImageRequestFailureKey(effectiveImageRequest),
+        [effectiveImageRequest],
+    );
 
     const [hasLoadedInInstance, setHasLoadedInInstance] = useState(false);
 
@@ -122,17 +162,19 @@ export function BaseImage({
         }
 
         loadedImageCacheKeys.add(effectiveImageRequest.cacheKey);
-        failedImageCacheKeys.delete(effectiveImageRequest.cacheKey);
+        if (effectiveImageFailureKey) {
+            failedImageCacheKeys.delete(effectiveImageFailureKey);
+        }
         setHasLoadedInInstance(true);
-    }, [effectiveImageRequest?.cacheKey, nativeImage.isLoaded]);
+    }, [effectiveImageFailureKey, effectiveImageRequest?.cacheKey, nativeImage.isLoaded]);
 
     useEffect(() => {
-        if (!nativeImage.isError || !effectiveImageRequest?.cacheKey) {
+        if (!nativeImage.isError || !effectiveImageFailureKey) {
             return;
         }
 
-        failedImageCacheKeys.add(effectiveImageRequest.cacheKey);
-    }, [effectiveImageRequest?.cacheKey, nativeImage.isError]);
+        failedImageCacheKeys.set(effectiveImageFailureKey, Date.now());
+    }, [effectiveImageFailureKey, nativeImage.isError]);
 
     return (
         <ImageContainer
