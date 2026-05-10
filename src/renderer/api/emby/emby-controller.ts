@@ -251,6 +251,45 @@ export const EmbyController: EmbyControllerEndpoint = {
             apiClientProps.server as any,
         );
     },
+    getAlbumArtistInfo: async (args) => {
+        const { apiClientProps, query } = args;
+        await EmbyController.getMusicFolderList({ apiClientProps });
+
+        const similarArtistsRes = await embyApiClient(apiClientProps as any).getSimilarArtistList({
+            params: {
+                id: query.id,
+            },
+            query: {
+                ImageTypeLimit: 1,
+                Limit: query.limit ?? 10,
+                ParentId: musicLibraryId,
+                UserId: apiClientProps.server?.userId || undefined,
+            },
+        });
+
+        if (similarArtistsRes.status !== 200) {
+            return null;
+        }
+
+        return {
+            biography: null,
+            similarArtists:
+                similarArtistsRes.body?.Items?.filter(
+                    (entry) => entry.Name !== 'Various Artists',
+                ).map((entry) => ({
+                    id: entry.Id,
+                    imageId: entry.ImageTags?.Primary
+                        ? entry.Id
+                        : entry.PrimaryImageTag
+                          ? entry.PrimaryImageItemId || entry.Id
+                          : null,
+                    imageUrl: null,
+                    name: entry.Name,
+                    userFavorite: entry.UserData?.IsFavorite || false,
+                    userRating: null,
+                })) ?? null,
+        };
+    },
     getAlbumArtistList: async (args) => {
         const { apiClientProps, query } = args;
         await EmbyController.getMusicFolderList({ apiClientProps });
