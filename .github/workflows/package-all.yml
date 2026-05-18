@@ -209,6 +209,7 @@ jobs:
               env:
                   DRAFT: ${{ inputs.draft }}
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GH_REPO: ${{ github.repository }}
                   PRERELEASE: ${{ inputs.prerelease }}
                   RELEASE_NAME: ${{ needs.metadata.outputs.release_name }}
                   RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
