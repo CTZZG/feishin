@@ -2,6 +2,25 @@ name: Package All Platforms (Manual)
 
 on:
     workflow_dispatch:
+        inputs:
+            release_tag:
+                description: Release tag to create/update. Defaults to v<package.json version>-emby.
+                required: false
+                type: string
+            release_name:
+                description: Release title. Defaults to the release tag.
+                required: false
+                type: string
+            draft:
+                description: Create a draft release when the tag does not already have one.
+                required: false
+                default: false
+                type: boolean
+            prerelease:
+                description: Mark the release as a prerelease when the tag does not already have one.
+                required: false
+                default: false
+                type: boolean
 
 env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -9,12 +28,55 @@ env:
     PNPM_VERSION: 10
 
 permissions:
-    contents: read
+    actions: read
+    contents: write
 
 jobs:
+    metadata:
+        name: Resolve release metadata
+        runs-on: ubuntu-latest
+
+        outputs:
+            app_version: ${{ steps.metadata.outputs.app_version }}
+            release_name: ${{ steps.metadata.outputs.release_name }}
+            release_tag: ${{ steps.metadata.outputs.release_tag }}
+
+        steps:
+            - name: Checkout git repo
+              uses: actions/checkout@v6
+
+            - name: Resolve release metadata
+              id: metadata
+              shell: bash
+              env:
+                  INPUT_RELEASE_NAME: ${{ inputs.release_name }}
+                  INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+              run: |
+                  set -euo pipefail
+
+                  APP_VERSION="$(node -p "require('./package.json').version")"
+
+                  RELEASE_TAG="${INPUT_RELEASE_TAG:-}"
+                  if [ -z "$RELEASE_TAG" ]; then
+                      RELEASE_TAG="v${APP_VERSION}-emby"
+                  fi
+
+                  RELEASE_NAME="${INPUT_RELEASE_NAME:-}"
+                  if [ -z "$RELEASE_NAME" ]; then
+                      RELEASE_NAME="$RELEASE_TAG"
+                  fi
+
+                  echo "app_version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+                  echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+                  echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
     package:
         name: Package ${{ matrix.name }}
+        needs: metadata
         runs-on: ${{ matrix.os }}
+
+        env:
+            APP_VERSION: ${{ needs.metadata.outputs.app_version }}
 
         strategy:
             fail-fast: false
@@ -63,12 +125,6 @@ jobs:
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
-
-            - name: Get app version
-              shell: bash
-              run: |
-                  APP_VERSION="$(node -p "require('./package.json').version")"
-                  echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
 
             - name: Build package (Windows)
               if: runner.os == 'Windows'
@@ -119,3 +175,74 @@ jobs:
                   if-no-files-found: error
                   retention-days: 14
                   path: ${{ matrix.artifact_path }}
+
+    release:
+        name: Upload packages to GitHub release
+        needs:
+            - metadata
+            - package
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Download packaged artifacts
+              uses: actions/download-artifact@v7
+              with:
+                  path: release-assets
+                  pattern: Feishin-v${{ needs.metadata.outputs.app_version }}-*
+                  merge-multiple: true
+
+            - name: List release assets
+              shell: bash
+              run: |
+                  set -euo pipefail
+
+                  asset_count="$(find release-assets -maxdepth 1 -type f | wc -l)"
+                  if [ "$asset_count" -eq 0 ]; then
+                      echo "No release assets were downloaded."
+                      exit 1
+                  fi
+
+                  find release-assets -maxdepth 1 -type f -print | sort
+
+            - name: Create or update release
+              shell: bash
+              env:
+                  DRAFT: ${{ inputs.draft }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PRERELEASE: ${{ inputs.prerelease }}
+                  RELEASE_NAME: ${{ needs.metadata.outputs.release_name }}
+                  RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
+              run: |
+                  set -euo pipefail
+
+                  if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+                      gh release edit "$RELEASE_TAG" --title "$RELEASE_NAME"
+                      exit 0
+                  fi
+
+                  args=(
+                      release create "$RELEASE_TAG"
+                      --target "$GITHUB_SHA"
+                      --title "$RELEASE_NAME"
+                      --generate-notes
+                  )
+
+                  if [ "$DRAFT" = "true" ]; then
+                      args+=(--draft)
+                  fi
+
+                  if [ "$PRERELEASE" = "true" ]; then
+                      args+=(--prerelease)
+                  fi
+
+                  gh "${args[@]}"
+
+            - name: Upload packaged assets to release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{ needs.metadata.outputs.release_tag }}
+                  files: release-assets/*
+                  fail_on_unmatched_files: true
+                  overwrite_files: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
