@@ -549,7 +549,7 @@ export const MobileFullscreenPlayer = () => {
                                 variant={isPageHovered ? 'default' : 'subtle'}
                             />
                             <Text fw={600} size="lg">
-                                {t('page.fullscreenPlayer.lyrics', { postProcess: 'sentenceCase' })}
+                                {t('page.fullscreenPlayer.lyrics')}
                             </Text>
                             <ActionIcon
                                 icon="x"

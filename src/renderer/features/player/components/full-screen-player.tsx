@@ -292,7 +292,7 @@ const Controls = () => {
                 icon="arrowDownS"
                 iconProps={{ size: 'lg' }}
                 onClick={handleToggleFullScreenPlayer}
-                tooltip={{ label: t('common.minimize', { postProcess: 'titleCase' }) }}
+                tooltip={{ label: t('common.minimize') }}
                 variant="subtle"
             />
             <Popover position="bottom-start">
@@ -300,16 +300,14 @@ const Controls = () => {
                     <ActionIcon
                         icon="settings2"
                         iconProps={{ size: 'lg' }}
-                        tooltip={{ label: t('common.configure', { postProcess: 'titleCase' }) }}
+                        tooltip={{ label: t('common.configure') }}
                         variant="subtle"
                     />
                 </Popover.Target>
                 <Popover.Dropdown>
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.dynamicBackground', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.dynamicBackground')}
                         </Option.Label>
                         <Option.Control>
                             <Switch
@@ -325,9 +323,7 @@ const Controls = () => {
                     {dynamicBackground && (
                         <Option>
                             <Option.Label>
-                                {t('page.fullscreenPlayer.config.dynamicIsImage', {
-                                    postProcess: 'sentenceCase',
-                                })}
+                                {t('page.fullscreenPlayer.config.dynamicIsImage')}
                             </Option.Label>
                             <Option.Control>
                                 <Switch
@@ -344,9 +340,7 @@ const Controls = () => {
                     {dynamicBackground && dynamicIsImage && (
                         <Option>
                             <Option.Label>
-                                {t('page.fullscreenPlayer.config.dynamicImageBlur', {
-                                    postProcess: 'sentenceCase',
-                                })}
+                                {t('page.fullscreenPlayer.config.dynamicImageBlur')}
                             </Option.Label>
                             <Option.Control>
                                 <Slider
@@ -363,11 +357,7 @@ const Controls = () => {
                     )}
                     {dynamicBackground && (
                         <Option>
-                            <Option.Label>
-                                {t('page.fullscreenPlayer.config.opacity', {
-                                    postProcess: 'sentenceCase',
-                                })}
-                            </Option.Label>
+                            <Option.Label>{t('page.fullscreenPlayer.config.opacity')}</Option.Label>
                             <Option.Control>
                                 <Slider
                                     defaultValue={opacity}
@@ -382,9 +372,7 @@ const Controls = () => {
                     )}
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.useImageAspectRatio', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.useImageAspectRatio')}
                         </Option.Label>
                         <Option.Control>
                             <Switch
@@ -400,9 +388,7 @@ const Controls = () => {
                     <Divider my="sm" />
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.followCurrentLyric', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.followCurrentLyric')}
                         </Option.Label>
                         <Option.Control>
                             <Switch
@@ -415,9 +401,7 @@ const Controls = () => {
                     </Option>
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.showLyricProvider', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.showLyricProvider')}
                         </Option.Label>
                         <Option.Control>
                             <Switch
@@ -430,9 +414,7 @@ const Controls = () => {
                     </Option>
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.showLyricMatch', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.showLyricMatch')}
                         </Option.Label>
                         <Option.Control>
                             <Switch
@@ -444,19 +426,13 @@ const Controls = () => {
                         </Option.Control>
                     </Option>
                     <Option>
-                        <Option.Label>
-                            {t('page.fullscreenPlayer.config.lyricSize', {
-                                postProcess: 'sentenceCase',
-                            })}
-                        </Option.Label>
+                        <Option.Label>{t('page.fullscreenPlayer.config.lyricSize')}</Option.Label>
                         <Option.Control>
                             <Group w="100%" wrap="nowrap">
                                 <Slider
                                     defaultValue={lyricConfig.fontSize}
                                     label={(e) =>
-                                        `${t('page.fullscreenPlayer.config.synchronized', {
-                                            postProcess: 'titleCase',
-                                        })}: ${e}px`
+                                        `${t('page.fullscreenPlayer.config.synchronized')}: ${e}px`
                                     }
                                     max={72}
                                     min={8}
@@ -466,9 +442,7 @@ const Controls = () => {
                                 <Slider
                                     defaultValue={lyricConfig.fontSize}
                                     label={(e) =>
-                                        `${t('page.fullscreenPlayer.config.unsynchronized', {
-                                            postProcess: 'sentenceCase',
-                                        })}: ${e}px`
+                                        `${t('page.fullscreenPlayer.config.unsynchronized')}: ${e}px`
                                     }
                                     max={72}
                                     min={8}
@@ -481,11 +455,7 @@ const Controls = () => {
                         </Option.Control>
                     </Option>
                     <Option>
-                        <Option.Label>
-                            {t('page.fullscreenPlayer.config.lyricGap', {
-                                postProcess: 'sentenceCase',
-                            })}
-                        </Option.Label>
+                        <Option.Label>{t('page.fullscreenPlayer.config.lyricGap')}</Option.Label>
                         <Option.Control>
                             <Group w="100%" wrap="nowrap">
                                 <Slider
@@ -511,29 +481,21 @@ const Controls = () => {
                     </Option>
                     <Option>
                         <Option.Label>
-                            {t('page.fullscreenPlayer.config.lyricAlignment', {
-                                postProcess: 'sentenceCase',
-                            })}
+                            {t('page.fullscreenPlayer.config.lyricAlignment')}
                         </Option.Label>
                         <Option.Control>
                             <SegmentedControl
                                 data={[
                                     {
-                                        label: t('common.left', {
-                                            postProcess: 'titleCase',
-                                        }),
+                                        label: t('common.left'),
                                         value: 'left',
                                     },
                                     {
-                                        label: t('common.center', {
-                                            postProcess: 'titleCase',
-                                        }),
+                                        label: t('common.center'),
                                         value: 'center',
                                     },
                                     {
-                                        label: t('common.right', {
-                                            postProcess: 'titleCase',
-                                        }),
+                                        label: t('common.right'),
                                         value: 'right',
                                     },
                                 ]}
@@ -543,11 +505,7 @@ const Controls = () => {
                         </Option.Control>
                     </Option>
                     <Option>
-                        <Option.Label>
-                            {t('page.fullscreenPlayer.config.lyricOffset', {
-                                postProcess: 'sentenceCase',
-                            })}
-                        </Option.Label>
+                        <Option.Label>{t('page.fullscreenPlayer.config.lyricOffset')}</Option.Label>
                         <Option.Control>
                             <NumberInput
                                 defaultValue={lyricConfig.delayMs}

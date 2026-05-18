@@ -136,7 +136,7 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
     const handleSubmit = form.onSubmit(async (values) => {
         if (serverLock && Object.keys(serverList).length >= 1) {
             toast.error({
-                message: t('error.serverLockSingleServer', { postProcess: 'sentenceCase' }),
+                message: t('error.serverLockSingleServer'),
             });
             return;
         }
@@ -145,7 +145,7 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
 
         if (!authFunction) {
             return toast.error({
-                message: t('error.invalidServer', { postProcess: 'sentenceCase' }),
+                message: t('error.invalidServer'),
             });
         }
 
@@ -163,7 +163,7 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
 
             if (!data) {
                 return toast.error({
-                    message: t('error.authenticationFailed', { postProcess: 'sentenceCase' }),
+                    message: t('error.authenticationFailed'),
                 });
             }
 
@@ -203,7 +203,7 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
             closeAllModals();
 
             toast.success({
-                message: t('form.addServer.success', { postProcess: 'sentenceCase' }),
+                message: t('form.addServer.success'),
             });
 
             if (localSettings && values.savePassword) {
@@ -212,7 +212,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                     toast.error({
                         message: t('form.addServer.error', {
                             context: 'savePassword',
-                            postProcess: 'sentenceCase',
                         }),
                     });
                 }
@@ -260,7 +259,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                             disabled={serverLock}
                             label={t('form.addServer.input', {
                                 context: 'name',
-                                postProcess: 'titleCase',
                             })}
                             required
                             {...form.getInputProps('name')}
@@ -269,7 +267,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                             disabled={serverLock}
                             label={t('form.addServer.input', {
                                 context: 'url',
-                                postProcess: 'titleCase',
                             })}
                             required
                             {...form.getInputProps('url')}
@@ -279,11 +276,9 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         disabled={serverLock}
                         label={t('form.addServer.input', {
                             context: 'remoteUrl',
-                            postProcess: 'titleCase',
                         })}
                         placeholder={t('form.addServer.input', {
                             context: 'remoteUrlPlaceholder',
-                            postProcess: 'sentenceCase',
                         })}
                         {...form.getInputProps('remoteUrl')}
                     />
@@ -291,7 +286,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         <Checkbox
                             label={t('form.addServer.input', {
                                 context: 'preferRemoteUrl',
-                                postProcess: 'titleCase',
                             })}
                             {...form.getInputProps('preferRemoteUrl', {
                                 type: 'checkbox',
@@ -301,7 +295,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                     <TextInput
                         label={t('form.addServer.input', {
                             context: 'username',
-                            postProcess: 'titleCase',
                         })}
                         required
                         {...form.getInputProps('username')}
@@ -309,7 +302,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                     <PasswordInput
                         label={t('form.addServer.input', {
                             context: 'password',
-                            postProcess: 'titleCase',
                         })}
                         {...form.getInputProps('password')}
                     />
@@ -317,7 +309,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         <Checkbox
                             label={t('form.addServer.input', {
                                 context: 'savePassword',
-                                postProcess: 'titleCase',
                             })}
                             {...form.getInputProps('savePassword', {
                                 type: 'checkbox',
@@ -329,7 +320,6 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                             disabled={serverLock}
                             label={t('form.addServer.input', {
                                 context: 'legacyAuthentication',
-                                postProcess: 'titleCase',
                             })}
                             {...form.getInputProps('legacyAuth', { type: 'checkbox' })}
                         />
@@ -338,11 +328,9 @@ export const AddServerForm = ({ onCancel }: AddServerFormProps) => {
                         <Checkbox
                             description={t('form.addServer.input', {
                                 context: 'preferInstantMixDescription',
-                                postProcess: 'sentenceCase',
                             })}
                             label={t('form.addServer.input', {
                                 context: 'preferInstantMix',
-                                postProcess: 'titleCase',
                             })}
                             {...form.getInputProps('preferInstantMix', {
                                 type: 'checkbox',
