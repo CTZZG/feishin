@@ -33,6 +33,8 @@ const formatCommaDelimitedString = (value: string[]) => {
 };
 
 const MAX_ITEMS_PER_PLAYLIST_ADD = 50;
+const TICKS_PER_MILLISECOND = 10000;
+const TICKS_PER_SECOND = TICKS_PER_MILLISECOND * 1000;
 
 let musicLibraryId: string | undefined;
 
@@ -45,6 +47,19 @@ const VERSION_INFO: VersionInfo = [
         },
     ],
 ];
+
+const getPlaybackPositionTicks = (
+    position: number | undefined,
+    unit: 'milliseconds' | 'seconds',
+) => {
+    if (!position) {
+        return 0;
+    }
+
+    return Math.round(
+        position * (unit === 'milliseconds' ? TICKS_PER_MILLISECOND : TICKS_PER_SECOND),
+    );
+};
 
 const getEmbyImageRequest = ({
     apiClientProps: { server },
@@ -982,7 +997,14 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('Failed to get server info');
         }
 
-        const features = getFeatures(VERSION_INFO, res.body.Version);
+        const defaultFeatures = {
+            [ServerFeature.REPORT_PLAYBACK]: [1],
+        };
+
+        const features = {
+            ...defaultFeatures,
+            ...getFeatures(VERSION_INFO, res.body.Version),
+        };
 
         return {
             features,
@@ -1280,13 +1302,14 @@ export const EmbyController: EmbyControllerEndpoint = {
     scrobble: async (args) => {
         const { apiClientProps, query } = args;
         const playSessionId = apiClientProps.server?.id + '-' + query.id;
-        const position = query.position && Math.round(query.position * 10000);
 
         if (!apiClientProps.server?.userId) {
             throw new Error('no user id');
         }
 
         if (query.submission) {
+            const position = getPlaybackPositionTicks(query.position, 'milliseconds');
+
             // Send stopped scrobble for proper Last.fm integration
             await embyApiClient(apiClientProps as any).scrobbleStopped({
                 body: {
@@ -1306,6 +1329,8 @@ export const EmbyController: EmbyControllerEndpoint = {
             });
             return null;
         }
+
+        const position = getPlaybackPositionTicks(query.position, 'seconds');
 
         if (query.event === 'start') {
             await embyApiClient(apiClientProps as any).scrobblePlaying({

@@ -441,7 +441,7 @@ export const useScrobble = () => {
                 lastProgressEventRef.current = 0;
             }
 
-            // Position scrobbles are only relevant for Jellyfin
+            // Position scrobbles are only relevant for servers that support playback reporting.
             if (!hasPlaybackReport) {
                 flushScrobbleDebug();
                 return;
@@ -505,7 +505,7 @@ export const useScrobble = () => {
                 return;
             }
 
-            // Only apply to Jellyfin controller scrobble
+            // Only apply to controller scrobble implementations that support playback reporting.
             if (!hasPlaybackReport) {
                 return;
             }
