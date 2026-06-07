@@ -34,7 +34,6 @@ const formatCommaDelimitedString = (value: string[]) => {
 
 const MAX_ITEMS_PER_PLAYLIST_ADD = 50;
 const TICKS_PER_MILLISECOND = 10000;
-const TICKS_PER_SECOND = TICKS_PER_MILLISECOND * 1000;
 
 let musicLibraryId: string | undefined;
 
@@ -48,17 +47,12 @@ const VERSION_INFO: VersionInfo = [
     ],
 ];
 
-const getPlaybackPositionTicks = (
-    position: number | undefined,
-    unit: 'milliseconds' | 'seconds',
-) => {
+const getPlaybackPositionTicks = (position: number | undefined) => {
     if (!position) {
         return 0;
     }
 
-    return Math.round(
-        position * (unit === 'milliseconds' ? TICKS_PER_MILLISECOND : TICKS_PER_SECOND),
-    );
+    return Math.round(position * TICKS_PER_MILLISECOND);
 };
 
 const getEmbyImageRequest = ({
@@ -1308,7 +1302,7 @@ export const EmbyController: EmbyControllerEndpoint = {
         }
 
         if (query.submission) {
-            const position = getPlaybackPositionTicks(query.position, 'milliseconds');
+            const position = getPlaybackPositionTicks(query.position);
 
             // Send stopped scrobble for proper Last.fm integration
             await embyApiClient(apiClientProps as any).scrobbleStopped({
@@ -1330,13 +1324,24 @@ export const EmbyController: EmbyControllerEndpoint = {
             return null;
         }
 
-        const position = getPlaybackPositionTicks(query.position, 'seconds');
+        const position = getPlaybackPositionTicks(query.position);
 
         if (query.event === 'start') {
             await embyApiClient(apiClientProps as any).scrobblePlaying({
                 body: {
                     ItemId: query.id,
                     PlaySessionId: playSessionId,
+                },
+            });
+            return null;
+        }
+
+        if (query.event === 'stop') {
+            await embyApiClient(apiClientProps as any).scrobbleStopped({
+                body: {
+                    ItemId: query.id,
+                    PlaySessionId: playSessionId,
+                    PositionTicks: position || 0,
                 },
             });
             return null;
