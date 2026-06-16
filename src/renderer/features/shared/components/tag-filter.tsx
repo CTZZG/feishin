@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { MultiSelectWithInvalidData } from '/@/renderer/components/select-with-invalid-data';
@@ -67,7 +67,7 @@ interface TagFiltersProps {
 export const TagFilters = ({ query, setCustom, type }: TagFiltersProps) => {
     const serverId = useCurrentServerId();
 
-    const tagsQuery = useSuspenseQuery(
+    const tagsQuery = useQuery(
         sharedQueries.tagList({
             options: {
                 gcTime: 1000 * 60 * 60,
@@ -91,8 +91,8 @@ export const TagFilters = ({ query, setCustom, type }: TagFiltersProps) => {
 
         const excluded =
             type === LibraryItem.ALBUM
-                ? tagsQuery.data?.excluded.album
-                : tagsQuery.data?.excluded.song;
+                ? (tagsQuery.data?.excluded.album ?? [])
+                : (tagsQuery.data?.excluded.song ?? []);
 
         for (const tag of tagsQuery.data?.tags || []) {
             if (!excluded.includes(tag.name)) {

@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -71,7 +71,7 @@ export const JellyfinSongFilters = ({
         }));
     }, [genreListQuery.data]);
 
-    const albumArtistListQuery = useSuspenseQuery(
+    const albumArtistListQuery = useQuery(
         artistsQueries.albumArtistList({
             options: {
                 gcTime: 1000 * 60 * 2,
@@ -288,6 +288,7 @@ export const JellyfinSongFilters = ({
                     <VirtualMultiSelect
                         displayCountType="song"
                         height={300}
+                        isLoading={albumArtistListQuery.isFetching}
                         label={artistFilterLabel}
                         onChange={handleArtistChange}
                         options={selectableAlbumArtists}
