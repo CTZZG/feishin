@@ -1,7 +1,10 @@
+import axios from 'axios';
+import { set } from 'idb-keyval';
 import chunk from 'lodash/chunk';
 import { z } from 'zod';
 
 import { createAuthHeader, embyApiClient } from '/@/renderer/api/emby/emby-api';
+import { useRadioStore } from '/@/renderer/features/radio/store/radio-store';
 import { getServerUrl } from '/@/renderer/utils/normalize-server-url';
 import { EmbySongListSort, EmbySortOrder } from '/@/shared/api/emby.types';
 import { embyNormalize } from '/@/shared/api/emby/emby-normalize';
@@ -14,6 +17,10 @@ import {
     AlbumListResponse,
     AlbumListSort,
     albumListSortMap,
+    DeleteArtistImageArgs,
+    DeleteArtistImageResponse,
+    DeletePlaylistImageArgs,
+    DeletePlaylistImageResponse,
     genreListSortMap,
     ImageArgs,
     ImageRequest,
@@ -25,6 +32,10 @@ import {
     Song,
     songListSortMap,
     sortOrderMap,
+    UploadArtistImageArgs,
+    UploadArtistImageResponse,
+    UploadPlaylistImageArgs,
+    UploadPlaylistImageResponse,
 } from '/@/shared/types/domain-types';
 import { ServerFeature } from '/@/shared/types/features-types';
 
@@ -41,7 +52,9 @@ const VERSION_INFO: VersionInfo = [
     [
         '4.8.0',
         {
+            [ServerFeature.ARTIST_IMAGE_UPLOAD]: [1],
             [ServerFeature.LYRICS_SINGLE_STRUCTURED]: [1],
+            [ServerFeature.PLAYLIST_IMAGE_UPLOAD]: [1],
             [ServerFeature.TAGS]: [1],
         },
     ],
@@ -53,6 +66,195 @@ const getPlaybackPositionTicks = (position: number | undefined) => {
     }
 
     return Math.round(position * TICKS_PER_MILLISECOND);
+};
+
+const getImageContentType = (bytes: Uint8Array): string => {
+    if (bytes[0] === 0x89 && bytes[1] === 0x50) {
+        return 'image/png';
+    }
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) {
+        return 'image/jpeg';
+    }
+    if (bytes[0] === 0x47 && bytes[1] === 0x49) {
+        return 'image/gif';
+    }
+    if (bytes[0] === 0x52 && bytes[1] === 0x49) {
+        return 'image/webp';
+    }
+
+    return 'image/jpeg';
+};
+
+const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+    }
+
+    return btoa(binary);
+};
+
+type EmbyImageApiClientProps = DeletePlaylistImageArgs['apiClientProps'];
+
+const deleteItemPrimaryImage = async (
+    apiClientProps: EmbyImageApiClientProps,
+    id: string,
+    errorMessage: string,
+): Promise<boolean> => {
+    const server = apiClientProps.server;
+    const serverUrl = getServerUrl(server);
+
+    if (!server || !serverUrl) {
+        throw new Error('Server is required');
+    }
+
+    const res = await axios.delete(`${serverUrl}/Items/${id}/Images/Primary`, {
+        headers: {
+            'X-Emby-Authorization': createAuthHeader(server),
+        },
+        signal: apiClientProps.signal,
+    });
+
+    if (res.status !== 200 && res.status !== 204) {
+        throw new Error(errorMessage);
+    }
+
+    return true;
+};
+
+const uploadItemPrimaryImage = async (
+    apiClientProps: EmbyImageApiClientProps,
+    id: string,
+    image: Uint8Array,
+    errorMessage: string,
+): Promise<boolean> => {
+    const server = apiClientProps.server;
+    const serverUrl = getServerUrl(server);
+
+    if (!server || !serverUrl) {
+        throw new Error('Server is required');
+    }
+
+    const res = await axios.post(
+        `${serverUrl}/Items/${id}/Images/Primary`,
+        uint8ArrayToBase64(image),
+        {
+            headers: {
+                'Content-Type': getImageContentType(image),
+                'X-Emby-Authorization': createAuthHeader(server),
+            },
+            signal: apiClientProps.signal,
+        },
+    );
+
+    if (res.status !== 200 && res.status !== 204) {
+        throw new Error(errorMessage);
+    }
+
+    return true;
+};
+
+const replaceEmbyPlaylistSongs = async ({
+    apiClientProps,
+    playlistId,
+    songIds,
+}: {
+    apiClientProps: Parameters<InternalControllerEndpoint['replacePlaylist']>[0]['apiClientProps'];
+    playlistId: string;
+    songIds: string[];
+}) => {
+    if (!apiClientProps.server?.userId) {
+        throw new Error('No userId found');
+    }
+
+    const existingSongsRes = await embyApiClient(apiClientProps as any).getPlaylistSongList({
+        params: {
+            id: playlistId,
+        },
+        query: {
+            Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
+            IncludeItemTypes: 'Audio',
+            UserId: apiClientProps.server.userId,
+        },
+    });
+
+    if (existingSongsRes.status !== 200) {
+        throw new Error('Failed to fetch existing playlist songs');
+    }
+
+    const playlistDetailRes = await embyApiClient(apiClientProps as any).getPlaylistDetail({
+        params: {
+            id: playlistId,
+            userId: apiClientProps.server.userId,
+        },
+        query: {
+            Fields: 'ChildCount,Genres,DateCreated,ParentId,Overview',
+        },
+    });
+
+    if (playlistDetailRes.status !== 200) {
+        throw new Error('Failed to get playlist detail');
+    }
+
+    await set(`playlist-backup-${playlistId}`, {
+        id: playlistId,
+        name: playlistDetailRes.body.Name,
+        songIds: existingSongsRes.body.Items.map((song) => song.Id),
+        timestamp: Date.now(),
+    });
+
+    if (existingSongsRes.body.Items.length > 0) {
+        const existingPlaylistItemIds = existingSongsRes.body.Items.map(
+            (song) => song.PlaylistItemId,
+        ).filter((id): id is string => Boolean(id));
+
+        if (existingPlaylistItemIds.length !== existingSongsRes.body.Items.length) {
+            throw new Error('Failed to get playlist item ids');
+        }
+
+        const chunks = chunk(existingPlaylistItemIds, MAX_ITEMS_PER_PLAYLIST_ADD);
+
+        for (const chunk of chunks) {
+            const res = await embyApiClient(apiClientProps as any).removeFromPlaylist({
+                params: {
+                    id: playlistId,
+                },
+                query: {
+                    EntryIds: chunk.join(','),
+                },
+            });
+
+            if (res.status !== 204) {
+                throw new Error('Failed to remove songs from playlist');
+            }
+        }
+    }
+
+    if (songIds.length > 0) {
+        const chunks = chunk(songIds, MAX_ITEMS_PER_PLAYLIST_ADD);
+
+        for (const chunk of chunks) {
+            const res = await embyApiClient(apiClientProps as any).addToPlaylist({
+                body: null,
+                params: {
+                    id: playlistId,
+                },
+                query: {
+                    Ids: chunk.join(','),
+                    UserId: apiClientProps.server.userId,
+                },
+            });
+
+            if (res.status !== 204) {
+                throw new Error('Failed to add songs to playlist');
+            }
+        }
+    }
+
+    return null;
 };
 
 const getEmbyImageRequest = ({
@@ -157,8 +359,25 @@ export const EmbyController: EmbyControllerEndpoint = {
 
         return null;
     },
-    createInternetRadioStation: async () => {
-        throw new Error('Not supported');
+    createInternetRadioStation: async (args) => {
+        const { apiClientProps, body } = args;
+
+        if (!apiClientProps.serverId) {
+            throw new Error('No serverId found');
+        }
+
+        const state = useRadioStore.getState();
+        if (!state?.actions?.createStation) {
+            throw new Error('Radio store not initialized');
+        }
+
+        state.actions.createStation(apiClientProps.serverId, {
+            homepageUrl: body.homepageUrl || null,
+            name: body.name,
+            streamUrl: body.streamUrl,
+        });
+
+        return null;
     },
     createPlaylist: async (args) => {
         const { apiClientProps, body } = args;
@@ -183,6 +402,11 @@ export const EmbyController: EmbyControllerEndpoint = {
             id: res.body.Id,
         };
     },
+    deleteArtistImage: async (args: DeleteArtistImageArgs): Promise<DeleteArtistImageResponse> => {
+        const { apiClientProps, query } = args;
+
+        return deleteItemPrimaryImage(apiClientProps, query.id, 'Failed to delete artist image');
+    },
     deleteFavorite: async (args) => {
         const { apiClientProps, query } = args;
 
@@ -202,8 +426,21 @@ export const EmbyController: EmbyControllerEndpoint = {
 
         return null;
     },
-    deleteInternetRadioStation: async () => {
-        throw new Error('Not supported');
+    deleteInternetRadioStation: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.serverId) {
+            throw new Error('No serverId found');
+        }
+
+        const state = useRadioStore.getState();
+        if (!state?.actions?.deleteStation) {
+            throw new Error('Radio store not initialized');
+        }
+
+        state.actions.deleteStation(apiClientProps.serverId, query.id);
+
+        return null;
     },
     deletePlaylist: async (args) => {
         const { apiClientProps, query } = args;
@@ -219,6 +456,13 @@ export const EmbyController: EmbyControllerEndpoint = {
         }
 
         return null;
+    },
+    deletePlaylistImage: async (
+        args: DeletePlaylistImageArgs,
+    ): Promise<DeletePlaylistImageResponse> => {
+        const { apiClientProps, query } = args;
+
+        return deleteItemPrimaryImage(apiClientProps, query.id, 'Failed to delete playlist image');
     },
     getAlbumArtistDetail: async (args) => {
         const { apiClientProps, query } = args;
@@ -644,8 +888,19 @@ export const EmbyController: EmbyControllerEndpoint = {
     getImageUrl: (args) => {
         return getEmbyImageRequest(args)?.url || null;
     },
-    getInternetRadioStations: async () => {
-        return [];
+    getInternetRadioStations: async (args) => {
+        const { apiClientProps } = args;
+
+        if (!apiClientProps.serverId) {
+            throw new Error('No serverId found');
+        }
+
+        const state = useRadioStore.getState();
+        if (!state?.actions?.getStations) {
+            throw new Error('Radio store not initialized');
+        }
+
+        return state.actions.getStations(apiClientProps.serverId);
     },
     getLyrics: async (args) => {
         const { apiClientProps, query } = args;
@@ -1009,19 +1264,8 @@ export const EmbyController: EmbyControllerEndpoint = {
     getSimilarSongs: async (args) => {
         const { apiClientProps, query } = args;
 
-        const res = await embyApiClient(apiClientProps as any).getSimilarSongs({
-            params: {
-                id: query.songId,
-            },
-            query: {
-                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
-                Limit: query.count,
-                UserId: apiClientProps.server?.userId || undefined,
-            },
-        });
-
-        if (res.status !== 200) {
-            const mix = await embyApiClient(apiClientProps as any).getInstantMix({
+        if (apiClientProps.server?.preferInstantMix !== true) {
+            const res = await embyApiClient(apiClientProps as any).getSimilarSongs({
                 params: {
                     id: query.songId,
                 },
@@ -1032,19 +1276,36 @@ export const EmbyController: EmbyControllerEndpoint = {
                 },
             });
 
-            if (mix.status !== 200) {
-                throw new Error('Failed to get similar songs or instant mix');
-            }
+            if (res.status === 200 && res.body.Items.length) {
+                const results = res.body.Items.reduce<Song[]>((acc, song) => {
+                    if (song.Id !== query.songId) {
+                        acc.push(embyNormalize.song(song, apiClientProps.server as any, ''));
+                    }
+                    return acc;
+                }, []);
 
-            return mix.body.Items.reduce<Song[]>((acc, song) => {
-                if (song.Id !== query.songId) {
-                    acc.push(embyNormalize.song(song, apiClientProps.server as any, ''));
+                if (results.length > 0) {
+                    return results;
                 }
-                return acc;
-            }, []);
+            }
         }
 
-        return res.body.Items.reduce<Song[]>((acc, song) => {
+        const mix = await embyApiClient(apiClientProps as any).getInstantMix({
+            params: {
+                id: query.songId,
+            },
+            query: {
+                Fields: 'Genres,DateCreated,MediaSources,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
+                Limit: query.count,
+                UserId: apiClientProps.server?.userId || undefined,
+            },
+        });
+
+        if (mix.status !== 200) {
+            throw new Error('Failed to get similar songs or instant mix');
+        }
+
+        return mix.body.Items.reduce<Song[]>((acc, song) => {
             if (song.Id !== query.songId) {
                 acc.push(embyNormalize.song(song, apiClientProps.server as any, ''));
             }
@@ -1287,8 +1548,14 @@ export const EmbyController: EmbyControllerEndpoint = {
 
         return null;
     },
-    replacePlaylist: async () => {
-        throw new Error('Not implemented');
+    replacePlaylist: async (args) => {
+        const { apiClientProps, body, query } = args;
+
+        return replaceEmbyPlaylistSongs({
+            apiClientProps,
+            playlistId: query.id,
+            songIds: body.songId,
+        });
     },
     savePlayQueue: async () => {
         throw new Error('Not supported');
@@ -1456,8 +1723,14 @@ export const EmbyController: EmbyControllerEndpoint = {
             songs: songs.map((item) => embyNormalize.song(item, apiClientProps.server!, '')),
         };
     },
-    setPlaylistSongs: async () => {
-        throw new Error('Not supported');
+    setPlaylistSongs: async (args) => {
+        const { apiClientProps, body } = args;
+
+        return replaceEmbyPlaylistSongs({
+            apiClientProps,
+            playlistId: body.id,
+            songIds: body.songIds,
+        });
     },
     setRating: async (args) => {
         const { apiClientProps, query } = args;
@@ -1466,40 +1739,57 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('No userId found');
         }
 
-        // Handle rating deletion (rating = 0)
-        if (query.rating === 0) {
-            const res = await embyApiClient(apiClientProps as any).deleteRating({
-                body: {},
-                params: {
-                    id: query.id[0],
-                    userId: apiClientProps.server.userId,
-                },
-            });
+        for (const id of query.id) {
+            if (query.rating === 0) {
+                const res = await embyApiClient(apiClientProps as any).deleteRating({
+                    body: {},
+                    params: {
+                        id,
+                        userId: apiClientProps.server.userId,
+                    },
+                });
 
-            if (res.status !== 200) {
-                throw new Error('Failed to delete rating');
-            }
-        } else {
-            // Handle rating setting (rating > 0)
-            const res = await embyApiClient(apiClientProps as any).setRating({
-                body: {
-                    rating: query.rating,
-                },
-                params: {
-                    id: query.id[0],
-                    userId: apiClientProps.server.userId,
-                },
-            });
+                if (res.status !== 200) {
+                    throw new Error('Failed to delete rating');
+                }
+            } else {
+                const res = await embyApiClient(apiClientProps as any).setRating({
+                    body: {
+                        rating: query.rating,
+                    },
+                    params: {
+                        id,
+                        userId: apiClientProps.server.userId,
+                    },
+                });
 
-            if (res.status !== 200) {
-                throw new Error('Failed to set rating');
+                if (res.status !== 200) {
+                    throw new Error('Failed to set rating');
+                }
             }
         }
 
         return null;
     },
-    updateInternetRadioStation: async () => {
-        throw new Error('Not supported');
+    updateInternetRadioStation: async (args) => {
+        const { apiClientProps, body, query } = args;
+
+        if (!apiClientProps.serverId) {
+            throw new Error('No serverId found');
+        }
+
+        const state = useRadioStore.getState();
+        if (!state?.actions?.updateStation) {
+            throw new Error('Radio store not initialized');
+        }
+
+        state.actions.updateStation(apiClientProps.serverId, query.id, {
+            homepageUrl: body.homepageUrl || null,
+            name: body.name,
+            streamUrl: body.streamUrl,
+        });
+
+        return null;
     },
     updatePlaylist: async (args) => {
         const { apiClientProps, body, query } = args;
@@ -1523,5 +1813,27 @@ export const EmbyController: EmbyControllerEndpoint = {
         }
 
         return null;
+    },
+    uploadArtistImage: async (args: UploadArtistImageArgs): Promise<UploadArtistImageResponse> => {
+        const { apiClientProps, body, query } = args;
+
+        return uploadItemPrimaryImage(
+            apiClientProps,
+            query.id,
+            body.image,
+            'Failed to upload artist image',
+        );
+    },
+    uploadPlaylistImage: async (
+        args: UploadPlaylistImageArgs,
+    ): Promise<UploadPlaylistImageResponse> => {
+        const { apiClientProps, body, query } = args;
+
+        return uploadItemPrimaryImage(
+            apiClientProps,
+            query.id,
+            body.image,
+            'Failed to upload playlist image',
+        );
     },
 };
