@@ -82,6 +82,7 @@ export interface QueueData {
 }
 
 export type QueueSong = Song & {
+    _contextPlaylistId?: null | string;
     _uniqueId: string;
 };
 
@@ -429,10 +430,8 @@ export type Song = {
     userRating: null | number;
 };
 
-type ApiContext = {
-    pathReplace?: string;
-    pathReplaceWith?: string;
-};
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type ApiContext = {};
 
 type BaseEndpointArgs = {
     apiClientProps: {
