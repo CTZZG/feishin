@@ -4,6 +4,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--theme-spacing-md) var(--theme-spacing-md) var(--theme-spacing-md) 0;
+
 }
 
 .metadata-stack {
@@ -70,6 +71,17 @@
     a {
         color: var(--theme-colors-foreground-muted);
     }
+}
+
+.joined-artists {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.joined-artists,
+.joined-artists > * {
+    white-space: nowrap;
 }
 
 .left-controls-container {

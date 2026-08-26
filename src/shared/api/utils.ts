@@ -311,6 +311,14 @@ export const sortSongList = (songs: Song[], sortBy: SongListSort, sortOrder: Sor
             );
             break;
 
+        case SongListSort.RELEASE_YEAR:
+            results = orderBy(
+                results,
+                ['releaseYear', (v) => v.album?.toLowerCase(), 'discNumber', 'trackNumber'],
+                [order, order, order, order],
+            );
+            break;
+
         case SongListSort.SORT_NAME:
             results = orderBy(results, [(v) => v.sortName ?? v.name], [order]);
             break;
@@ -318,7 +326,7 @@ export const sortSongList = (songs: Song[], sortBy: SongListSort, sortOrder: Sor
         case SongListSort.YEAR:
             results = orderBy(
                 results,
-                ['releaseYear', (v) => v.album?.toLowerCase(), 'discNumber', 'trackNumber'],
+                ['year', (v) => v.album?.toLowerCase(), 'discNumber', 'trackNumber'],
                 [order, order, order, order],
             );
             break;
@@ -342,31 +350,31 @@ export const sortSongsByFetchedOrder = (
 
     // Group songs by the fetched ID they belong to
     const songsByFetchedId = new Map<string, Song[]>();
+    const fetchedIdsSet = new Set(fetchedIds);
 
     for (const song of songs) {
         let matchedId: string | undefined;
 
         switch (itemType) {
             case LibraryItem.ALBUM:
-                matchedId = fetchedIds.find((id) => song.albumId === id);
+                matchedId = fetchedIdsSet.has(song.albumId) ? song.albumId : undefined;
                 break;
             case LibraryItem.ALBUM_ARTIST:
-                matchedId = fetchedIds.find((id) =>
-                    song.albumArtists.some((artist) => artist.id === id),
-                );
+                matchedId = song.albumArtists.find((a) => fetchedIdsSet.has(a.id))?.id;
                 break;
             case LibraryItem.ARTIST:
-                matchedId = fetchedIds.find((id) =>
-                    song.artists.some((artist) => artist.id === id),
-                );
+                matchedId = song.artists.find((a) => fetchedIdsSet.has(a.id))?.id;
                 break;
             case LibraryItem.GENRE:
-                matchedId = fetchedIds.find((id) => song.genres.some((genre) => genre.id === id));
+                matchedId = song.genres.find((a) => fetchedIdsSet.has(a.id))?.id;
                 break;
             case LibraryItem.PLAYLIST:
                 // For playlists, we might need to track which playlist each song came from
                 // This is a simplified approach - you may need to adjust based on your data structure
-                matchedId = fetchedIds.find((id) => song.playlistItemId === id);
+                matchedId =
+                    song.playlistItemId && fetchedIdsSet.has(song.playlistItemId)
+                        ? song.playlistItemId
+                        : undefined;
                 break;
             default:
                 break;

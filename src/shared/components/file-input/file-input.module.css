@@ -19,6 +19,10 @@
         color: var(--theme-colors-foreground);
         background: var(--theme-colors-background);
     }
+
+    &.clearable {
+        padding-right: 4rem;
+    }
 }
 
 .input:focus,
@@ -35,6 +39,29 @@
 }
 
 .label {
-    margin-bottom: var(--theme-spacing-sm);
+    margin-bottom: var(--theme-spacing-xs);
     font-family: var(--theme-label-font-family);
+}
+
+.description {
+    margin-bottom: var(--theme-spacing-xs);
+    font-size: var(--theme-font-size-xs);
+    color: var(--theme-colors-foreground-muted);
+}
+
+.clear-button {
+    color: var(--theme-colors-foreground) !important;
+    background: transparent !important;
+
+    &:hover,
+    &:active,
+    &:focus-visible {
+        @mixin dark {
+            background-color: lighten(var(--theme-colors-background), 10%) !important;
+        }
+
+        @mixin light {
+            background-color: darken(var(--theme-colors-background), 5%) !important;
+        }
+    }
 }

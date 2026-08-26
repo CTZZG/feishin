@@ -104,8 +104,20 @@ export const LyricSettings = memo(() => {
             description: t('setting.enableFurigana', {
                 context: 'description',
             }),
-            isHidden: !isElectron(),
             title: t('setting.enableFurigana'),
+        },
+        {
+            control: (
+                <Switch
+                    aria-label="Enable romaji generation"
+                    defaultChecked={settings.enableRomaji}
+                    onChange={(e) => updateSetting({ enableRomaji: e.currentTarget.checked })}
+                />
+            ),
+            description: t('setting.enableRomaji', {
+                context: 'description',
+            }),
+            title: t('setting.enableRomaji'),
         },
         {
             control: (

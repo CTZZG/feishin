@@ -5,6 +5,7 @@ import { eventEmitter } from '/@/renderer/events/event-emitter';
 import { UserFavoriteEventPayload, UserRatingEventPayload } from '/@/renderer/events/events';
 import { DiscordRpcHook } from '/@/renderer/features/discord-rpc/use-discord-rpc';
 import { MainPlayerListenerHook } from '/@/renderer/features/player/audio-player/hooks/use-main-player-listener';
+import { JukeboxPlayer } from '/@/renderer/features/player/audio-player/jukebox-player';
 import { MpvPlayer } from '/@/renderer/features/player/audio-player/mpv-player';
 import { WebPlayer } from '/@/renderer/features/player/audio-player/web-player';
 import { SleepTimerHook } from '/@/renderer/features/player/components/sleep-timer-button';
@@ -38,11 +39,10 @@ import {
     usePlaybackType,
     useSettingsStoreActions,
 } from '/@/renderer/store';
-import { logFn } from '/@/renderer/utils/logger';
+import { logger } from '/@/renderer/utils/logger';
 import { toast } from '/@/shared/components/toast/toast';
 import { LibraryItem } from '/@/shared/types/domain-types';
 import { PlayerType } from '/@/shared/types/types';
-
 const CODEC_PROBES = [
     { codec: 'mp3', container: 'mp3', mime: 'audio/mpeg' },
 
@@ -99,7 +99,7 @@ function detectBrowserProfile() {
         }
     }
 
-    logFn.info('DIRECT_PLAY_PROFILES', { meta: DIRECT_PLAY_PROFILES });
+    logger.debug('DIRECT_PLAY_PROFILES', DIRECT_PLAY_PROFILES);
 
     return DIRECT_PLAY_PROFILES;
 }
@@ -158,6 +158,8 @@ export const AudioPlayers = () => {
     );
 };
 
+const mpvPlayerListener = isElectron() ? window.api.mpvPlayerListener : null;
+
 const AudioPlayersContent = ({
     audioContext,
     audioDeviceId,
@@ -180,88 +182,131 @@ const AudioPlayersContent = ({
     const isRadioActive = useIsRadioActive();
 
     useEffect(() => {
-        if (webAudio && 'AudioContext' in window) {
-            let context: AudioContext;
+        logger.info('Playback engine', { playbackType });
+    }, [playbackType]);
 
-            try {
-                context = new AudioContext({
-                    latencyHint: 'playback',
-                    sampleRate: audioSampleRateHz || undefined,
-                });
-            } catch (error) {
-                // In practice, this should never be hit because the UI should validate
-                // the range. However, the actual supported range is not guaranteed
-                toast.error({ message: (error as Error).message });
-                context = new AudioContext({ latencyHint: 'playback' });
-                resetSampleRate();
-            }
-
-            const gains = [context.createGain(), context.createGain()];
-
-            // Build DSP chain from persisted settings so EQ/compressor
-            // are active immediately on first playback, not just after
-            // the user opens the settings panel.
-            const { compressor, equalizer } = useSettingsStore.getState().playback;
-
-            // Preamp gain — converts dB to linear
-            const preampGain = context.createGain();
-            preampGain.gain.value = equalizer.enabled ? Math.pow(10, equalizer.preamp / 20) : 1;
-
-            // One peaking BiquadFilterNode per EQ band
-            const eqFilters: BiquadFilterNode[] = equalizer.bands.map((band) => {
-                const filter = context.createBiquadFilter();
-                filter.type = 'peaking';
-                filter.frequency.value = band.freq;
-                // Q of 1.41 gives roughly 1-octave bandwidth per band
-                filter.Q.value = 1.41;
-                filter.gain.value = equalizer.enabled ? band.gain : 0;
-                return filter;
-            });
-
-            // DynamicsCompressorNode — always present, pass-through when disabled
-            // (ratio=1, threshold=0 = mathematically transparent)
-            const compressorNode = context.createDynamicsCompressor();
-            if (compressor.enabled) {
-                compressorNode.threshold.value = compressor.threshold;
-                compressorNode.ratio.value = compressor.ratio;
-                compressorNode.attack.value = compressor.attack / 1000;
-                compressorNode.release.value = compressor.release / 1000;
-                compressorNode.knee.value = compressor.knee;
-            } else {
-                compressorNode.threshold.value = 0;
-                compressorNode.ratio.value = 1;
-                compressorNode.attack.value = 0;
-                compressorNode.release.value = 0.25;
-                compressorNode.knee.value = 0;
-            }
-
-            // Wire: each gain → preamp → eq[0] → eq[1] → ... → compressor → destination
-            for (const gain of gains) {
-                gain.connect(preampGain);
-            }
-
-            if (eqFilters.length > 0) {
-                preampGain.connect(eqFilters[0]);
-                for (let i = 0; i < eqFilters.length - 1; i++) {
-                    eqFilters[i].connect(eqFilters[i + 1]);
-                }
-                eqFilters[eqFilters.length - 1].connect(compressorNode);
-            } else {
-                preampGain.connect(compressorNode);
-            }
-
-            compressorNode.connect(context.destination);
-
-            setWebAudio!({
-                context,
-                dsp: { compressor: compressorNode, eqFilters, preampGain },
-                gains,
-            });
+    useEffect(() => {
+        if (!mpvPlayerListener) {
+            return;
         }
+
+        mpvPlayerListener.rendererPlayerFallback((isFallback: boolean) => {
+            if (isFallback) {
+                logger.warn('Playback engine fell back to web');
+            } else {
+                logger.info('Playback engine using local (mpv)');
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        if (playbackType !== PlayerType.WEB || !webAudio || !('AudioContext' in window)) {
+            return;
+        }
+
+        let context: AudioContext;
+
+        try {
+            context = new AudioContext({
+                latencyHint: 'playback',
+                sampleRate: audioSampleRateHz || undefined,
+            });
+        } catch (error) {
+            // In practice, this should never be hit because the UI should validate
+            // the range. However, the actual supported range is not guaranteed
+            toast.error({ message: (error as Error).message });
+            context = new AudioContext({ latencyHint: 'playback' });
+            resetSampleRate();
+        }
+
+        const gains = [context.createGain(), context.createGain()];
+
+        // Build DSP chain from persisted settings so EQ/compressor
+        // are active immediately on first playback, not just after
+        // the user opens the settings panel.
+        const { compressor, equalizer } = useSettingsStore.getState().playback;
+
+        // Preamp gain — converts dB to linear
+        const preampGain = context.createGain();
+        preampGain.gain.value = equalizer.enabled ? Math.pow(10, equalizer.preamp / 20) : 1;
+
+        // One peaking BiquadFilterNode per EQ band
+        const eqFilters: BiquadFilterNode[] = equalizer.bands.map((band) => {
+            const filter = context.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = band.freq;
+            // Q of 1.41 gives roughly 1-octave bandwidth per band
+            filter.Q.value = 1.41;
+            filter.gain.value = equalizer.enabled ? band.gain : 0;
+            return filter;
+        });
+
+        // DynamicsCompressorNode — always present, pass-through when disabled
+        // (ratio=1, threshold=0 = mathematically transparent)
+        const compressorNode = context.createDynamicsCompressor();
+        if (compressor.enabled) {
+            compressorNode.threshold.value = compressor.threshold;
+            compressorNode.ratio.value = compressor.ratio;
+            compressorNode.attack.value = compressor.attack / 1000;
+            compressorNode.release.value = compressor.release / 1000;
+            compressorNode.knee.value = compressor.knee;
+        } else {
+            compressorNode.threshold.value = 0;
+            compressorNode.ratio.value = 1;
+            compressorNode.attack.value = 0;
+            compressorNode.release.value = 0.25;
+            compressorNode.knee.value = 0;
+        }
+
+        // Wire: each gain → preamp → eq[0] → eq[1] → ... → compressor → destination
+        for (const gain of gains) {
+            gain.connect(preampGain);
+        }
+
+        if (eqFilters.length > 0) {
+            preampGain.connect(eqFilters[0]);
+            for (let i = 0; i < eqFilters.length - 1; i++) {
+                eqFilters[i].connect(eqFilters[i + 1]);
+            }
+            eqFilters[eqFilters.length - 1].connect(compressorNode);
+        } else {
+            preampGain.connect(compressorNode);
+        }
+
+        compressorNode.connect(context.destination);
+
+        setWebAudio?.({
+            context,
+            dsp: { compressor: compressorNode, eqFilters, preampGain },
+            gains,
+        });
+
+        return () => {
+            void context.close().catch(() => {});
+            setWebAudio?.(undefined);
+        };
 
         // Intentionally ignore the sample rate dependency, as it makes things really messy
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [playbackType, webAudio]);
+
+    useEffect(() => {
+        if (!audioContext?.context) return undefined;
+        const ctx = audioContext.context;
+        if (ctx.state === 'running') return undefined;
+
+        const unlock = () => {
+            ctx.resume().catch(() => {});
+        };
+
+        document.addEventListener('pointerdown', unlock, { capture: true, once: true });
+        document.addEventListener('keydown', unlock, { capture: true, once: true });
+
+        return () => {
+            document.removeEventListener('pointerdown', unlock, { capture: true });
+            document.removeEventListener('keydown', unlock, { capture: true });
+        };
+    }, [audioContext]);
 
     useEffect(() => {
         // Not standard, just used in chromium-based browsers. See
@@ -317,18 +362,21 @@ const AudioPlayersContent = ({
         };
     }, [serverId]);
 
-    if (isRadioActive && playbackType === PlayerType.LOCAL) {
+    if (playbackType === PlayerType.LOCAL) {
         return <MpvPlayer />;
     }
 
-    if (isRadioActive && playbackType === PlayerType.WEB) {
-        return <RadioWebPlayer />;
+    if (playbackType === PlayerType.WEB) {
+        if (isRadioActive) {
+            return <RadioWebPlayer />;
+        }
+
+        return <WebPlayer />;
     }
 
-    return (
-        <>
-            {playbackType === PlayerType.WEB && <WebPlayer />}
-            {playbackType === PlayerType.LOCAL && <MpvPlayer />}
-        </>
-    );
+    if (playbackType === PlayerType.JUKEBOX) {
+        return <JukeboxPlayer />;
+    }
+
+    return null;
 };

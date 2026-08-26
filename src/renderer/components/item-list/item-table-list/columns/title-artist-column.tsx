@@ -52,7 +52,15 @@ export const DefaultTitleArtistColumn = (props: ItemTableListInnerColumn) => {
                         [styles.compact]: props.size === 'compact',
                     })}
                 >
-                    <Text className={styles.title} isNoSelect size="md" {...titleLinkProps}>
+                    <Text
+                        className={clsx(styles.title, {
+                            [styles.compact]: props.size === 'compact',
+                            [styles.large]: props.size === 'large',
+                        })}
+                        isNoSelect
+                        size="md"
+                        {...titleLinkProps}
+                    >
                         <ExplicitIndicator explicitStatus={item?.explicitStatus} />
                         {item.name as string}
                     </Text>
@@ -61,7 +69,12 @@ export const DefaultTitleArtistColumn = (props: ItemTableListInnerColumn) => {
                             artistName={item.albumArtist}
                             artists={item.albumArtists}
                             linkProps={{ fw: 400, isMuted: true }}
-                            rootTextProps={{ fw: 400, isMuted: true, size: 'sm' }}
+                            rootTextProps={{
+                                className: styles.artists,
+                                fw: 400,
+                                isMuted: true,
+                                size: 'sm',
+                            }}
                         />
                     </div>
                 </div>
@@ -116,6 +129,8 @@ export const QueueSongTitleArtistColumn = (props: ItemTableListInnerColumn) => {
                     <Text
                         className={clsx({
                             [styles.active]: isActive,
+                            [styles.compact]: props.size === 'compact',
+                            [styles.large]: props.size === 'large',
                             [styles.title]: true,
                         })}
                         isNoSelect
@@ -144,7 +159,12 @@ export const QueueSongTitleArtistColumn = (props: ItemTableListInnerColumn) => {
                             artistName={item.artistName}
                             artists={item.artists}
                             linkProps={{ fw: 400, isMuted: true }}
-                            rootTextProps={{ fw: 400, isMuted: true, size: 'sm' }}
+                            rootTextProps={{
+                                className: styles.artists,
+                                fw: 400,
+                                isMuted: true,
+                                size: 'sm',
+                            }}
                         />
                     </div>
                 </div>

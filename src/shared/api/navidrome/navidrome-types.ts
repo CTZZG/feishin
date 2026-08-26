@@ -27,7 +27,9 @@ export enum NDAlbumListSort {
 }
 
 export enum NDGenreListSort {
+    ALBUM_COUNT = 'albumCount',
     NAME = 'name',
+    SONG_COUNT = 'songCount',
 }
 
 export enum NDPlaylistListSort {
@@ -57,6 +59,7 @@ export enum NDSongListSort {
     RANDOM = 'random',
     RATING = 'rating',
     RECENTLY_ADDED = 'createdAt',
+    RELEASE_YEAR = 'releaseYear',
     TITLE = 'title',
     TRACK = 'track',
     YEAR = 'year',
@@ -553,6 +556,7 @@ const song = z.object({
     comment: z.string().optional(),
     compilation: z.boolean(),
     createdAt: z.string(),
+    date: z.string().optional(),
     discNumber: z.number(),
     discSubtitle: z.string().optional(),
     duration: z.number(),
@@ -732,7 +736,7 @@ const shareItem = z.object({
 const shareItemParameters = z.object({
     description: z.string(),
     downloadable: z.boolean(),
-    expires: z.number(),
+    expires: z.number().optional(),
     resourceIds: z.string(),
     resourceType: z.string(),
 });
@@ -754,6 +758,8 @@ const tag = z.object({
 const tagList = z.array(tag);
 
 export enum NDTagListSort {
+    ALBUM_COUNT = 'albumCount',
+    SONG_COUNT = 'songCount',
     TAG_VALUE = 'tagValue',
 }
 

@@ -304,26 +304,33 @@ const artistInfoParameters = z.object({
     includeNotPresent: z.boolean().optional(),
 });
 
-const artistInfo = z.object({
-    artistInfo: z.object({
-        biography: z.string().optional(),
-        largeImageUrl: z.string().optional(),
-        lastFmUrl: z.string().optional(),
-        mediumImageUrl: z.string().optional(),
-        musicBrainzId: z.string().optional(),
-        similarArtist: z.array(
-            z.object({
-                albumCount: z.string(),
-                artistImageUrl: z.string().optional(),
-                coverArt: z.string().optional(),
-                id: z.string(),
-                name: z.string(),
-                starred: z.string().optional(),
-                userRating: z.number().optional(),
-            }),
-        ),
-        smallImageUrl: z.string().optional(),
-    }),
+// Organizes music according to ID3 tags, and must be queried with an ID3 artist id
+// (as returned by getArtists/getArtist). The non-ID3 getArtistInfo resolves the id
+// against the folder browsing namespace, where the same id belongs to an unrelated item.
+const artistInfo2 = z.object({
+    artistInfo2: z
+        .object({
+            biography: z.string().optional(),
+            largeImageUrl: z.string().optional(),
+            lastFmUrl: z.string().optional(),
+            mediumImageUrl: z.string().optional(),
+            musicBrainzId: z.string().optional(),
+            similarArtist: z
+                .array(
+                    z.object({
+                        albumCount: z.number().or(z.string()).optional(),
+                        artistImageUrl: z.string().optional(),
+                        coverArt: z.string().optional(),
+                        id,
+                        name: z.string(),
+                        starred: z.string().optional(),
+                        userRating: z.number().optional(),
+                    }),
+                )
+                .optional(),
+            smallImageUrl: z.string().optional(),
+        })
+        .optional(),
 });
 
 const topSongsListParameters = z.object({
@@ -346,6 +353,19 @@ const scrobbleParameters = z.object({
 });
 
 const scrobble = z.null();
+
+const scanStatusBody = z.object({
+    count: z.number(),
+    folderCount: z.number(),
+    lastScan: z.string().optional(),
+    scanning: z.boolean(),
+});
+
+const startScanParameters = z.object({});
+const startScan = z.object({ scanStatus: scanStatusBody });
+
+const getScanStatusParameters = z.object({});
+const getScanStatus = z.object({ scanStatus: scanStatusBody });
 
 const search3 = z.object({
     searchResult3: z
@@ -400,6 +420,7 @@ const serverInfo = z.object({
 });
 
 const structuredLyricsParameters = z.object({
+    enhanced: z.boolean().optional(),
     id: z.string(),
 });
 
@@ -408,9 +429,39 @@ const lyricLine = z.object({
     value: z.string(),
 });
 
+const lyricAgentRole = z.enum(['main', 'voice', 'bg', 'group']);
+
+const lyricAgent = z.object({
+    id: z.string(),
+    name: z.string().optional(),
+    role: lyricAgentRole,
+});
+
+const lyricCue = z.object({
+    byteEnd: z.number(),
+    byteStart: z.number(),
+    end: z.number(),
+    start: z.number(),
+    value: z.string(),
+});
+
+const lyricCueLine = z.object({
+    agentId: z.string().optional(),
+    cue: z.array(lyricCue).optional(),
+    end: z.number(),
+    index: z.number(),
+    start: z.number(),
+    value: z.string(),
+});
+
+const structuredLyricKind = z.enum(['main', 'translation', 'pronunciation']);
+
 const structuredLyric = z.object({
+    agents: z.array(lyricAgent).optional(),
+    cueLine: z.array(lyricCueLine).optional(),
     displayArtist: z.string().optional(),
     displayTitle: z.string().optional(),
+    kind: structuredLyricKind.optional(),
     lang: z.string(),
     line: z.array(lyricLine),
     offset: z.number().optional(),
@@ -805,6 +856,53 @@ const reportPlaybackParameters = z.object({
 
 const reportPlayback = z.null();
 
+const jukeboxControlParameters = z.object({
+    action: z.enum([
+        'start',
+        'stop',
+        'skip',
+        'set',
+        'get',
+        'setGain',
+        'add',
+        'clear',
+        'remove',
+        'shuffle',
+        'status',
+    ]),
+    gain: z.number().optional(),
+    id: z.union([z.string(), z.array(z.string())]).optional(),
+    index: z.number().optional(),
+    offset: z.number().optional(),
+});
+
+const jukeboxPlaylistEntry = z.object({
+    album: z.string().optional(),
+    artist: z.string().optional(),
+    coverArt: z.string().optional(),
+    duration: z.number().optional(),
+    id: z.string(),
+    isDir: z.boolean(),
+    parent: z.string().optional(),
+    title: z.string(),
+});
+
+const jukeboxStatus = z.object({
+    currentIndex: z.number().optional(),
+    gain: z.number(),
+    playing: z.boolean(),
+    position: z.number().optional(),
+});
+
+const jukeboxPlaylist = jukeboxStatus.extend({
+    entry: z.array(jukeboxPlaylistEntry).optional(),
+});
+
+const jukeboxControl = z.object({
+    jukeboxPlaylist: jukeboxPlaylist.optional(),
+    jukeboxStatus: jukeboxStatus.optional(),
+});
+
 export const ssType = {
     _body: {
         getTranscodeDecision: transcodeDecisionRequestBody,
@@ -829,11 +927,13 @@ export const ssType = {
         getMusicDirectory: getMusicDirectoryParameters,
         getPlaylist: getPlaylistParameters,
         getPlaylists: getPlaylistsParameters,
+        getScanStatus: getScanStatusParameters,
         getSong: getSongParameters,
         getSongsByGenre: getSongsByGenreParameters,
         getStarred: getStarredParameters,
         getTranscodeDecision: transcodeDecisionParameters,
         getTranscodeStream: getTranscodeStreamParameters,
+        jukeboxControl: jukeboxControlParameters,
         randomSongList: randomSongListParameters,
         removeFavorite: removeFavoriteParameters,
         reportPlayback: reportPlaybackParameters,
@@ -844,6 +944,7 @@ export const ssType = {
         setRating: setRatingParameters,
         similarSongs: similarSongsParameters,
         similarSongs2: similarSongs2Parameters,
+        startScan: startScanParameters,
         structuredLyrics: structuredLyricsParameters,
         topSongsList: topSongsListParameters,
         updateInternetRadioStation: updateInternetRadioStationParameters,
@@ -857,7 +958,7 @@ export const ssType = {
         albumInfo,
         albumList,
         albumListEntry,
-        artistInfo,
+        artistInfo2,
         artistListEntry,
         authenticate,
         baseResponse,
@@ -877,11 +978,15 @@ export const ssType = {
         getMusicDirectory,
         getPlaylist,
         getPlaylists,
+        getScanStatus,
         getSong,
         getSongsByGenre,
         getStarred,
         getTranscodeDecision,
         internetRadioStation,
+        jukeboxControl,
+        jukeboxPlaylist,
+        jukeboxStatus,
         musicFolderList,
         ping,
         playlist,
@@ -899,6 +1004,7 @@ export const ssType = {
         similarSongs,
         similarSongs2,
         song,
+        startScan,
         structuredLyrics,
         topSongsList,
         updateInternetRadioStation,

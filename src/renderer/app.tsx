@@ -12,6 +12,8 @@ import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState } from 'reac
 import i18n from '/@/i18n/i18n';
 import { WebAudioContext } from '/@/renderer/features/player/context/webaudio-context';
 import { useCheckForUpdates } from '/@/renderer/hooks/use-check-for-updates';
+import { useFullscreenAutoOpen } from '/@/renderer/hooks/use-fullscreen-auto-open';
+import { useFullscreenToggle } from '/@/renderer/hooks/use-fullscreen-toggle';
 import { useNativeMenuSync } from '/@/renderer/hooks/use-native-menu-sync';
 import { useSyncSettingsToMain } from '/@/renderer/hooks/use-sync-settings-to-main';
 import { AppRouter } from '/@/renderer/router/app-router';
@@ -21,6 +23,7 @@ import {
     useLanguage,
     useSettingsStoreActions,
 } from '/@/renderer/store';
+import { initCustomThemes } from '/@/renderer/store/custom-themes.store';
 import { useAppTheme } from '/@/renderer/themes/use-app-theme';
 import { sanitizeCss } from '/@/renderer/utils/sanitize';
 import { WebAudio } from '/@/shared/types/types';
@@ -39,6 +42,23 @@ const ipc = isElectron() ? window.api.ipc : null;
 const utils = isElectron() ? window.api.utils : null;
 
 export const App = () => {
+    // Custom themes must be loaded (and registered into the shared theme
+    // registry) before the first render of ThemedApp, otherwise a user whose
+    // selected theme is a custom one would flash the default theme first.
+    const [customThemesReady, setCustomThemesReady] = useState(!isElectron());
+
+    useEffect(() => {
+        if (!isElectron()) return;
+
+        initCustomThemes()
+            .catch((error) => console.error('Failed to load custom themes', error))
+            .finally(() => setCustomThemesReady(true));
+    }, []);
+
+    if (!customThemesReady) {
+        return null;
+    }
+
     return <ThemedApp />;
 };
 
@@ -100,6 +120,8 @@ const AppEffects = () => (
         <GlobalShortcutsEffect />
         <LanguageEffect />
         <NativeMenuSyncEffect />
+        <FullscreenToggleEffect />
+        <FullscreenAutoOpenEffect />
         <InputFocusEffect />
     </>
 );
@@ -240,6 +262,18 @@ const LanguageEffect = () => {
 
 const NativeMenuSyncEffect = () => {
     useNativeMenuSync();
+
+    return null;
+};
+
+const FullscreenToggleEffect = () => {
+    useFullscreenToggle();
+
+    return null;
+};
+
+const FullscreenAutoOpenEffect = () => {
+    useFullscreenAutoOpen();
 
     return null;
 };

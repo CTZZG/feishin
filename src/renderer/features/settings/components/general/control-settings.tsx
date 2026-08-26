@@ -201,6 +201,27 @@ export const ControlSettings = memo(() => {
         },
         {
             control: (
+                <Switch
+                    aria-label="Toggle sidebar image enabled"
+                    defaultChecked={settings.sidebarImageEnabled}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                sidebarImageEnabled: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.sidebarImageEnabled', {
+                context: 'description',
+            }),
+            isHidden: false,
+            title: t('setting.sidebarImageEnabled'),
+        },
+        {
+            control: (
                 <NumberInput
                     defaultValue={settings.artistRadioCount}
                     max={200}
@@ -501,6 +522,26 @@ export const ControlSettings = memo(() => {
                   },
               ]
             : []),
+        {
+            control: (
+                <Switch
+                    defaultChecked={settings.microtonalPitchControls}
+                    onChange={(e) =>
+                        setSettings({
+                            general: {
+                                ...settings,
+                                microtonalPitchControls: e.currentTarget.checked,
+                            },
+                        })
+                    }
+                />
+            ),
+            description: t('setting.microtonalPitchControls', {
+                context: 'description',
+            }),
+            isHidden: false,
+            title: t('setting.microtonalPitchControls'),
+        },
     ];
 
     return <SettingsSection options={controlOptions} title={t('page.setting.controls')} />;

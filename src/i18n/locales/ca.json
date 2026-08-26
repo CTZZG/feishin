@@ -2,20 +2,20 @@
     "page": {
         "sidebar": {
             "myLibrary": "La meva mediateca",
-            "albumArtists": "$t(entity.albumArtist, {\"count\": 2})",
-            "albums": "$t(entity.album, {\"count\": 2})",
-            "artists": "$t(entity.artist, {\"count\": 2})",
-            "folders": "$t(entity.folder, {\"count\": 2})",
-            "genres": "$t(entity.genre, {\"count\": 2})",
-            "home": "$t(common.home)",
-            "playlists": "$t(entity.playlist, {\"count\": 2})",
-            "search": "$t(common.search)",
-            "settings": "$t(common.setting, {\"count\": 2})",
-            "tracks": "$t(entity.track, {\"count\": 2})",
+            "albumArtists": "Artistes de l'àlbum",
+            "albums": "Àlbums",
+            "artists": "Artistes",
+            "folders": "Carpetes",
+            "genres": "Gèneres",
+            "home": "Inici",
+            "playlists": "Llistes de reproducció",
+            "search": "Cercar",
+            "settings": "Configuracions",
+            "tracks": "Pistes",
             "nowPlaying": "S'està reproduint",
-            "shared": "$t(entity.playlist, {\"count\": 2}) compartides",
-            "favorites": "$t(entity.favorite, {\"count\": 2})",
-            "radio": "$t(entity.radioStation, {\"count\": 2})",
+            "shared": "Llistes de reproducció compartides",
+            "favorites": "Preferits",
+            "radio": "Emissores de ràdio",
             "collections": "Col·leccions"
         },
         "albumArtistDetail": {
@@ -64,7 +64,9 @@
             "commandPalette": "Obre la paleta d'ordres",
             "selectMusicFolder": "Selecciona una carpeta de música",
             "noMusicFolder": "No s'ha seleccionat cap carpeta de música",
-            "multipleMusicFolders": "{{count}} carpetes de música seleccionades"
+            "multipleMusicFolders": "{{count}} carpetes de música seleccionades",
+            "logout": "Tanca la sessió",
+            "rescanLibrary": "Reescaneja la biblioteca"
         },
         "contextMenu": {
             "addFavorite": "$t(action.addToFavorites)",
@@ -92,7 +94,8 @@
             "goToAlbumArtist": "Ves a $t(entity.albumArtist, {\"count\": 1})",
             "goToAlbum": "Ves a $t(entity.album, {\"count\": 1})",
             "moveItems": "$t(action.moveItems)",
-            "goTo": "Ves a"
+            "goTo": "Ves a",
+            "editMetadata": "Edita les metadades"
         },
         "genreList": {
             "title": "$t(entity.genre, {\"count\": 2})",
@@ -141,13 +144,35 @@
                 "showLyricProvider": "Mostra el proveïdor de la lletra",
                 "lyricGap": "Espera entre lletres",
                 "lyricOpacityNonActive": "Opacitat de la lletra inactiva",
-                "lyricScaleNonActive": "Escala de la lletra inactiva"
+                "lyricScaleNonActive": "Escala de la lletra inactiva",
+                "lyricFollowScrollAlignment": "Les lletres segueixen l'alineament",
+                "lyricLineLeadTime": "Temps de resposta de la línia (ms)",
+                "lyricPaddingLeft": "Espai a l'esquerra de la lletra (%)",
+                "lyricPaddingRight": "Espai a la dreta de la lletra (%)",
+                "followCurrentLyric_description": "Desplaça automàticament per mantenir la lletra activa a la vista",
+                "lyricFollowScrollAlignment_description": "Posició vertical de la línia activa mentre se segueix",
+                "lyricAlignment_description": "Alineació horitzontal de la lletra",
+                "lyricGapSynchronized_description": "Espaiat vertical entre les línies de les lletres sincronitzades",
+                "lyricGapUnsynchronized_description": "Espaiat vertical entre les línies de les lletres no sincronitzades",
+                "lyricLineLeadTime_description": "Avança la línia activa aquests tants milisegons abans de la seva marca temporal",
+                "lyricPaddingLeft_description": "Espaiat a l'esquerra com a percentatge de l'àrea de la lletra",
+                "lyricPaddingRight_description": "Espaiat a la dreta com a percentatge de l'àrea de la lletra",
+                "lyricSizeSynchronized_description": "Tamany de la tipografia per a lletres sincronitzades",
+                "lyricSizeUnsynchronized_description": "Mida de la font per la lletra no sincronitzada",
+                "lyricOpacityNonActive_description": "Opacitat de les línies inactives de la lletra",
+                "lyricScaleNonActive_description": "Escala de les línies inactives de la lletra",
+                "showLyricMatch_description": "Mostra el nom de la cançó i l'artista de la lletra coincident",
+                "showLyricProvider_description": "Mostra quin proveïdor proporciona la lletra actual"
             },
             "lyrics": "Lletres",
             "visualizer": "Visualitzador",
             "noLyrics": "No s'ha trobat cap lletra",
             "related": "Relacionat",
-            "upNext": "A continuació"
+            "upNext": "A continuació",
+            "lyricLayers": "Capes de lletra",
+            "lyricLanguage": "Llengua",
+            "showPronunciation": "Pronunciació",
+            "showTranslation": "Traducció"
         },
         "setting": {
             "advanced": "Avançat",
@@ -172,7 +197,9 @@
             "discord": "Discord",
             "logger": "Registres",
             "playerFilters": "Filtres de reproducció",
-            "lyricsDisplay": "Mostra la lletra"
+            "lyricsDisplay": "Mostra la lletra",
+            "sharing": "Compartició",
+            "lyricsTranslation": "Traducció de la lletra"
         },
         "globalSearch": {
             "commands": {
@@ -185,7 +212,27 @@
         "itemDetail": {
             "copyPath": "Copia ruta al porta-retalls",
             "copiedPath": "Ruta copiada correctament",
-            "openFile": "Mostra la pista al gestor d'arxius"
+            "openFile": "Mostra la pista al gestor d'arxius",
+            "tagConfiguration": "Configuració d'etiquetes",
+            "addTagConfig": "Afegeix una etiqueta…",
+            "multiValueToggle": "Valors múltiples",
+            "autocompleteSource": "Completa la font automàticament",
+            "customValues": "Valors personalitzats",
+            "addCustomValue": "Afegeix un valor personalitzat…",
+            "serverSuggestions": "Servidor",
+            "fileNotWritable": "L'arxiu no és accessible o editable",
+            "triggerRescan": "Fes un nou escaneig de la biblioteca després de desar",
+            "addField": "Afegeix un camp…",
+            "emptyFields": "Els camps no poden estar buits",
+            "tagsTab": "Etiquetes",
+            "artworkTab": "Il·lustració",
+            "removeArtwork": "Elimina la il·lustració",
+            "noArtwork": "Sense il·lustració",
+            "multipleValues": "(Valors múltiples)",
+            "multipleArtworks": "Múltiples il·lustracions",
+            "noLocalSongs": "No s'ha trobat cap cançó amb ruta d'arxiu local",
+            "readPartialFailure": "No s'han pogut llegir les metadades de {{count}} de {{total}} arxiu(s)",
+            "writePartialFailure": "Error en desar {{count}} arxiu(s)"
         },
         "playlist": {
             "reorder": "El reordenament només s'activa quan s'ordena per ID"
@@ -342,7 +389,13 @@
         "newVersionAvailable": "Hi ha una nova versió disponible",
         "numberOfResults": "{{numberOfResults}} resultats",
         "back": "Enrere",
-        "openFolder": "Obre la carpeta"
+        "openFolder": "Obre la carpeta",
+        "saveAndClose": "Desa i tanca",
+        "undo": "Desfés",
+        "lastScan": "Darrer escaneig: {{date}}",
+        "scanFolderCount": "{{count}} carpetes",
+        "scanItemCount": "{{count}} ítems",
+        "scanningLibrary": "Escanejant biblioteca…"
     },
     "entity": {
         "album_one": "Àlbum",
@@ -453,7 +506,8 @@
             "input_preferInstantMixDescription": "Utilitza només el mix instantani per obtenir cançons similars. útil si teniu complements que modifiquin aquest comportament",
             "input_preferRemoteUrl": "Prefereix l'url públic",
             "input_remoteUrl": "Url públic",
-            "input_remoteUrlPlaceholder": "Opcional: url públic per característiques externes"
+            "input_remoteUrlPlaceholder": "Opcional: url públic per característiques externes",
+            "input_passwordNoSSO": "No s'admet l'autenticació de proxy invers (SSO). Només s'admeten les autenticacions amb usuari/contrasenya i amb Subsonic"
         },
         "shareItem": {
             "description": "Descripció",
@@ -463,7 +517,9 @@
             "expireInvalid": "La data d'expiració ha de ser al futur",
             "createFailed": "No s'ha pogut crear el recurs compartit (està habilitat, l'ús compartit?)",
             "copyToClipboard": "Copiar al porta-retalls: Ctrl+C, enter",
-            "successMustClick": "Compartició creada correctament. Feu clic aquí per obrir-la"
+            "successMustClick": "Compartició creada correctament. Feu clic aquí per obrir-la",
+            "setExpiration_description": "Deixa-ho buit per fer servir l'expiració predeterminada del servidor",
+            "setExpiration_serverDefault": "Predeterminada del servidor"
         },
         "updateServer": {
             "success": "S'ha actualitzat el servidor amb èxit",
@@ -520,6 +576,13 @@
         },
         "editRadioStation": {
             "success": "Emissora de ràdio actualitzada amb èxit"
+        },
+        "createPrefilledPlaylist": {
+            "title": "Crea una $t(entity.playlist, {\"count\": 1}) a partir de les cançons seleccionades"
+        },
+        "queueChangeConfirmation": {
+            "title": "Voleu descartar la cua actual?",
+            "description": "Això eliminarà tots els elements de la cua actual."
         }
     },
     "action": {
@@ -566,7 +629,8 @@
         "openApplicationDirectory": "Obre el directori de l'aplicació",
         "goToCurrent": "Anar a l'element actual",
         "collapseAllFolders": "Replega totes les carpetes",
-        "expandAllFolders": "Expandeix totes les carpetes"
+        "expandAllFolders": "Expandeix totes les carpetes",
+        "createPlaylistFromQueue": "Crea una $t(entity.playlist, {\"count\": 1}) des de la cua"
     },
     "setting": {
         "language_description": "Estableix l'idioma de l'aplicació ($t(common.restartRequired))",
@@ -703,7 +767,7 @@
         "lastfmApiKey": "Clau d'API per {{lastfm}}",
         "lastfmApiKey_description": "La clau d'API per {{lastfm}}. Necessària per la caràtula",
         "lyricFetch": "Extreu la lletra d'internet",
-        "lyricFetch_description": "Extreu la lletra de diverses fonts d'internet",
+        "lyricFetch_description": "Extreu la lletra dels proveïdors seleccionats",
         "lyricFetchProvider": "Proveïdors de lletres",
         "lyricFetchProvider_description": "Selecciona els proveïdors de lletres",
         "lyricOffset": "Desfasament de la lletra (ms)",
@@ -767,10 +831,10 @@
         "transcodeFormat": "Format per transcodificar",
         "transcodeFormat_description": "Selecciona el format per transcodificar. deixeu-ho buit per deixar que el servidor decideixi",
         "translationApiProvider": "Proveïdor d'api de traducció",
-        "translationApiProvider_description": "Proveïdor de l'API de traducció",
+        "translationApiProvider_description": "Selecciona el proveïdor de l'API per la traducció",
         "translationApiKey": "Clau de l'API de traducció",
         "translationTargetLanguage": "Llengua meta de traducció",
-        "translationTargetLanguage_description": "Llengua meta per la traducció",
+        "translationTargetLanguage_description": "Estableix la llengua meta per la traducció automàtica",
         "trayEnabled": "Mostra a la safata",
         "trayEnabled_description": "Mostra/oculta la icona/menú de la safata. si està desactivat, també desactiva la funcionalitat de minimitzar/sortir a la safata",
         "volumeWheelStep": "Increment de volum de la roda",
@@ -842,11 +906,9 @@
         "followCurrentSong_description": "Desplaça automàticament la cua de reproducció a la cançó en reproducció",
         "followCurrentSong": "Segueix la cançó actual",
         "logLevel": "Nivell de registre",
-        "logLevel_description": "Estableix el nivell mínim de registre que s'ha de mostrar. debug mostra tots els missatges, error mostra només els errors",
+        "logLevel_description": "Estableix el nivell mínim de registre que s'ha de mostrar",
         "logLevel_optionDebug": "Debug",
-        "logLevel_optionError": "Error",
         "logLevel_optionInfo": "Info",
-        "logLevel_optionWarn": "Avís",
         "playerFilters": "Filtra les cançons de la cua",
         "playerFilters_description": "Evita afegir cançons a la cua segons els següents criteris",
         "playerbarSlider": "Barra lliscadora de reproducció",
@@ -974,7 +1036,7 @@
         "autoDJ_songStrategy": "Mode de selecció de cançó",
         "autoDJ_strategy_option_library_random": "A l'atzar",
         "autoDJ_strategy_option_similar": "Similar",
-        "enableFurigana_description": "Mostra guies de pronunciació (furigana) per les lletres en japonès.",
+        "enableFurigana_description": "Mostra guies de pronunciació (furigana) per les lletres en japonès",
         "enableFurigana": "Activa la generació de furigana",
         "equalizer_descriptionMpv": "Equalitzador paramètric amb FFmpeg lavfi (MPV)",
         "equalizer_descriptionWebAudio": "Equalitzador paramètric amb l'API de Web Audio",
@@ -1009,7 +1071,39 @@
         "compressorReset_description": "Restaura tots els paràmetres del compressor als seus valors per defecte",
         "compressorSavePreset_description": "Desa la configuració actual del compressor com un ajust predefinit amb nom",
         "compressorThreshold_description": "Nivell de senyal a partir del qual comença la compressió.",
-        "compressorThreshold": "Llindar"
+        "compressorThreshold": "Llindar",
+        "enableRomaji_description": "Mostra la pronunciació en romaji a sota de la lletra en japonès",
+        "enableRomaji": "Activa la generació de romaji",
+        "windowBarTrackinfo": "Títol de la finestra d'informació de la pista",
+        "windowBarTrackinfo_description": "Mostra el títol i l'artista de la pista actual, la posició a la cua i l'estat de reproducció al títol de la finestra.",
+        "audioDeviceDefault": "Predeterminat del sistema",
+        "microtonalPitchControls": "Controls de to microtonals",
+        "microtonalPitchControls_description": "Afegeix més controls de to per moure's entre semitons",
+        "hotkey_playbackNextAlbum": "Següent àlbum",
+        "hotkey_playbackPreviousAlbum": "Àlbum anterior",
+        "autoDJ_allowDuplicates": "Permet duplicats",
+        "autoDJ_allowDuplicates_description": "Permet que les cançons o àlbums de la cua s'hi tornin a afegir amb el DJ Automàtic",
+        "autoDJ_onlySimilar": "Només similars",
+        "autoDJ_onlySimilar_description": "Afegeix només elements similars a la cançó en qüestió. El número d'elements es tracta com un màxim d'elements per afegir en lloc de fer que altres fonts l'omplin fins al límit",
+        "logLevel_optionDebugDescription": "Inclou informació, a més d'informació de depuració detallada i respostes de l'API redactades",
+        "logLevel_optionInfoDescription": "Inclou informació, advertències i errors",
+        "exportDiagnostics": "Exporta diagnòstics",
+        "confirmQueueChanges": "Confirma els canvis a la cua",
+        "confirmQueueChanges_description": "Demana confirmació abans de descartar la cua actual",
+        "showFavorites": "Mostra preferits",
+        "showFavorites_description": "Controla si els botons de preferits (cor) es mostren a la interfície",
+        "showQueueInSidebar_description": "S'afegirà un tauler a la barra lateral del reproductor que mostra la cua de reproducció",
+        "showQueueInSidebar": "Mostra la cua de reproducció al tauler lateral",
+        "shareExpiration_description": "Quan triguen a expirar els nous enllaços de compartició. Esborreu la data del diàleg de compartició per fer servir el valor predeterminat del servidor",
+        "shareExpiration": "Expiració de compartició predeterminada",
+        "shareExpirationUseServerDefault_description": "Omet l'expiració en crear enllaços de compartició perquè el servidor pugui aplicar el seu valor predeterminat (per exemple, DefaultShareExpiration a Navidrome)",
+        "shareExpirationUseServerDefault": "Fes servir l'expiració predeterminada del servidor",
+        "customThemeErrors_description": "No s'han pogut carregar aquests fitxers de tema.",
+        "customThemeErrors": "Errors",
+        "customThemeWarnings_description": "Aquests temes s'han carregat, però alguns dels seus valors són invàlids i s'han omès.",
+        "customThemeWarnings": "Advertències",
+        "customThemes_description": "Arrossegueu fitxers de tema .json en aquesta carpeta per afegir temes personalitzats. Es registren automàticament cada cop que afegiu, editeu o elimineu un fitxer.",
+        "customThemes": "Temes personalitzats"
     },
     "table": {
         "column": {
@@ -1020,7 +1114,7 @@
             "genre": "Gènere",
             "size": "Mida",
             "songCount": "Pistes",
-            "releaseYear": "Any",
+            "releaseYear": "Any de llançament",
             "playCount": "Reproduccions",
             "releaseDate": "Data de llançament",
             "album": "Àlbum",
@@ -1039,7 +1133,9 @@
             "title": "Títol",
             "bitDepth": "Profunditat de bits",
             "sampleRate": "Freqüència de mostreig",
-            "owner": "Propietari"
+            "owner": "Propietari",
+            "date": "Data",
+            "year": "Any"
         },
         "config": {
             "general": {
@@ -1072,7 +1168,12 @@
                 "horizontalBorders": "Vores de fila",
                 "rowHoverHighlight": "Ressalta en passar el cursor per la fila",
                 "verticalBorders": "Vores de columna",
-                "showHeader": "Mostra l'encapçalament"
+                "showHeader": "Mostra l'encapçalament",
+                "albumGroupConfig": "Configuració del grup de l'àlbum",
+                "albumGroupMetadata": "Camps de metadades",
+                "albumGroupShowFavoriteRating": "Mostra preferits i qualificacions",
+                "albumImageSize": "Mida de la imatge de l'àlbum",
+                "albumGroupVerticalLayout": "Disseny vertical"
             },
             "label": {
                 "actions": "$t(common.action, {\"count\": 2})",
@@ -1110,7 +1211,9 @@
                 "sampleRate": "$t(common.sampleRate)",
                 "composer": "Compositor",
                 "titleArtist": "$t(common.title) (artista)",
-                "albumGroup": "Grup d'àlbums"
+                "albumGroup": "Grup d'àlbums",
+                "date": "Data",
+                "releaseYear": "Any de llançament"
             },
             "view": {
                 "table": "Taula",
@@ -1166,7 +1269,9 @@
         "explicitStatus": "$t(common.explicitStatus)",
         "sortName": "Ordena per nom",
         "matchAnd": "I",
-        "matchOr": "O"
+        "matchOr": "O",
+        "date": "Data",
+        "year": "Any"
     },
     "player": {
         "muted": "Silenciat",
@@ -1219,7 +1324,9 @@
         "sleepTimer_cancel": "Cancel·la el temporitzador",
         "albumRadio": "Ràdio d'àlbums",
         "scrobbleForceSubmit": "Força l'scrobble",
-        "sleepTimer_endOfAlbum": "Final de l'àlbum actual"
+        "sleepTimer_endOfAlbum": "Final de l'àlbum actual",
+        "nextAlbum": "Alt+clic pel següent àlbum",
+        "previousAlbum": "Alt+clic per l'àlbum anterior"
     },
     "error": {
         "credentialsRequired": "Credencials requerides",
@@ -1314,7 +1421,14 @@
         "minuteShort": "Min",
         "secondShort": "S",
         "hourShort": "H",
-        "dayShort": "D"
+        "dayShort": "D",
+        "secondLong": "Segon",
+        "minuteLong": "Minut",
+        "hourLong": "Hora",
+        "dayLong": "Dia",
+        "weekLong": "Setmana",
+        "monthLong": "Mes",
+        "yearLong": "Any"
     },
     "visualizer": {
         "visualizerType": "Tipus de visualitzador",

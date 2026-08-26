@@ -43,7 +43,8 @@
             "musicbrainz": "Ava MusicBrainzis",
             "qobuz": "Ava Qobuzis",
             "spotify": "Ava Spotifys"
-        }
+        },
+        "createPlaylistFromQueue": "Loo $t(entity.playlist, {\"count\": 1}) järjekorrast"
     },
     "common": {
         "countSelected": "{{count}} valitud",
@@ -170,7 +171,13 @@
         "tableColumns": "Tabeli veerge",
         "itemsMore": "{{count}} veel",
         "newVersionAvailable": "Saadaval on uus versioon",
-        "path": "Asukoht"
+        "path": "Asukoht",
+        "saveAndClose": "Salvesta ja sulge",
+        "undo": "Võta tagasi",
+        "lastScan": "Viimane skaneering {{date}}",
+        "scanFolderCount": "{{count}} kausta",
+        "scanItemCount": "{{count}} üksust",
+        "scanningLibrary": "Meediakogu skannimine…"
     },
     "entity": {
         "album_one": "Album",
@@ -293,7 +300,9 @@
         "title": "Pealkiri",
         "sortName": "Sortimisnimi",
         "trackNumber": "Lugu",
-        "toYear": "Aastasse"
+        "toYear": "Aastasse",
+        "date": "Kuupäev",
+        "year": "Aasta"
     },
     "filterOperator": {
         "contains": "Sisaldab",
@@ -335,7 +344,8 @@
             "title": "Lisa server",
             "error_savePassword": "Parooli salvestamisel ilmnes viga",
             "ignoreCors": "Eira CORS-i ($t(common.restartRequired))",
-            "ignoreSsl": "Eira SSL-i ($t(common.restartRequired))"
+            "ignoreSsl": "Eira SSL-i ($t(common.restartRequired))",
+            "input_passwordNoSSO": "Pöördproksi (SSO) autentimine ei ole toetatud. Toetatud on ainult kasutajanime/parooliga autentimine ja Subsonic-autentimine"
         },
         "largeFetchConfirmation": {
             "title": "Lisa üksused järjekorda",
@@ -408,7 +418,9 @@
             "success": "Jagamislink kopeeriti lõikelauale (või klõpsa avamiseks siia)",
             "successMustClick": "Jagamine on edukalt loodud. Klõpsa avamiseks siia",
             "expireInvalid": "Aegumisaeg peab olema tulevikus",
-            "createFailed": "Jagamise loomine nurjus (kas jagamine on lubatud?)"
+            "createFailed": "Jagamise loomine nurjus (kas jagamine on lubatud?)",
+            "setExpiration_description": "Serveri vaikimisi aegumisaja kasutamiseks jäta tühjaks",
+            "setExpiration_serverDefault": "Serveri vaikeväärtus"
         },
         "shuffleAll": {
             "title": "Juhuesitus",
@@ -434,6 +446,13 @@
             "enabled": "Privaatne režiim lülitati sisse, esituse olek on nüüd väliste allikate eest peidetud",
             "disabled": "Privaatne režiim lülitati välja, esituse olek on nüüd väliste allikate jaoks nähtav",
             "title": "Privaatne režiim"
+        },
+        "createPrefilledPlaylist": {
+            "title": "Loo $t(entity.playlist, {\"count\": 1}) valitud lugudest"
+        },
+        "queueChangeConfirmation": {
+            "title": "Kas tühistada praegune järjekord?",
+            "description": "See eemaldab kõik üksused praegusest järjekorrast."
         }
     },
     "page": {
@@ -498,7 +517,9 @@
             "noMusicFolder": "Muusikakausta pole valitud",
             "multipleMusicFolders": "{{count}} muusikakausta valitud",
             "settings": "$t(common.setting, {\"count\": 2})",
-            "version": "Versioon {{version}}"
+            "version": "Versioon {{version}}",
+            "logout": "Logi välja",
+            "rescanLibrary": "Skanni meediakogu uuesti"
         },
         "manageServers": {
             "title": "Halda servereid",
@@ -534,7 +555,8 @@
             "goTo": "Mine >",
             "goToAlbum": "Mine > $t(entity.album, {\"count\": 1})",
             "goToAlbumArtist": "Mine > $t(entity.albumArtist, {\"count\": 1})",
-            "showDetails": "Hangi teavet"
+            "showDetails": "Hangi teavet",
+            "editMetadata": "Muuda metaandmeid"
         },
         "fullscreenPlayer": {
             "config": {
@@ -553,13 +575,35 @@
                 "showLyricProvider": "Kuva laulusõnade allikas",
                 "synchronized": "Sünkroniseeritud",
                 "unsynchronized": "Sünkroniseerimata",
-                "useImageAspectRatio": "Kasuta pildi kuvasuhet"
+                "useImageAspectRatio": "Kasuta pildi kuvasuhet",
+                "lyricFollowScrollAlignment": "Laulusõnad järgivad joondumist",
+                "lyricLineLeadTime": "Rea kuvamise eelajastus (ms)",
+                "lyricPaddingLeft": "Laulusõnade vasakpoolne veeris (%)",
+                "lyricPaddingRight": "Laulusõnade parempoolne veeris (%)",
+                "followCurrentLyric_description": "Keri automaatselt, et aktiivne sõnade rida oleks nähtaval",
+                "lyricFollowScrollAlignment_description": "Aktiivse rea vertikaalne asukoht jälgimisel",
+                "lyricAlignment_description": "Laulusõnade horisontaalne joondus",
+                "lyricGapSynchronized_description": "Sünkroonitud laulusõnade ridade vahekaugus",
+                "lyricGapUnsynchronized_description": "Sünkroonimata laulusõnade ridade vertikaalne vahekaugus",
+                "lyricLineLeadTime_description": "Vii aktiivne rida nii mitu millisekundit selle ajatemplist edasi",
+                "lyricPaddingLeft_description": "Vasakpoolne tühimik protsendina laulusõnade alast",
+                "lyricPaddingRight_description": "Parempoolne tühimik protsendina laulusõnade alast",
+                "lyricSizeSynchronized_description": "Sünkroonitud laulusõnade kirjasuurus",
+                "lyricSizeUnsynchronized_description": "Sünkroonimata laulusõnade kirjasuurus",
+                "lyricOpacityNonActive_description": "Mitteaktiivsete ridade läbipaistmatus",
+                "lyricScaleNonActive_description": "Mitteaktiivsete ridade suurus suhtarvuna",
+                "showLyricMatch_description": "Kuva leitud laulusõnade pealkiri ja esitaja",
+                "showLyricProvider_description": "Kuva praeguste laulusõnade allikas"
             },
             "lyrics": "Laulusõnad",
             "related": "Seotud",
             "upNext": "Järgmiseks",
             "visualizer": "Visuaal",
-            "noLyrics": "Laulusõnu ei leitud"
+            "noLyrics": "Laulusõnu ei leitud",
+            "lyricLayers": "Laulusõnade kihid",
+            "lyricLanguage": "Keel",
+            "showPronunciation": "Hääldus",
+            "showTranslation": "Tõlge"
         },
         "genreList": {
             "showAlbums": "Kuva $t(entity.genre, {\"count\": 1}) $t(entity.album, {\"count\": 2})",
@@ -589,7 +633,27 @@
         "itemDetail": {
             "copyPath": "Kopeeri tee lõikelauale",
             "copiedPath": "Tee kopeeriti edukalt",
-            "openFile": "Kuva lugu failihalduris"
+            "openFile": "Kuva lugu failihalduris",
+            "tagConfiguration": "Siltide seadistus",
+            "addTagConfig": "Lisa silt…",
+            "multiValueToggle": "Mitme väärtusega",
+            "autocompleteSource": "Automaatse täitmise allikas",
+            "customValues": "Kohandatud väärtused",
+            "addCustomValue": "Lisa kohandatud väärtus…",
+            "serverSuggestions": "Server",
+            "fileNotWritable": "Fail pole ligipääsetav või kirjutatav",
+            "triggerRescan": "Soorita pärast salvestamist meediakogu skaneering",
+            "addField": "Lisa väli…",
+            "emptyFields": "Väljad ei tohi olla tühjad",
+            "tagsTab": "Sildid",
+            "artworkTab": "Kaanepildid",
+            "removeArtwork": "Eemalda kaanepildid",
+            "noArtwork": "Kaanepilti pole",
+            "multipleValues": "(Mitme väärtusega)",
+            "multipleArtworks": "Mitu kaanepilti",
+            "writePartialFailure": "{{count}} faili salvestamine nurjus",
+            "noLocalSongs": "Kohalike failiteedega laule ei leitud",
+            "readPartialFailure": "Metaandmeid ei saanud lugeda {{count}}/{{total}} failist"
         },
         "playlist": {
             "reorder": "Ümberreastamine on lubatud vaid ID järgi sorteerimisel"
@@ -624,25 +688,27 @@
             "discord": "Discord",
             "logger": "Logija",
             "playerFilters": "Mängija filtrid",
-            "remote": "Kaugjuhtimine"
+            "remote": "Kaugjuhtimine",
+            "sharing": "Jagamine",
+            "lyricsTranslation": "Laulusõnade tõlge"
         },
         "sidebar": {
-            "albumArtists": "$t(entity.albumArtist, {\"count\": 2})",
-            "albums": "$t(entity.album, {\"count\": 2})",
+            "albumArtists": "Albumi esitajad",
+            "albums": "Albumid",
             "collections": "Kogumikud",
-            "artists": "$t(entity.artist, {\"count\": 2})",
-            "favorites": "$t(entity.favorite, {\"count\": 2})",
-            "folders": "$t(entity.folder, {\"count\": 2})",
-            "genres": "$t(entity.genre, {\"count\": 2})",
-            "home": "$t(common.home)",
-            "radio": "$t(entity.radioStation, {\"count\": 2})",
+            "artists": "Esitajad",
+            "favorites": "Lemmikud",
+            "folders": "Kaustad",
+            "genres": "Žanrid",
+            "home": "Avaleht",
+            "radio": "Raadiojaamad",
             "myLibrary": "Muusikakogu",
             "nowPlaying": "Esitamisel",
-            "playlists": "$t(entity.playlist, {\"count\": 2})",
-            "search": "$t(common.search)",
-            "settings": "$t(common.setting, {\"count\": 2})",
-            "shared": "Shared $t(entity.playlist, {\"count\": 2})",
-            "tracks": "$t(entity.track, {\"count\": 2})"
+            "playlists": "Esitusloendid",
+            "search": "Otsi",
+            "settings": "Sätted",
+            "shared": "Jagatud esitusloendid",
+            "tracks": "Lood"
         },
         "trackList": {
             "artistTracks": "{{artist}} lood",
@@ -701,7 +767,9 @@
         "sleepTimer_timeRemaining": "{{time}} jäänud",
         "sleepTimer_setCustom": "Sea taimer",
         "sleepTimer_cancel": "Tühista taimer",
-        "scrobbleForceSubmit": "Sunnitud kraasimine"
+        "scrobbleForceSubmit": "Sunnitud kraasimine",
+        "nextAlbum": "Alt+klõps järgmise albumi esituseks",
+        "previousAlbum": "Alt+klõps eelmise albumi esituseks"
     },
     "queryBuilder": {
         "standardTags": "Standardsildid",
@@ -925,18 +993,16 @@
         "listenbrainz": "Kuva ListenBrainz linke",
         "lastfmApiKey_description": "{{lastfm}} API võti. Vajalik kaanepiltide jaoks",
         "lastfmApiKey": "{{lastfm}} API võti",
-        "lyricFetch_description": "Hangi laulusõnad erinevatest veebiallikatest",
+        "lyricFetch_description": "Hangi laulusõnad erinevatest allikatest",
         "lyricFetch": "Hangi laulusõnad internetist",
         "lyricFetchProvider_description": "Vali laulusõnade allikad",
         "lyricFetchProvider": "Laulusõnade allikad",
         "lyricOffset_description": "Nihuta laulusõnu määratud millisekundite võrra",
         "lyricOffset": "Laulusõnade nihe (ms)",
         "logLevel": "Logimise tase",
-        "logLevel_description": "Määrab kuvatava logimise miinimumtaseme. „Silumine“ näitab kõiki logisid, „viga“ ainult vigu",
+        "logLevel_description": "Määrab kuvatava logimise miinimumtaseme",
         "logLevel_optionDebug": "Silumine",
-        "logLevel_optionError": "Viga",
         "logLevel_optionInfo": "Info",
-        "logLevel_optionWarn": "Hoiata",
         "minimizeToTray_description": "Minimeeri rakendus süsteemisalve",
         "minimizeToTray": "Minimeeri salve",
         "minimumScrobblePercentage_description": "Minimaalne laulu kuulamise protsent, mis peab olema läbitud, enne kui see kraasitakse",
@@ -1111,9 +1177,9 @@
         "transcodeFormat": "Treisendamise vorming",
         "translationApiKey_description": "API-võti tõlkimiseks (ainult globaalse teenuse lõpp-punkt)",
         "translationApiKey": "Tõlketeenuse API-võti",
-        "translationApiProvider_description": "Tõlketeenuse API pakkuja",
+        "translationApiProvider_description": "Määrab tõlkimiseks kasutatava API-pakkuja",
         "translationApiProvider": "Tõlke-API pakkuja",
-        "translationTargetLanguage_description": "Sihtkeel tõlkimiseks",
+        "translationTargetLanguage_description": "Määrab automaattõlkes kasutatava sihtkeele",
         "translationTargetLanguage": "Tõlke sihtkeel",
         "trayEnabled_description": "Kuva/peida salveikoon/-menüü. Kui keelatud, keelatakse ka süsteemisalve minimeerimine/sulgemine",
         "trayEnabled": "Kuva salveikoon",
@@ -1154,7 +1220,7 @@
         "equalizerSavePreset": "Salvesta eelseadistus",
         "compressor_descriptionMpv": "Dünaamilise vahemiku kompressor FFmpeg acompressori kaudu (MPV)",
         "compressor_descriptionWebAudio": "Dünaamilise vahemiku kompressor Web Audio API kaudu",
-        "enableFurigana_description": "Kuva jaapani kanji-märkide kohal hääldusjuhiseid (furigana).",
+        "enableFurigana_description": "Kuva jaapani kanji-märkide kohal hääldusjuhiseid (furigana)",
         "enableFurigana": "Luba furigana kuvamine",
         "compressor": "Kompressor",
         "compressorAttack_description": "Kui kiiresti kompressor pärast läve ületamist rakendub.",
@@ -1171,13 +1237,52 @@
         "compressorReset_description": "Taasta kõigi kompressori parameetrite vaikeväärtused",
         "compressorSavePreset_description": "Salvesta praegused kompressori seaded nimetatud eelseadistusena",
         "compressorThreshold_description": "Signaali tase, mida ületades kompressioon algab.",
-        "compressorThreshold": "Lävi"
+        "compressorThreshold": "Lävi",
+        "audioDeviceDefault": "Süsteemi vaikeväärtus",
+        "enableRomaji_description": "Kuva jaapanikeelsete laulusõnade all romaji hääldusrida",
+        "enableRomaji": "Luba romaji genereerimine",
+        "hotkey_playbackNextAlbum": "Järgmine album",
+        "hotkey_playbackPreviousAlbum": "Eelmine album",
+        "windowBarTrackinfo": "Loo andmed akna tiitliribal",
+        "windowBarTrackinfo_description": "Kuva akna tiitliribal hetkel mängiva loo pealkirja ja esitajat, kohta järjekorras ning olekut (mängib/pausil).",
+        "microtonalPitchControls": "Mikrotonaalsed helikõrguse nupud",
+        "microtonalPitchControls_description": "Lisa täiendavad helikõrguse nupud pooltoonide vahel liikumiseks",
+        "autoDJ_allowDuplicates": "Luba duplikaadid",
+        "autoDJ_allowDuplicates_description": "Luba Auto DJ-l juba järjekorras olevaid lugusid või albumeid uuesti lisada",
+        "autoDJ_onlySimilar": "Ainult sarnased",
+        "showFavorites": "Kuva lemmikud",
+        "showQueueInSidebar": "Kuva esitusjärjekord külgribal",
+        "autoDJ_onlySimilar_description": "Lisa ainult algse looga sarnaseid palasid. Määratud palade arv on ülempiir, mida ei täideta teiste allikate abil",
+        "logLevel_optionDebugDescription": "Sisaldab infot, üksikasjalikku silumisinfot ja anonümiseeritud API-vastuseid",
+        "logLevel_optionInfoDescription": "Sisaldab infot, hoiatusi ja tõrkeid",
+        "exportDiagnostics": "Ekspordi diagnostikaandmed",
+        "showFavorites_description": "Määrab, kas lemmikuks märkimise (südame) nupud on liideses nähtavad",
+        "showQueueInSidebar_description": "Mängija külgribale lisatakse paneel, mis kuvab esitusjärjekorda",
+        "shareExpiration_description": "Kui pika aja pärast uued jagamislingid vaikimisi aeguvad. Serveri vaikeväärtuse kasutamiseks tühjenda jagamisaknas kuupäev",
+        "shareExpiration": "Jagamislingi vaikimisi aegumine",
+        "shareExpirationUseServerDefault_description": "Uute linkide jagamisel aegumiskuupäeva ei määrata, et server saaks rakendada oma vaikimisi seadistust (nt Navidrome'i DefaultShareExpiration)",
+        "shareExpirationUseServerDefault": "Kasuta serveri vaikimisi aegumisaega",
+        "customThemeErrors_description": "Neid teemafaile ei õnnestunud laadida.",
+        "customThemeErrors": "Tõrked",
+        "customThemeWarnings_description": "Need teemad laaditi, kuid mõned väärtused olid vigased ja neid eirati.",
+        "customThemeWarnings": "Hoiatused",
+        "customThemes_description": "Lohista kohandatud teemade lisamiseks sellesse kausta .json teemafailid. Need tuvastatakse automaatselt iga kord, kui faile lisad, muudad või eemaldad.",
+        "customThemes": "Kohandatud teemad",
+        "confirmQueueChanges": "Kinnita järjekorra muudatused",
+        "confirmQueueChanges_description": "Küsi enne praeguse järjekorra tühistamist kinnitust"
     },
     "datetime": {
         "minuteShort": "m",
         "secondShort": "s",
         "hourShort": "t",
-        "dayShort": "p"
+        "dayShort": "p",
+        "secondLong": "Sekund",
+        "minuteLong": "Minut",
+        "hourLong": "Tund",
+        "dayLong": "Päev",
+        "weekLong": "Nädal",
+        "monthLong": "Kuu",
+        "yearLong": "Aasta"
     },
     "visualizer": {
         "options": {
@@ -1356,14 +1461,16 @@
             "playCount": "Esitusi",
             "rating": "Hinne",
             "releaseDate": "Ilmumiskuupäev",
-            "releaseYear": "Aasta",
+            "releaseYear": "Ilmumisaasta",
             "sampleRate": "Diskreetimissagedus",
             "size": "Suurus",
             "title": "Pealkiri",
             "trackNumber": "Lugu",
             "owner": "Omanik",
             "channels": "Kanalid",
-            "songCount": "Lood"
+            "songCount": "Lood",
+            "date": "Kuupäev",
+            "year": "Aasta"
         },
         "config": {
             "general": {
@@ -1396,7 +1503,12 @@
                 "horizontalBorders": "Ridade piirjooned",
                 "rowHoverHighlight": "Rea esiletõstmine kursoriga",
                 "showHeader": "Kuva päis",
-                "verticalBorders": "Veergude piirjooned"
+                "verticalBorders": "Veergude piirjooned",
+                "albumImageSize": "Kaanepildi suurus",
+                "albumGroupConfig": "Albumigruppide seadistus",
+                "albumGroupMetadata": "Metaandmete väljad",
+                "albumGroupShowFavoriteRating": "Kuva lemmikud ja hinded",
+                "albumGroupVerticalLayout": "Vertikaalne paigutus"
             },
             "label": {
                 "actions": "$t(common.action, {\"count\": 2})",
@@ -1434,7 +1546,9 @@
                 "titleArtist": "$t(common.title) (artist)",
                 "titleCombined": "$t(common.title) (kombineeritud)",
                 "trackNumber": "Loo number",
-                "year": "$t(common.year)"
+                "year": "$t(common.year)",
+                "date": "Kuupäev",
+                "releaseYear": "Ilmumisaasta"
             },
             "view": {
                 "detail": "Detail",

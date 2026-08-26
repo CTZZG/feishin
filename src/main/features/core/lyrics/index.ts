@@ -1,7 +1,13 @@
 import { ipcMain } from 'electron';
 
 import { store } from '../settings';
-import { convertFurigana } from './furigana';
+import {
+    convertFurigana,
+    convertFuriganaFragment,
+    convertRomaji,
+    convertRomajiTokens,
+    parseLyricsTextTokens,
+} from './furigana';
 import { getLyricsBySongId as getGenius, getSearchResults as searchGenius } from './genius';
 import { getLyricsBySongId as getLrcLib, getSearchResults as searchLrcLib } from './lrclib';
 import { getLyricsBySongId as getNetease, getSearchResults as searchNetease } from './netease';
@@ -11,6 +17,7 @@ import {
     getSearchResults as searchSimpMusic,
 } from './simpmusic';
 
+import log from '/@/main/logger';
 import { Song } from '/@/shared/types/domain-types';
 
 export enum LyricSource {
@@ -104,7 +111,7 @@ const searchAllSources = async (
             allSearchResults.push(...result.value.searchResults);
         } else if (result.status === 'rejected') {
             const index = settled.indexOf(result);
-            console.error(`Error searching ${sources[index]} for lyrics:`, result.reason);
+            log.error(`Error searching ${sources[index]} for lyrics:`, result.reason);
         }
     }
     return allSearchResults;
@@ -168,7 +175,7 @@ const getRemoteLyrics = async (song: Song) => {
             };
         }
     } catch (error) {
-        console.error(`Error fetching lyrics from ${bestMatch.source}:`, error);
+        log.error(`Error fetching lyrics from ${bestMatch.source}:`, error);
     }
 
     if (lyricsFromSource) {
@@ -235,4 +242,20 @@ ipcMain.handle('lyric-by-remote-id', async (_event, params: LyricGetQuery) => {
 
 ipcMain.handle('lyric-convert-furigana', async (_event, text: string) => {
     return await convertFurigana(text);
+});
+
+ipcMain.handle('lyric-convert-furigana-fragment', async (_event, text: string) => {
+    return await convertFuriganaFragment(text);
+});
+
+ipcMain.handle('lyric-parse-text-tokens', async (_event, text: string) => {
+    return await parseLyricsTextTokens(text);
+});
+
+ipcMain.handle('lyric-convert-romaji', async (_event, text: string) => {
+    return await convertRomaji(text);
+});
+
+ipcMain.handle('lyric-convert-romaji-tokens', async (_event, text: string) => {
+    return await convertRomajiTokens(text);
 });

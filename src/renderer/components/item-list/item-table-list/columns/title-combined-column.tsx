@@ -108,7 +108,6 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
                         onMouseLeave={() => setIsHovered(false)}
                     >
                         <ItemImage
-                            containerClassName={styles.image}
                             enableDebounce={true}
                             enableViewport={false}
                             explicitStatus={item?.explicitStatus}
@@ -150,7 +149,16 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
                         [styles.compact]: props.size === 'compact',
                     })}
                 >
-                    <Text className={styles.title} isNoSelect size="md" {...titleLinkProps}>
+                    <Text
+                        className={clsx(styles.title, {
+                            [styles.compact]: props.size === 'compact',
+                            [styles.large]: props.size === 'large',
+                        })}
+                        isNoSelect
+                        size="md"
+                        truncate
+                        {...titleLinkProps}
+                    >
                         <ExplicitIndicator explicitStatus={item?.explicitStatus} />
                         {item.name as string}
                     </Text>
@@ -159,7 +167,12 @@ export const DefaultTitleCombinedColumn = (props: ItemTableListInnerColumn) => {
                             artistName={item.albumArtist}
                             artists={item.albumArtists}
                             linkProps={{ fw: 400, isMuted: true }}
-                            rootTextProps={{ fw: 400, isMuted: true, size: 'sm' }}
+                            rootTextProps={{
+                                className: styles.artists,
+                                fw: 400,
+                                isMuted: true,
+                                size: 'sm',
+                            }}
                         />
                     </div>
                 </div>
@@ -260,7 +273,6 @@ export const QueueSongTitleCombinedColumn = (props: ItemTableListInnerColumn) =>
                         onMouseLeave={() => setIsHovered(false)}
                     >
                         <ItemImage
-                            containerClassName={styles.image}
                             explicitStatus={item?.explicitStatus}
                             id={item?.imageId}
                             itemType={item?._itemType}
@@ -305,27 +317,27 @@ export const QueueSongTitleCombinedColumn = (props: ItemTableListInnerColumn) =>
                     <Text
                         className={clsx({
                             [styles.active]: isActive,
+                            [styles.compact]: props.size === 'compact',
+                            [styles.large]: props.size === 'large',
                             [styles.title]: true,
                         })}
                         isNoSelect
                         size="md"
+                        truncate
                         {...titleLinkProps}
                     >
                         <ExplicitIndicator explicitStatus={song?.explicitStatus} />
                         {row.name as string}
                         {song?.trackSubtitle && props.itemType !== LibraryItem.QUEUE_SONG && (
-                            <Text
-                                className={clsx({
+                            <span
+                                className={clsx(styles.trackSubtitle, {
                                     [styles.active]: isActive,
                                 })}
-                                component="span"
-                                isMuted
-                                size="sm"
                             >
                                 {' ('}
                                 {song.trackSubtitle}
                                 {')'}
-                            </Text>
+                            </span>
                         )}
                     </Text>
                     <div className={styles.artists}>
@@ -333,7 +345,12 @@ export const QueueSongTitleCombinedColumn = (props: ItemTableListInnerColumn) =>
                             artistName={item.artistName}
                             artists={item.artists}
                             linkProps={{ fw: 400, isMuted: true }}
-                            rootTextProps={{ fw: 400, isMuted: true, size: 'sm' }}
+                            rootTextProps={{
+                                className: styles.artists,
+                                fw: 400,
+                                isMuted: true,
+                                size: 'sm',
+                            }}
                         />
                     </div>
                 </div>
@@ -370,6 +387,7 @@ export const QueueSongTitleCombinedColumn = (props: ItemTableListInnerColumn) =>
                     className={styles.title}
                     isNoSelect
                     size="md"
+                    truncate
                     {...titleLinkProps}
                     style={textStyles}
                 >

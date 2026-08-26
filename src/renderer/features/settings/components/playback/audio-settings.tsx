@@ -3,15 +3,26 @@ import isElectron from 'is-electron';
 import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { eventEmitter } from '/@/renderer/events/event-emitter';
+import { usePlayer } from '/@/renderer/features/player/context/player-context';
 import {
     SettingOption,
     SettingsSection,
 } from '/@/renderer/features/settings/components/settings-section';
-import { usePlaybackType, usePlayerStatus } from '/@/renderer/store';
-import { usePlaybackSettings, useSettingsStoreActions } from '/@/renderer/store/settings.store';
+import { useCurrentServer, usePlayerStatus } from '/@/renderer/store';
+import {
+    usePlaybackSettings,
+    usePlaybackType,
+    useSettingsStoreActions,
+} from '/@/renderer/store/settings.store';
+import { logger } from '/@/renderer/utils/logger';
+import { hasFeature } from '/@/shared/api/utils';
+import { ActionIcon } from '/@/shared/components/action-icon/action-icon';
+import { Group } from '/@/shared/components/group/group';
 import { Select } from '/@/shared/components/select/select';
 import { Switch } from '/@/shared/components/switch/switch';
 import { toast } from '/@/shared/components/toast/toast';
+import { ServerFeature } from '/@/shared/types/features-types';
 import { PlayerStatus, PlayerType } from '/@/shared/types/types';
 
 const ipc = isElectron() ? window.api.ipc : null;
@@ -24,19 +35,26 @@ const getAudioDevices = async () => {
 
 const getMpvAudioDevices = async () => {
     if (!mpvPlayer) {
-        console.log('mpvPlayer not found');
         return [];
     }
 
     try {
         return await mpvPlayer.getAudioDevices();
     } catch (error) {
-        console.error('Failed to get MPV audio devices:', error);
+        logger.error('Failed to get MPV audio devices:', error);
         return [];
     }
 };
 
 export type AudioDeviceOption = { label: string; value: string };
+
+export const getDefaultAudioDevice = (
+    devices: AudioDeviceOption[],
+    playbackType: PlayerType,
+): null | string => {
+    const defaultId = playbackType === PlayerType.LOCAL ? 'auto' : 'default';
+    return devices.find((d) => d.value === defaultId)?.value ?? devices[0]?.value ?? null;
+};
 
 export const useAudioDevices = (playbackType: PlayerType) => {
     const [audioDevices, setAudioDevices] = useState<AudioDeviceOption[]>([]);
@@ -90,35 +108,60 @@ export const AudioSettings = memo(() => {
     const { setSettings } = useSettingsStoreActions();
     const status = usePlayerStatus();
     const playbackType = usePlaybackType();
+    const { mediaStop } = usePlayer();
+
+    // Cleaned up server feature logic via requested hooks/utilities
+    const currentServer = useCurrentServer();
+    const isJukeboxSupported = hasFeature(currentServer, ServerFeature.JUKEBOX);
+    const showRefreshButton = settings.type === PlayerType.LOCAL;
 
     const audioDevices = useAudioDevices(playbackType);
     const audioDeviceId =
         playbackType === PlayerType.LOCAL ? settings.mpvAudioDeviceId : settings.audioDeviceId;
 
+    // Dynamically build the options for the dropdown
+    const selectData = [
+        {
+            disabled: !isElectron(),
+            label: 'MPV',
+            value: PlayerType.LOCAL,
+        },
+        { label: 'Web', value: PlayerType.WEB },
+    ];
+
+    if (isJukeboxSupported) {
+        selectData.push({ label: 'Jukebox', value: PlayerType.JUKEBOX });
+    }
+
     const audioOptions: SettingOption[] = [
         {
             control: (
-                <Select
-                    data={[
-                        {
-                            disabled: !isElectron(),
-                            label: 'MPV',
-                            value: PlayerType.LOCAL,
-                        },
-                        { label: 'Web', value: PlayerType.WEB },
-                    ]}
-                    defaultValue={settings.type}
-                    disabled={status === PlayerStatus.PLAYING}
-                    onChange={(e) => {
-                        setSettings({ playback: { type: e as PlayerType } });
-                        ipc?.send('settings-set', { property: 'playbackType', value: e });
-                    }}
-                />
+                <Group gap="xs" wrap="nowrap">
+                    <Select
+                        data={selectData}
+                        defaultValue={settings.type}
+                        disabled={status === PlayerStatus.PLAYING}
+                        onChange={(e) => {
+                            setSettings({ playback: { type: e as PlayerType } });
+                            ipc?.send('settings-set', { property: 'playbackType', value: e });
+                        }}
+                    />
+                    {showRefreshButton && (
+                        <ActionIcon
+                            icon="refresh"
+                            iconProps={{ size: 'md' }}
+                            onClick={() => {
+                                mediaStop();
+                                eventEmitter.emit('MPV_RELOAD', {});
+                            }}
+                            tooltip={{ label: t('common.reload') }}
+                            variant="transparent"
+                        />
+                    )}
+                </Group>
             ),
-            description: t('setting.audioPlayer', {
-                context: 'description',
-            }),
-            isHidden: !isElectron(),
+            description: t('setting.audioPlayer', { context: 'description' }),
+            isHidden: !isElectron() && !isJukeboxSupported,
             note: status === PlayerStatus.PLAYING ? t('common.playerMustBePaused') : undefined,
             title: t('setting.audioPlayer'),
         },
@@ -127,7 +170,6 @@ export const AudioSettings = memo(() => {
                 <Select
                     clearable
                     data={audioDevices}
-                    defaultValue={audioDeviceId}
                     disabled={!isElectron()}
                     onChange={(e) =>
                         setSettings({
@@ -137,11 +179,10 @@ export const AudioSettings = memo(() => {
                                     : { audioDeviceId: e },
                         })
                     }
+                    value={audioDeviceId ?? getDefaultAudioDevice(audioDevices, playbackType)}
                 />
             ),
-            description: t('setting.audioDevice', {
-                context: 'description',
-            }),
+            description: t('setting.audioDevice', { context: 'description' }),
             isHidden: !isElectron(),
             title: t('setting.audioDevice'),
         },
@@ -156,9 +197,7 @@ export const AudioSettings = memo(() => {
                     }}
                 />
             ),
-            description: t('setting.webAudio', {
-                context: 'description',
-            }),
+            description: t('setting.webAudio', { context: 'description' }),
             isHidden: settings.type !== PlayerType.WEB,
             note: t('common.restartRequired'),
             title: t('setting.webAudio'),
@@ -174,9 +213,7 @@ export const AudioSettings = memo(() => {
                     }}
                 />
             ),
-            description: t('setting.preservePitch', {
-                context: 'description',
-            }),
+            description: t('setting.preservePitch', { context: 'description' }),
             isHidden: settings.type !== PlayerType.WEB,
             title: t('setting.preservePitch'),
         },
@@ -186,16 +223,12 @@ export const AudioSettings = memo(() => {
                     defaultChecked={settings.audioFadeOnStatusChange}
                     onChange={(e) => {
                         setSettings({
-                            playback: {
-                                audioFadeOnStatusChange: e.currentTarget.checked,
-                            },
+                            playback: { audioFadeOnStatusChange: e.currentTarget.checked },
                         });
                     }}
                 />
             ),
-            description: t('setting.audioFadeOnStatusChange', {
-                context: 'description',
-            }),
+            description: t('setting.audioFadeOnStatusChange', { context: 'description' }),
             title: t('setting.audioFadeOnStatusChange'),
         },
     ];

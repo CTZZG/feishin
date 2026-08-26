@@ -10,12 +10,22 @@ import { Stack } from '/@/shared/components/stack/stack';
 interface LyricLineProps extends ComponentPropsWithoutRef<'div'> {
     alignment: 'center' | 'left' | 'right';
     fontSize: number;
-    text: string;
+    romajiText?: null | string;
+    text?: string;
+    translatedText?: null | string;
 }
 
 export const LyricLine = memo(
-    ({ alignment, className, fontSize, text, ...props }: LyricLineProps) => {
-        const lines = useMemo(() => text.split('_BREAK_'), [text]);
+    ({
+        alignment,
+        className,
+        fontSize,
+        romajiText,
+        text,
+        translatedText,
+        ...props
+    }: LyricLineProps) => {
+        const lines = useMemo(() => (text ?? '').split('_BREAK_'), [text]);
 
         const style = useMemo(
             () => ({
@@ -31,6 +41,15 @@ export const LyricLine = memo(
                     {lines.map((line, index) => (
                         <span dangerouslySetInnerHTML={{ __html: sanitize(line) }} key={index} />
                     ))}
+                    {romajiText && (
+                        <span
+                            className={styles.romajiLine}
+                            dangerouslySetInnerHTML={{ __html: sanitize(romajiText) }}
+                        />
+                    )}
+                    {translatedText && translatedText !== text && (
+                        <span dangerouslySetInnerHTML={{ __html: sanitize(translatedText) }} />
+                    )}
                 </Stack>
             </Box>
         );

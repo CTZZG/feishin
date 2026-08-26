@@ -197,8 +197,8 @@ const JF_FIELDS = {
         'SortName',
         'ProviderIds',
     ],
-    ALBUM_DETAIL: ['Genres', 'DateCreated', 'ChildCount', 'People', 'Tags', 'ProviderIds'],
-    ALBUM_LIST: ['People', 'Tags', 'Studios', 'SortName', 'ProviderIds', 'ChildCount'],
+    ALBUM_DETAIL: ['Genres', 'DateCreated', 'ChildCount', 'Tags', 'ProviderIds'],
+    ALBUM_LIST: ['Tags', 'Studios', 'SortName', 'ProviderIds', 'ChildCount'],
     FOLDER: ['Genres', 'DateCreated', 'MediaSources', 'ParentId'],
     GENRE: ['ItemCounts'],
     PLAYLIST_DETAIL: [
@@ -210,16 +210,7 @@ const JF_FIELDS = {
         'SortName',
     ],
     PLAYLIST_LIST: ['ChildCount', 'Genres', 'DateCreated', 'ParentId', 'Overview'],
-    SONG: [
-        'Genres',
-        'DateCreated',
-        'MediaSources',
-        'ParentId',
-        'People',
-        'Tags',
-        'SortName',
-        'ProviderIds',
-    ],
+    SONG: ['Genres', 'DateCreated', 'MediaSources', 'ParentId', 'Tags', 'SortName', 'ProviderIds'],
 } as const;
 
 export const JellyfinController: InternalControllerEndpoint = {
@@ -511,10 +502,10 @@ export const JellyfinController: InternalControllerEndpoint = {
                 userId: apiClientProps.server.userId,
             },
             query: {
-                AlbumIds: query.id,
                 EnableUserData: true,
                 Fields: JF_FIELDS.SONG,
                 IncludeItemTypes: 'Audio',
+                ParentId: query.id,
                 Recursive: true,
                 SortBy: 'ParentIndexNumber,IndexNumber,SortName',
                 SortOrder: JFSortOrder.ASC,
@@ -687,6 +678,43 @@ export const JellyfinController: InternalControllerEndpoint = {
         const { apiClientProps, query } = args;
 
         return `${apiClientProps.server?.url}/items/${query.id}/download?apiKey=${apiClientProps.server?.credential}`;
+    },
+    getFavoriteSongs: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        // Gets songs sorted by play count and filters favorited songs
+        const res = await jfApiClient(apiClientProps).getTopSongsList({
+            params: {
+                userId: apiClientProps.server?.userId,
+            },
+            query: {
+                ArtistIds: query.artistId,
+                Fields: JF_FIELDS.SONG,
+                IncludeItemTypes: 'Audio',
+                IsFavorite: true,
+                Limit: query.limit,
+                Recursive: true,
+                SortBy: JFSongListSort.PLAY_COUNT,
+                SortOrder: 'Descending',
+                UserId: apiClientProps.server?.userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get top song list');
+        }
+
+        const items = res.body.Items.map((item) => jfNormalize.song(item, apiClientProps.server));
+
+        return {
+            items,
+            startIndex: 0,
+            totalRecordCount: res.body.TotalRecordCount,
+        };
     },
     getFolder: async (args) => {
         const { apiClientProps, query } = args;
@@ -965,7 +993,10 @@ export const JellyfinController: InternalControllerEndpoint = {
             return res.body.Lyrics.map((lyric) => lyric.Text).join('\n');
         }
 
-        return res.body.Lyrics.map((lyric) => [lyric.Start! / 1e4, lyric.Text]);
+        return res.body.Lyrics.map((lyric) => ({
+            startMs: lyric.Start! / 1e4,
+            text: lyric.Text,
+        }));
     },
     getMusicFolderList: async (args) => {
         const { apiClientProps } = args;
@@ -1056,6 +1087,35 @@ export const JellyfinController: InternalControllerEndpoint = {
             apiClientProps,
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
+    getPlaylistSongIds: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        const res = await jfApiClient(apiClientProps).getPlaylistSongList({
+            params: {
+                id: query.id,
+            },
+            query: {
+                // XXX: No fields are required for only IDs, which saves processing time between
+                // the Jellyfin server query, network (MBs vs KBs), and in-app parsing.
+                IncludeItemTypes: 'Audio',
+                UserId: apiClientProps.server?.userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get playlist song list IDs');
+        }
+
+        return {
+            items: res.body.Items.map((item) => item.Id),
+            startIndex: 0,
+            totalRecordCount: res.body.TotalRecordCount,
+        };
+    },
     getPlaylistSongList: async (args) => {
         const { apiClientProps, query } = args;
 
@@ -1068,7 +1128,7 @@ export const JellyfinController: InternalControllerEndpoint = {
                 id: query.id,
             },
             query: {
-                Fields: JF_FIELDS.SONG,
+                Fields: JF_FIELDS.PLAYLIST_DETAIL,
                 IncludeItemTypes: 'Audio',
                 UserId: apiClientProps.server?.userId,
             },
@@ -1138,6 +1198,34 @@ export const JellyfinController: InternalControllerEndpoint = {
         };
     },
     getRoles: async () => [],
+    getScanStatus: async (args) => {
+        const { apiClientProps } = args;
+
+        const res = await jfApiClient(apiClientProps).getScheduledTasks();
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get scan status');
+        }
+
+        const task =
+            res.body.find((t) => t.Key === 'RefreshLibrary') ||
+            res.body.find((t) => t.Name === 'Scan Media Library');
+
+        if (!task) {
+            return {
+                count: 0,
+                folderCount: 0,
+                scanning: false,
+            };
+        }
+
+        return {
+            count: 0,
+            folderCount: 0,
+            lastScan: task.LastExecutionResult?.EndTimeUtc ?? undefined,
+            scanning: task.State === 'Running' || task.State === 'Cancelling',
+        };
+    },
     getServerInfo: async (args) => {
         const { apiClientProps } = args;
 
@@ -1533,6 +1621,21 @@ export const JellyfinController: InternalControllerEndpoint = {
             throw new Error('Failed to move item in playlist');
         }
     },
+    refreshItems: async (args) => {
+        const { apiClientProps, query } = args;
+
+        await Promise.all(
+            query.ids.map((id) =>
+                jfApiClient(apiClientProps).refreshItem({
+                    body: null,
+                    params: { id },
+                    query: { MetadataRefreshMode: 'FullRefresh' },
+                }),
+            ),
+        );
+
+        return null;
+    },
     removeFromPlaylist: async (args) => {
         const { apiClientProps, query } = args;
 
@@ -1848,6 +1951,54 @@ export const JellyfinController: InternalControllerEndpoint = {
         if (res.status !== 204) {
             throw new Error('Failed to update playlist songs');
         }
+
+        return null;
+    },
+    startLibraryScan: async (args) => {
+        const { apiClientProps } = args;
+        const server = apiClientProps.server;
+        const userId = server?.userId;
+
+        if (!userId) {
+            throw new Error('No userId found');
+        }
+
+        let musicFolderIds = server.musicFolderId?.filter(Boolean) ?? [];
+
+        if (musicFolderIds.length === 0) {
+            const res = await jfApiClient(apiClientProps).getMusicFolderList({
+                params: { userId },
+            });
+
+            if (res.status !== 200) {
+                throw new Error('Failed to get music folders');
+            }
+
+            musicFolderIds = res.body.Items.filter(
+                (folder) => folder.CollectionType === jfType._enum.collection.MUSIC,
+            ).map((folder) => folder.Id);
+        }
+
+        if (musicFolderIds.length === 0) {
+            throw new Error('No music folders found');
+        }
+
+        await Promise.all(
+            musicFolderIds.map((id) =>
+                jfApiClient(apiClientProps).refreshItem({
+                    body: null,
+                    params: { id },
+                    query: {
+                        ImageRefreshMode: 'Default',
+                        MetadataRefreshMode: 'Default',
+                        Recursive: true,
+                        RegenerateTrickplay: false,
+                        ReplaceAllImages: false,
+                        ReplaceAllMetadata: false,
+                    },
+                }),
+            ),
+        );
 
         return null;
     },

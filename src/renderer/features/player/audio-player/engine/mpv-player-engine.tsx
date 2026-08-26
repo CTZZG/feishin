@@ -27,6 +27,7 @@ interface MpvPlayerEngineProps {
     onProgress: (e: PlayerOnProgressProps) => void;
     playerRef: RefObject<MpvPlayerEngineHandle | null>;
     playerStatus: PlayerStatus;
+    preservePitch?: boolean;
     speed?: number;
     volume: number;
 }
@@ -45,6 +46,7 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
         onProgress,
         playerRef,
         playerStatus,
+        preservePitch,
         speed,
         volume,
     } = props;
@@ -67,10 +69,18 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
             setReloadTrigger((prev) => prev + 1);
         };
 
+        const handleMpvReconnect = () => {
+            handleMpvReload();
+        };
+
         eventEmitter.on('MPV_RELOAD', handleMpvReload);
+        // The main process notifies us after the OS resumes from sleep, since the
+        // stream mpv had open is likely on a now-dead connection.
+        mpvPlayerListener?.rendererMpvReconnect(handleMpvReconnect);
 
         return () => {
             eventEmitter.off('MPV_RELOAD', handleMpvReload);
+            ipc?.removeAllListeners('renderer-mpv-reconnect');
         };
     }, []);
 
@@ -103,6 +113,7 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
             // Initialize mpv with fresh state
             const properties: Record<string, any> = {
                 ...getMpvProperties(mpvProperties),
+                'audio-pitch-correction': preservePitch === false ? 'no' : 'yes',
                 speed: speed,
                 volume: volume,
             };
@@ -140,7 +151,9 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
                     : undefined;
 
                 if (currentSongUrl && nextSongUrl && !hasPopulatedQueueRef.current && mpvPlayer) {
-                    mpvPlayer.setQueue(currentSongUrl, nextSongUrl, true);
+                    const shouldPause =
+                        usePlayerStore.getState().player.status !== PlayerStatus.PLAYING;
+                    mpvPlayer.setQueue(currentSongUrl, nextSongUrl, shouldPause);
                     hasPopulatedQueueRef.current = true;
                 }
             }
@@ -157,8 +170,8 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
             isInitializedRef.current = false;
             hasPopulatedQueueRef.current = false;
         };
-        // Note: volume, speed, and transcode are intentionally not in dependencies.
-        // Volume and speed changes are handled by separate useEffects below to avoid
+        // Note: volume, speed, preservePitch, and transcode are intentionally not in dependencies.
+        // Volume speed, and preservePitch changes are handled by separate useEffects below to avoid
         // reinitializing the entire player. Transcode changes are handled by queue
         // update callbacks in usePlayerEvents.
         // reloadTrigger is included to allow manual reload via MPV_RELOAD event.
@@ -200,6 +213,19 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
         mpvPlayer.setProperties({ speed });
     }, [speed]);
 
+    // Update pitch correction status
+    useEffect(() => {
+        if (!mpvPlayer) {
+            return;
+        }
+
+        if (preservePitch === false) {
+            mpvPlayer.setProperties({ 'audio-pitch-correction': 'no' });
+        } else {
+            mpvPlayer.setProperties({ 'audio-pitch-correction': 'yes' });
+        }
+    }, [preservePitch]);
+
     // Handle play/pause status
     useEffect(() => {
         if (!mpvPlayer) {
@@ -208,7 +234,7 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
 
         if (playerStatus === PlayerStatus.PLAYING) {
             mpvPlayer.play();
-        } else if (playerStatus === PlayerStatus.PAUSED) {
+        } else {
             mpvPlayer.pause();
         }
     }, [playerStatus]);
@@ -272,10 +298,23 @@ export const MpvPlayerEngine = (props: MpvPlayerEngineProps) => {
             handleMpvAutoNext(transcode);
         };
 
+        const handleTrackEnded = () => {
+            const { player } = usePlayerStore.getState();
+            // mpv often emits `stopped` before this event, which already set STOPPED
+            // via mediaStop. Still run mediaAutoNext so end-of-queue seek/reset runs.
+            if (player.status !== PlayerStatus.PLAYING && player.status !== PlayerStatus.STOPPED) {
+                return;
+            }
+
+            mediaAutoNext();
+        };
+
         mpvPlayerListener.rendererAutoNext(handleOnAutoNext);
+        mpvPlayerListener.rendererTrackEnded(handleTrackEnded);
 
         return () => {
             ipc?.removeAllListeners('renderer-player-auto-next');
+            ipc?.removeAllListeners('renderer-player-track-ended');
         };
     }, [mediaAutoNext, onEnded, transcode]);
 

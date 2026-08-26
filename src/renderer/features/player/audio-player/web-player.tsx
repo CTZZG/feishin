@@ -89,13 +89,13 @@ export function WebPlayer() {
                 }, PLAY_PAUSE_FADE_INTERVAL);
             });
 
-            if (status === PlayerStatus.PAUSED) {
+            if (status === PlayerStatus.PLAYING) {
+                setLocalPlayerStatus(status);
+                await promise;
+            } else {
                 await promise;
                 setLocalPlayerStatus(status);
                 playerRef.current?.setVolume(startVolume);
-            } else if (status === PlayerStatus.PLAYING) {
-                setLocalPlayerStatus(status);
-                await promise;
             }
         },
         [],
@@ -127,8 +127,16 @@ export function WebPlayer() {
                 return;
             }
 
+            if (num === 1) {
+                setTimestamp(e.playedSeconds);
+            }
+
             if (repeat === PlayerRepeat.ONE) {
                 handleRepeatOne(1, e.playedSeconds, getDuration(playerRef.current.player1().ref));
+                return;
+            }
+
+            if (usePlayerStoreBase.getState().player.status !== PlayerStatus.PLAYING) {
                 return;
             }
 
@@ -170,6 +178,7 @@ export function WebPlayer() {
             num,
             player2,
             repeat,
+            setTimestamp,
             transitionType,
             volume,
         ],
@@ -181,8 +190,16 @@ export function WebPlayer() {
                 return;
             }
 
+            if (num === 2) {
+                setTimestamp(e.playedSeconds);
+            }
+
             if (repeat === PlayerRepeat.ONE) {
                 handleRepeatOne(2, e.playedSeconds, getDuration(playerRef.current.player2().ref));
+                return;
+            }
+
+            if (usePlayerStoreBase.getState().player.status !== PlayerStatus.PLAYING) {
                 return;
             }
 
@@ -224,6 +241,7 @@ export function WebPlayer() {
             num,
             player1,
             repeat,
+            setTimestamp,
             transitionType,
             volume,
         ],
@@ -238,10 +256,10 @@ export function WebPlayer() {
         promise.then(() => {
             playerRef.current?.player1()?.ref?.getInternalPlayer().pause();
 
-            // If mediaAutoNext resulted in a paused state (e.g. end of queue,
+            // If mediaAutoNext resulted in a stopped/paused state (e.g. end of queue,
             // or pauseOnNextSongEnd flag), stop all audio instead of restoring volume.
             const currentStatus = usePlayerStoreBase.getState().player.status;
-            if (currentStatus === PlayerStatus.PAUSED) {
+            if (currentStatus !== PlayerStatus.PLAYING) {
                 playerRef.current?.pause();
             } else {
                 playerRef.current?.setVolume(volume);
@@ -260,7 +278,7 @@ export function WebPlayer() {
             playerRef.current?.player2()?.ref?.getInternalPlayer().pause();
 
             const currentStatus = usePlayerStoreBase.getState().player.status;
-            if (currentStatus === PlayerStatus.PAUSED) {
+            if (currentStatus !== PlayerStatus.PLAYING) {
                 playerRef.current?.pause();
             } else {
                 playerRef.current?.setVolume(volume);
@@ -275,6 +293,11 @@ export function WebPlayer() {
         {
             onCurrentSongChange: () => {
                 setIsTransitioning(false);
+            },
+            onPlayerQueueChange: () => {
+                if (usePlayerStoreBase.getState().player.status !== PlayerStatus.PLAYING) {
+                    setIsTransitioning(false);
+                }
             },
             onPlayerSeekToTimestamp: (properties) => {
                 setIsTransitioning(false);
@@ -313,9 +336,9 @@ export function WebPlayer() {
 
                 const status = properties.status;
 
-                // Reset crossfade transition if paused during a crossfade transition
+                // Reset crossfade transition if paused/stopped during a crossfade transition
                 if (
-                    status === PlayerStatus.PAUSED &&
+                    status !== PlayerStatus.PLAYING &&
                     isTransitioning &&
                     transitionType === PlayerStyle.CROSSFADE
                 ) {
@@ -331,18 +354,18 @@ export function WebPlayer() {
                 }
 
                 if (audioFadeOnStatusChange) {
-                    if (status === PlayerStatus.PAUSED) {
-                        fadeAndSetStatus(volume, 0, PLAY_PAUSE_FADE_DURATION, PlayerStatus.PAUSED);
-                    } else if (status === PlayerStatus.PLAYING) {
+                    if (status === PlayerStatus.PLAYING) {
                         fadeAndSetStatus(0, volume, PLAY_PAUSE_FADE_DURATION, PlayerStatus.PLAYING);
+                    } else {
+                        fadeAndSetStatus(volume, 0, PLAY_PAUSE_FADE_DURATION, status);
                     }
                 } else {
-                    if (status === PlayerStatus.PAUSED) {
-                        playerRef.current?.setVolume(volume);
-                        setLocalPlayerStatus(PlayerStatus.PAUSED);
-                    } else if (status === PlayerStatus.PLAYING) {
+                    if (status === PlayerStatus.PLAYING) {
                         playerRef.current?.setVolume(volume);
                         setLocalPlayerStatus(PlayerStatus.PLAYING);
+                    } else {
+                        playerRef.current?.setVolume(volume);
+                        setLocalPlayerStatus(status);
                     }
                 }
             },
@@ -388,7 +411,7 @@ export function WebPlayer() {
                 transitionType === PlayerStyle.CROSSFADE ||
                 transitionType === PlayerStyle.GAPLESS
             ) {
-                setTimestamp(Number(currentTime.toFixed(0)));
+                setTimestamp(currentTime);
             }
         }, 500);
 
@@ -597,6 +620,13 @@ function crossfadeHandler(args: {
     } = args;
     const player = `player${playerNum}`;
 
+    if (usePlayerStoreBase.getState().player.status !== PlayerStatus.PLAYING) {
+        if (isTransitioning) {
+            setIsTransitioning(false);
+        }
+        return;
+    }
+
     // If there is no next song to transition to, ensure we don't enter or stay in a transition
     if (!hasNextSong) {
         currentPlayer.setVolume(volume);
@@ -704,7 +734,22 @@ function gaplessHandler(args: {
         setIsTransitioning,
     } = args;
 
+    if (usePlayerStoreBase.getState().player.status !== PlayerStatus.PLAYING) {
+        if (isTransitioning) {
+            setIsTransitioning(false);
+        }
+        return null;
+    }
+
     if (!hasNextSong) {
+        return null;
+    }
+
+    // Ignore invalid durations (e.g. during URL load or empty source placeholder)
+    if (!Number.isFinite(duration) || duration < 2) {
+        if (isTransitioning) {
+            setIsTransitioning(false);
+        }
         return null;
     }
 

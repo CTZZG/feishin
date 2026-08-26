@@ -1,15 +1,16 @@
-import { externalizeDepsPlugin, UserConfig } from 'electron-vite';
+import { defineConfig, UserConfig } from 'electron-vite';
 import { resolve } from 'path';
 import conditionalImportPlugin from 'vite-plugin-conditional-import';
 import dynamicImportPlugin from 'vite-plugin-dynamic-import';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 
+import { kuromojiDictionaryPlugin } from './vite.kuromoji-plugin';
 import { createReactPlugin } from './vite.react-plugin';
 
 const currentOSEnv = process.platform;
 const electronRendererTarget = 'chrome87';
 
-const config: UserConfig = {
+const createConfig = (isDevelopment: boolean): UserConfig => ({
     main: {
         build: {
             rollupOptions: {
@@ -23,7 +24,6 @@ const config: UserConfig = {
             'import.meta.env.IS_WIN': JSON.stringify(currentOSEnv === 'win32'),
         },
         plugins: [
-            externalizeDepsPlugin(),
             dynamicImportPlugin(),
             conditionalImportPlugin({
                 currentEnv: currentOSEnv,
@@ -41,7 +41,6 @@ const config: UserConfig = {
         build: {
             sourcemap: true,
         },
-        plugins: [externalizeDepsPlugin()],
         resolve: {
             alias: {
                 '/@/preload': resolve('src/preload'),
@@ -65,16 +64,26 @@ const config: UserConfig = {
                 localsConvention: 'camelCase',
             },
         },
-        plugins: [createReactPlugin(), ViteEjsPlugin({ web: false })],
+        plugins: [
+            createReactPlugin(),
+            ...(isDevelopment ? [kuromojiDictionaryPlugin({ emitDictionary: false })] : []),
+            ViteEjsPlugin({ web: false }),
+        ],
         resolve: {
             alias: {
                 '/@/i18n': resolve('src/i18n'),
+                '/@/lyrics-conversion-api': resolve(
+                    isDevelopment
+                        ? 'src/renderer/features/lyrics/api/development-lyrics-conversion-api.ts'
+                        : 'src/renderer/features/lyrics/api/electron-lyrics-conversion-api.ts',
+                ),
                 '/@/remote': resolve('src/remote'),
                 '/@/renderer': resolve('src/renderer'),
                 '/@/shared': resolve('src/shared'),
+                ...(isDevelopment ? { path: resolve('src/renderer/shims/path.ts') } : {}),
             },
         },
     },
-};
+});
 
-export default config;
+export default defineConfig(({ command }) => createConfig(command === 'serve'));

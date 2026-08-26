@@ -7,6 +7,7 @@ import type {
     AlbumRadioQuery,
     ArtistListQuery,
     ArtistRadioQuery,
+    FavoriteSongListQuery,
     FolderQuery,
     GenreListQuery,
     LyricSearchQuery,
@@ -75,9 +76,9 @@ export const queryKeys: Record<
 
             return [serverId, 'albumArtists', 'detail'] as const;
         },
-        favoriteSongs: (serverId: string, artistId?: string) => {
-            if (artistId) {
-                return [serverId, 'albumArtists', 'favoriteSongs', artistId] as const;
+        favoriteSongs: (serverId: string, query?: FavoriteSongListQuery) => {
+            if (query) {
+                return [serverId, 'albumArtists', 'favoriteSongs', query] as const;
             }
 
             return [serverId, 'albumArtists', 'favoriteSongs'] as const;
@@ -338,6 +339,9 @@ export const queryKeys: Record<
 
             return [serverId, 'playlists', 'songList'] as const;
         },
+        songListIds: (serverId: string, id: string) => {
+            return [serverId, 'playlists', 'songListIds', id] as const;
+        },
     },
     radio: {
         list: (serverId: string) => [serverId, 'radio', 'list'] as const,
@@ -360,6 +364,7 @@ export const queryKeys: Record<
     },
     server: {
         root: (serverId: string) => [serverId] as const,
+        scanStatus: (serverId: string) => [serverId, 'server', 'scanStatus'] as const,
     },
     songs: {
         albumRadio: (serverId: string, query?: AlbumRadioQuery) => {

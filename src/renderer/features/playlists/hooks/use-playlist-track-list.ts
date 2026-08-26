@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useListContext } from '/@/renderer/context/list-context';
 import { usePlaylistSongListFilters } from '/@/renderer/features/playlists/hooks/use-playlist-song-list-filters';
+import { useListRefreshTick } from '/@/renderer/features/shared/hooks/use-list-refresh-tick';
 import { useSearchTermFilter } from '/@/renderer/features/shared/hooks/use-search-term-filter';
 import { FILTER_KEYS } from '/@/renderer/features/shared/utils';
 import { searchLibraryItems } from '/@/renderer/features/shared/utils';
@@ -13,6 +14,7 @@ import {
     SongListSort,
     SortOrder,
 } from '/@/shared/types/domain-types';
+import { ItemListKey } from '/@/shared/types/types';
 
 export function applyClientSideSongFilters(songs: Song[], query: Record<string, unknown>): Song[] {
     let result = songs;
@@ -93,19 +95,19 @@ export function usePlaylistTrackList(data: PlaylistSongListResponse | undefined)
     const { setItemCount, setListData } = useListContext();
     const { searchTerm } = useSearchTermFilter();
     const { query } = usePlaylistSongListFilters();
+    const refreshTick = useListRefreshTick(ItemListKey.PLAYLIST_SONG);
 
     const sortedAndFilteredSongs = useMemo(() => {
         const raw = data?.items ?? [];
         const filtered = applyClientSideSongFilters(raw, query as Record<string, unknown>);
-        const searched = searchTerm
-            ? searchLibraryItems(filtered, searchTerm, LibraryItem.SONG)
-            : filtered;
-        return sortSongList(
-            searched,
-            (query.sortBy as SongListSort) ?? SongListSort.ID,
-            (query.sortOrder as SortOrder) ?? SortOrder.ASC,
-        );
-    }, [data?.items, query, searchTerm]);
+        if (searchTerm?.trim()) {
+            return searchLibraryItems(filtered, searchTerm, LibraryItem.SONG);
+        }
+        const sortBy = (query.sortBy as SongListSort) ?? SongListSort.ID;
+        const sortOrder = (query.sortOrder as SortOrder) ?? SortOrder.ASC;
+        return sortSongList(filtered, sortBy, sortOrder);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTick intentionally re-shuffles random sort on list refresh
+    }, [data?.items, query, searchTerm, refreshTick]);
 
     const totalCount = sortedAndFilteredSongs.length;
 

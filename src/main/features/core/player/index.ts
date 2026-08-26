@@ -1,5 +1,4 @@
-import console from 'console';
-import { app, ipcMain } from 'electron';
+import { app, ipcMain, powerMonitor } from 'electron';
 import { access, rm } from 'fs/promises';
 import uniq from 'lodash/uniq';
 import MpvAPI from 'node-mpv';
@@ -7,7 +6,7 @@ import { pid } from 'node:process';
 import process from 'process';
 
 import { getMainWindow, sendToastToRenderer } from '../../../index';
-import { createLog } from '../../../utils';
+import log from '../../../logger';
 import { store } from '../settings';
 
 import { isMacOS, isWindows } from '/@/main/env';
@@ -26,6 +25,21 @@ declare module 'node-mpv';
 let mpvInstance: MpvAPI | null = null;
 let currentPlayerData: null | PlayerData = null;
 const socketPath = isWindows() ? `\\\\.\\pipe\\mpvserver-${pid}` : `/tmp/node-mpv-${pid}.sock`;
+
+// While quitting/restarting mpv, playlist-pos goes to -1 and node-mpv emits stopped/paused/
+// resumed. Those look identical to a real track end and must not reach the renderer — otherwise
+// handleTrackEnded runs mediaAutoNext while status is STOPPED and flips the UI back to Playing
+// on the next queue item (e.g. MPV reload after mediaStop).
+let suppressRendererPlaybackEvents = false;
+// Bumped on quit so late events from a dying instance are ignored after a new one starts.
+let playbackEventGeneration = 0;
+
+const sendRendererPlaybackEvent = (channel: string, ...args: unknown[]) => {
+    if (suppressRendererPlaybackEvents) {
+        return;
+    }
+    getMainWindow()?.webContents.send(channel, ...args);
+};
 
 const NodeMpvErrorCode = {
     0: 'Unable to load file or stream',
@@ -48,24 +62,29 @@ type NodeMpvError = {
 };
 
 const mpvLog = (
-    data: { action: string; toast?: 'info' | 'success' | 'warning' },
+    data: {
+        action: string;
+        level?: 'debug' | 'error' | 'info' | 'warn';
+        toast?: 'info' | 'success' | 'warning';
+    },
     err?: NodeMpvError,
 ) => {
     const { action, toast } = data;
 
     if (err) {
-        const message = `[AUDIO PLAYER] ${action} - mpv errorcode ${err.errcode} - ${
+        const message = `${action} - mpv errorcode ${err.errcode} - ${
             NodeMpvErrorCode[err.errcode as keyof typeof NodeMpvErrorCode]
         }`;
 
         sendToastToRenderer({ message, type: 'error' });
-        createLog({ message, type: 'error' });
+        log.error(message);
+        return;
     }
 
-    const message = `[AUDIO PLAYER] ${action}`;
-    createLog({ message, type: 'error' });
+    const level = data.level ?? 'info';
+    log[level](action);
     if (toast) {
-        sendToastToRenderer({ message, type: toast });
+        sendToastToRenderer({ message: action, type: toast });
     }
 };
 
@@ -83,6 +102,19 @@ const DEFAULT_MPV_PARAMETERS = (extraParameters?: string[]) => {
 
     if (!extraParameters?.some((param) => prefetchPlaylistParams.includes(param))) {
         parameters.push('--prefetch-playlist=yes');
+    }
+
+    // Without these, mpv/ffmpeg will block indefinitely on a dead TCP connection
+    // instead of failing or reconnecting. This commonly happens when the OS network
+    // adapter resets after the system wakes from sleep while a stream is open.
+    if (!extraParameters?.some((param) => param.startsWith('--network-timeout'))) {
+        parameters.push('--network-timeout=10');
+    }
+
+    if (!extraParameters?.some((param) => param.startsWith('--stream-lavf-o'))) {
+        parameters.push(
+            '--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_at_eof=1,reconnect_delay_max=5',
+        );
     }
 
     return parameters;
@@ -142,45 +174,69 @@ const createMpv = async (data: {
 
     try {
         await mpv.start();
+        log.info('mpv initialized', { binary: resolvedBinaryPath ?? 'bundled/default' });
     } catch (error: any) {
-        console.error('mpv failed to start', error);
+        log.error('mpv failed to start', error);
     } finally {
         await mpv.setMultipleProperties(properties || {});
     }
 
+    let previousPlaylistPos: number | undefined;
+    const eventGeneration = playbackEventGeneration;
+
+    suppressRendererPlaybackEvents = false;
+
+    const sendIfCurrent = (channel: string, ...args: unknown[]) => {
+        if (eventGeneration !== playbackEventGeneration) {
+            return;
+        }
+        sendRendererPlaybackEvent(channel, ...args);
+    };
+
     mpv.on('status', (status) => {
         if (status.property === 'playlist-pos') {
+            const currentPos = typeof status.value === 'number' ? status.value : undefined;
+
             // mpv uses playlist-pos = -1 when nothing is playing (ended, cleared, load failure, etc).
-            if (status.value === -1) {
+            if (currentPos === -1) {
+                if (previousPlaylistPos === 0) {
+                    sendIfCurrent('renderer-player-track-ended');
+                }
                 mpv?.pause();
+                previousPlaylistPos = currentPos;
                 return;
             }
 
             // In our 2-item queue model, playlist-pos should normally be 0.
             // When mpv auto-advances to the next track it becomes > 0 (typically 1).
-            if (typeof status.value === 'number' && status.value > 0) {
-                getMainWindow()?.webContents.send('renderer-player-auto-next');
+            if (typeof currentPos === 'number' && currentPos > 0) {
+                sendIfCurrent('renderer-player-auto-next');
             }
+
+            previousPlaylistPos = currentPos;
         }
     });
 
     // Automatically updates the play button when the player is playing
     mpv.on('resumed', () => {
-        getMainWindow()?.webContents.send('renderer-player-play');
+        sendIfCurrent('renderer-player-play');
     });
 
     // Automatically updates the play button when the player is stopped
     mpv.on('stopped', () => {
-        getMainWindow()?.webContents.send('renderer-player-stop');
+        sendIfCurrent('renderer-player-stop');
     });
 
     // Automatically updates the play button when the player is paused
     mpv.on('paused', () => {
-        getMainWindow()?.webContents.send('renderer-player-pause');
+        sendIfCurrent('renderer-player-pause');
     });
 
     // Event output every interval set by time_update, used to update the current time
     mpv.on('timeposition', (time: number) => {
+        if (eventGeneration !== playbackEventGeneration) {
+            return;
+        }
         getMainWindow()?.webContents.send('renderer-player-current-time', time);
     });
 
@@ -191,21 +247,46 @@ export const getMpvInstance = () => {
     return mpvInstance;
 };
 
+const QUIT_TIMEOUT_MS = 3000;
+
+const killMpvProcess = (mpv: MpvAPI) => {
+    const mpvProcess = (mpv as any).process || (mpv as any).mpvProcess;
+    if (mpvProcess && typeof mpvProcess.kill === 'function') {
+        try {
+            mpvProcess.kill('SIGTERM');
+        } catch (killErr) {
+            mpvLog({ action: 'Failed to kill mpv process' }, killErr as NodeMpvError);
+        }
+    }
+};
+
 const quit = async (instance?: MpvAPI | null) => {
     const mpv = instance || getMpvInstance();
     if (mpv) {
+        suppressRendererPlaybackEvents = true;
+        playbackEventGeneration += 1;
         try {
-            await mpv.quit();
+            // mpv.quit() resolves only when mpv replies over IPC. If mpv's command queue
+            // is wedged (e.g. blocked on a dead network stream after the system resumes
+            // from sleep), that reply never arrives, so this must not be allowed to hang
+            // forever - fall back to killing the process directly.
+            let timedOut = false;
+            await Promise.race([
+                mpv.quit(),
+                new Promise((resolve) => {
+                    setTimeout(() => {
+                        timedOut = true;
+                        resolve(undefined);
+                    }, QUIT_TIMEOUT_MS);
+                }),
+            ]);
+
+            if (timedOut) {
+                killMpvProcess(mpv);
+            }
         } catch {
             // If quit() fails, try to kill the process directly
-            const mpvProcess = (mpv as any).process || (mpv as any).mpvProcess;
-            if (mpvProcess && typeof mpvProcess.kill === 'function') {
-                try {
-                    mpvProcess.kill('SIGTERM');
-                } catch (killErr) {
-                    mpvLog({ action: 'Failed to kill mpv process' }, killErr as NodeMpvError);
-                }
-            }
+            killMpvProcess(mpv);
         }
         if (!isWindows()) {
             try {
@@ -218,11 +299,14 @@ const quit = async (instance?: MpvAPI | null) => {
 };
 
 const setAudioPlayerFallback = (isError: boolean) => {
+    if (isError) {
+        log.warn('Falling back to web player');
+    }
     getMainWindow()?.webContents.send('renderer-player-fallback', isError);
 };
 
 ipcMain.on('player-set-properties', async (_event, data: Record<string, any>) => {
-    mpvLog({ action: `Setting properties: ${JSON.stringify(data)}` });
+    mpvLog({ action: `Setting properties: ${JSON.stringify(data)}`, level: 'debug' });
     if (data.length === 0) {
         return;
     }
@@ -244,9 +328,12 @@ ipcMain.handle(
         try {
             mpvLog({
                 action: `Attempting to initialize mpv with parameters: ${JSON.stringify(data)}`,
+                level: 'debug',
             });
 
             // Clean up previous mpv instance
+            suppressRendererPlaybackEvents = true;
+            playbackEventGeneration += 1;
             getMpvInstance()?.stop();
             getMpvInstance()
                 ?.quit()
@@ -271,6 +358,7 @@ ipcMain.handle(
         try {
             mpvLog({
                 action: `Attempting to initialize mpv with parameters: ${JSON.stringify(data)}`,
+                level: 'debug',
             });
             mpvInstance = await createMpv(data);
             setAudioPlayerFallback(false);
@@ -282,6 +370,9 @@ ipcMain.handle(
 );
 
 ipcMain.on('player-quit', async () => {
+    // stop() also drives playlist-pos to -1; suppress before that so reload does not look like a track end.
+    suppressRendererPlaybackEvents = true;
+    playbackEventGeneration += 1;
     try {
         await getMpvInstance()?.stop();
         await quit();
@@ -384,6 +475,13 @@ ipcMain.on('player-set-queue', async (_event, current?: string, next?: string, p
         }
     }
 
+    // When pause is requested (e.g. preload after reload while UI is STOPPED/PAUSED), mpv still
+    // briefly resumes on load. Suppress those events so they do not overwrite renderer status.
+    const shouldSuppressLoadEvents = pause === true;
+    if (shouldSuppressLoadEvents) {
+        suppressRendererPlaybackEvents = true;
+    }
+
     try {
         if (current) {
             try {
@@ -406,6 +504,10 @@ ipcMain.on('player-set-queue', async (_event, current?: string, next?: string, p
         }
     } catch (err: any | NodeMpvError) {
         mpvLog({ action: `Failed to set play queue` }, err);
+    } finally {
+        if (shouldSuppressLoadEvents) {
+            suppressRendererPlaybackEvents = false;
+        }
     }
 });
 
@@ -666,6 +768,15 @@ const cleanupMpv = async (force = false) => {
     }
 };
 
+// When the OS resumes from sleep, any network stream mpv had open is likely dead
+// (the connection silently dropped while the network adapter was suspended). Tell
+// the renderer to reload mpv so it reconnects with a fresh stream instead of staying
+// stuck on the old, now-dead connection until the app is manually restarted.
+powerMonitor.on('resume', () => {
+    mpvLog({ action: 'System resumed from sleep, notifying renderer to reconnect mpv' });
+    getMainWindow()?.webContents.send('renderer-mpv-reconnect');
+});
+
 app.on('before-quit', async (event) => {
     switch (mpvState) {
         case MpvState.DONE:
@@ -718,7 +829,7 @@ process.on('SIGTERM', async () => {
 
 // Handle uncaught exceptions - cleanup mpv before crashing
 process.on('uncaughtException', async (error) => {
-    console.error('Uncaught exception:', error);
+    log.error('Uncaught exception:', error);
     await cleanupMpv(true).catch(() => {
         // Ignore cleanup errors during crash
     });
@@ -726,7 +837,7 @@ process.on('uncaughtException', async (error) => {
 
 // Handle unhandled rejections - cleanup mpv
 process.on('unhandledRejection', async (reason) => {
-    console.error('Unhandled rejection:', reason);
+    log.error('Unhandled rejection:', reason);
     await cleanupMpv(true).catch(() => {
         // Ignore cleanup errors
     });

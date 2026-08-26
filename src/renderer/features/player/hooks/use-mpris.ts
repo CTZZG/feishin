@@ -19,7 +19,7 @@ export const useMPRIS = () => {
     const player = usePlayerStore();
     const currentSong = usePlayerSong();
     const isRadioActive = useIsRadioActive();
-    const { isPlaying: isRadioPlaying, metadata: radioMetadata, stationName } = useRadioPlayer();
+    const { metadata: radioMetadata, stationName } = useRadioPlayer();
 
     const imageUrl = useItemImageUrl({
         id: currentSong?.imageId || undefined,
@@ -29,7 +29,7 @@ export const useMPRIS = () => {
     });
 
     const radioSong = useMemo((): QueueSong | undefined => {
-        if (!isRadioActive || !isRadioPlaying) {
+        if (!isRadioActive) {
             return undefined;
         }
 
@@ -80,6 +80,7 @@ export const useMPRIS = () => {
             compilation: null,
             container: null,
             createdAt: '',
+            date: null,
             discNumber: 0,
             discSubtitle: null,
             duration: 0,
@@ -91,6 +92,7 @@ export const useMPRIS = () => {
             imageUrl: null,
             lastPlayedAt: null,
             lyrics: null,
+            mbzAlbumId: null,
             mbzRecordingId: null,
             mbzTrackId: null,
             name: title,
@@ -109,8 +111,9 @@ export const useMPRIS = () => {
             updatedAt: new Date().toISOString(),
             userFavorite: false,
             userRating: null,
+            year: null,
         };
-    }, [isRadioActive, isRadioPlaying, radioMetadata, stationName]);
+    }, [isRadioActive, radioMetadata, stationName]);
 
     useEffect(() => {
         if (!mpris) {
@@ -152,12 +155,12 @@ export const useMPRIS = () => {
             return;
         }
 
-        // Use radio song if radio is active and playing, otherwise use current song
-        const songToUpdate = isRadioActive && isRadioPlaying ? radioSong : currentSong;
-        const imageUrlToUpdate = isRadioActive && isRadioPlaying ? null : imageUrl;
+        // Use radio song while a station is loaded (playing or paused)
+        const songToUpdate = isRadioActive ? radioSong : currentSong;
+        const imageUrlToUpdate = isRadioActive ? null : imageUrl;
 
         mpris?.updateSong(songToUpdate, imageUrlToUpdate);
-    }, [currentSong, imageUrl, isRadioActive, isRadioPlaying, radioSong]);
+    }, [currentSong, imageUrl, isRadioActive, radioSong]);
 
     usePlayerEvents(
         {
