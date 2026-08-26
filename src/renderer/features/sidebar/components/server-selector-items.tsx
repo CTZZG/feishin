@@ -165,10 +165,11 @@ export const ServerSelectorItems = () => {
             {Object.values(serverList).map((server) => {
                 const isNavidromeExpired =
                     server.type === ServerType.NAVIDROME && !server.ndCredential;
+                const isEmbyExpired = server.type === ServerType.EMBY && !server.credential;
                 const isJellyfinExpired = server.type === ServerType.JELLYFIN && !server.credential;
                 const isSubsonicExpired = server.type === ServerType.SUBSONIC && !server.credential;
                 const isSessionExpired =
-                    isNavidromeExpired || isJellyfinExpired || isSubsonicExpired;
+                    isNavidromeExpired || isEmbyExpired || isJellyfinExpired || isSubsonicExpired;
 
                 const logo =
                     server.type === ServerType.NAVIDROME

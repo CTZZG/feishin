@@ -460,7 +460,9 @@ type GenreListSortMap = {
 
 export const genreListSortMap: GenreListSortMap = {
     emby: {
+        albumCount: undefined,
         name: EmbyGenreListSort.NAME,
+        songCount: undefined,
     },
     jellyfin: {
         albumCount: undefined,
@@ -736,6 +738,8 @@ export const songListSortMap: SongListSortMap = {
         recentlyAdded: EmbySongListSort.RECENTLY_ADDED,
         recentlyPlayed: EmbySongListSort.RECENTLY_PLAYED,
         releaseDate: EmbySongListSort.RELEASE_DATE,
+        // Emby exposes the release year through ProductionYear, same as `year`.
+        releaseYear: EmbySongListSort.YEAR,
         sortName: EmbySongListSort.NAME,
         year: EmbySongListSort.YEAR,
     },

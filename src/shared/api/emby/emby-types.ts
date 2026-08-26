@@ -522,6 +522,41 @@ const removeTagsParameters = z.object({
 
 const removeTags = z.null();
 
+const refreshItemParameters = z.object({
+    ImageRefreshMode: z.string().optional(),
+    MetadataRefreshMode: z.string().optional(),
+    Recursive: z.boolean().optional(),
+    ReplaceAllImages: z.boolean().optional(),
+    ReplaceAllMetadata: z.boolean().optional(),
+});
+
+const refreshItem = z.null();
+
+const taskResult = z.object({
+    EndTimeUtc: z.string().nullish(),
+    ErrorMessage: z.string().nullish(),
+    Id: z.string().nullish(),
+    Key: z.string().nullish(),
+    LongErrorMessage: z.string().nullish(),
+    Name: z.string().nullish(),
+    StartTimeUtc: z.string().nullish(),
+    Status: z.string().nullish(),
+});
+
+const taskInfo = z.object({
+    Category: z.string().nullish(),
+    CurrentProgressPercentage: z.number().nullish(),
+    Description: z.string().nullish(),
+    Id: z.string().nullish(),
+    IsHidden: z.boolean().optional(),
+    Key: z.string().nullish(),
+    LastExecutionResult: taskResult.nullish(),
+    Name: z.string().nullish(),
+    State: z.enum(['Idle', 'Cancelling', 'Running']).optional(),
+});
+
+const scheduledTasks = z.array(taskInfo);
+
 export const embyType = {
     _enum: {
         albumArtistList: albumArtistListSort,
@@ -550,6 +585,7 @@ export const embyType = {
         musicFolderList: musicFolderListParameters,
         playlistDetail: baseParameters,
         playlistList: playlistListParameters,
+        refreshItem: refreshItemParameters,
         removeFromPlaylist: removeFromPlaylistParameters,
         removeTags: removeTagsParameters,
         scrobbleMarkPlayed: scrobbleMarkPlayedParameters,
@@ -587,8 +623,10 @@ export const embyType = {
         playlist,
         playlistList,
         playlistSongList,
+        refreshItem,
         removeFromPlaylist,
         removeTags,
+        scheduledTasks,
         scrobble,
         search,
         serverInfo,

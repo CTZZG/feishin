@@ -188,6 +188,14 @@ export const contract = c.router({
             400: embyType._response.error,
         },
     },
+    getScheduledTasks: {
+        method: 'GET',
+        path: 'ScheduledTasks',
+        responses: {
+            200: embyType._response.scheduledTasks,
+            400: embyType._response.error,
+        },
+    },
     getServerInfo: {
         method: 'GET',
         path: 'system/info',
@@ -263,6 +271,16 @@ export const contract = c.router({
         path: 'playlists/:playlistId/items/:itemId/move/:newIndex',
         responses: {
             204: embyType._response.movePlaylistItem,
+            400: embyType._response.error,
+        },
+    },
+    refreshItem: {
+        body: z.null(),
+        method: 'POST',
+        path: 'Items/:id/Refresh',
+        query: embyType._parameters.refreshItem,
+        responses: {
+            204: embyType._response.refreshItem,
             400: embyType._response.error,
         },
     },

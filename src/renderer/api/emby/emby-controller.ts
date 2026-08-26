@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { set } from 'idb-keyval';
 import chunk from 'lodash/chunk';
+import orderBy from 'lodash/orderBy';
 import { z } from 'zod';
 
 import { createAuthHeader, embyApiClient } from '/@/renderer/api/emby/emby-api';
@@ -767,6 +768,65 @@ export const EmbyController: EmbyControllerEndpoint = {
 
         return `${serverUrl}/Items/${query.id}/Download?${params.toString()}`;
     },
+    getFavoriteSongs: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        // Ensure the cached music library id is populated before querying.
+        await EmbyController.getMusicFolderList({ apiClientProps });
+
+        const isRating = query.type === 'rating';
+
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
+            query: {
+                ArtistIds: query.artistId,
+                Fields: 'Genres,DateCreated,MediaSources,UserData,ParentId,Tags,DatePlayed,AlbumPrimaryImageTag',
+                IncludeItemTypes: 'Audio',
+                // Emby cannot filter by rating server-side, so only favorites are narrowed here.
+                IsFavorite: isRating ? undefined : true,
+                Limit: query.limit,
+                ParentId: musicLibraryId,
+                Recursive: true,
+                SortBy: isRating ? EmbySongListSort.COMMUNITY_RATING : EmbySongListSort.PLAY_COUNT,
+                SortOrder: 'Descending',
+                UserId: apiClientProps.server.userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get favorite song list');
+        }
+
+        const items = res.body.Items.map((item) =>
+            embyNormalize.song(item, apiClientProps.server as any, ''),
+        );
+
+        if (isRating) {
+            const songsWithHighRating = orderBy(
+                items.filter((song) => song.userRating !== null && song.userRating > 2),
+                ['userRating', 'userFavorite', 'playCount', 'albumId', 'trackNumber'],
+                ['desc', 'desc', 'desc', 'asc', 'asc'],
+            );
+
+            return {
+                items: songsWithHighRating,
+                startIndex: 0,
+                totalRecordCount: songsWithHighRating.length,
+            };
+        }
+
+        return {
+            items,
+            startIndex: 0,
+            totalRecordCount: res.body?.TotalRecordCount ?? items.length,
+        };
+    },
     getFolder: async ({ apiClientProps, query }) => {
         const userId = apiClientProps.server?.userId;
         if (!userId) throw new Error('No userId found');
@@ -958,13 +1018,13 @@ export const EmbyController: EmbyControllerEndpoint = {
         const parsedLyrics = embyType._response.lyrics.parse(lyricsData);
 
         if (parsedLyrics.TrackEvents.length > 0) {
-            return parsedLyrics.TrackEvents.map((lyric) => [
-                lyric.StartPositionTicks / 10000,
-                lyric.Text,
-            ]);
+            return parsedLyrics.TrackEvents.map((lyric) => ({
+                startMs: lyric.StartPositionTicks / 10000,
+                text: lyric.Text,
+            }));
         }
 
-        return [] as [number, string][];
+        return [];
     },
     getMusicFolderList: async (args) => {
         const { apiClientProps } = args;
@@ -1076,6 +1136,35 @@ export const EmbyController: EmbyControllerEndpoint = {
             apiClientProps,
             query: { ...query, limit: 1, startIndex: 0 },
         }).then((result) => result!.totalRecordCount!),
+    getPlaylistSongIds: async (args) => {
+        const { apiClientProps, query } = args;
+
+        if (!apiClientProps.server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        const res = await embyApiClient({
+            ...apiClientProps,
+            server: apiClientProps.server as any,
+        }).getSongList({
+            query: {
+                // No extra fields are requested since only the IDs are needed.
+                IncludeItemTypes: 'Audio',
+                ParentId: query.id,
+                UserId: apiClientProps.server.userId,
+            },
+        });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get playlist song list IDs');
+        }
+
+        return {
+            items: res.body.Items.map((item) => item.Id),
+            startIndex: 0,
+            totalRecordCount: res.body?.TotalRecordCount ?? res.body?.Items?.length ?? 0,
+        };
+    },
     getPlaylistSongList: async (args) => {
         const { apiClientProps, query } = args;
         const playlistQuery = query as typeof query & {
@@ -1237,6 +1326,34 @@ export const EmbyController: EmbyControllerEndpoint = {
         };
     },
     getRoles: async () => [],
+    getScanStatus: async (args) => {
+        const { apiClientProps } = args;
+
+        const res = await embyApiClient(apiClientProps as any).getScheduledTasks();
+
+        if (res.status !== 200) {
+            throw new Error('Failed to get scan status');
+        }
+
+        const task =
+            res.body.find((t) => t.Key === 'RefreshLibrary') ||
+            res.body.find((t) => t.Name === 'Scan media library');
+
+        if (!task) {
+            return {
+                count: 0,
+                folderCount: 0,
+                scanning: false,
+            };
+        }
+
+        return {
+            count: 0,
+            folderCount: 0,
+            lastScan: task.LastExecutionResult?.EndTimeUtc ?? undefined,
+            scanning: task.State === 'Running' || task.State === 'Cancelling',
+        };
+    },
     getServerInfo: async (args) => {
         const { apiClientProps } = args;
 
@@ -1526,6 +1643,21 @@ export const EmbyController: EmbyControllerEndpoint = {
             throw new Error('Failed to move item in playlist');
         }
     },
+    refreshItems: async (args) => {
+        const { apiClientProps, query } = args;
+
+        await Promise.all(
+            query.ids.map((id) =>
+                embyApiClient(apiClientProps as any).refreshItem({
+                    body: null,
+                    params: { id },
+                    query: { MetadataRefreshMode: 'FullRefresh' },
+                }),
+            ),
+        );
+
+        return null;
+    },
     removeFromPlaylist: async (args) => {
         const { apiClientProps, query } = args;
 
@@ -1768,6 +1900,43 @@ export const EmbyController: EmbyControllerEndpoint = {
                 }
             }
         }
+
+        return null;
+    },
+    startLibraryScan: async (args) => {
+        const { apiClientProps } = args;
+        const server = apiClientProps.server;
+
+        if (!server?.userId) {
+            throw new Error('No userId found');
+        }
+
+        let musicFolderIds = server.musicFolderId?.filter(Boolean) ?? [];
+
+        if (musicFolderIds.length === 0) {
+            const res = await EmbyController.getMusicFolderList({ apiClientProps });
+            musicFolderIds = res.items.map((folder) => folder.id);
+        }
+
+        if (musicFolderIds.length === 0) {
+            throw new Error('No music folders found');
+        }
+
+        await Promise.all(
+            musicFolderIds.map((id) =>
+                embyApiClient(apiClientProps as any).refreshItem({
+                    body: null,
+                    params: { id },
+                    query: {
+                        ImageRefreshMode: 'Default',
+                        MetadataRefreshMode: 'Default',
+                        Recursive: true,
+                        ReplaceAllImages: false,
+                        ReplaceAllMetadata: false,
+                    },
+                }),
+            ),
+        );
 
         return null;
     },

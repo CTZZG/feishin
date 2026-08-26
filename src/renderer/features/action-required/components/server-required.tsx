@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 
 import styles from '/@/renderer/features/action-required/components/server-required.module.css';
 import { isServerLock } from '/@/renderer/features/action-required/utils/window-properties';
+import EmbyLogo from '/@/renderer/features/servers/assets/emby.png';
 import JellyfinLogo from '/@/renderer/features/servers/assets/jellyfin.png';
 import NavidromeLogo from '/@/renderer/features/servers/assets/navidrome.png';
 import OpenSubsonicLogo from '/@/renderer/features/servers/assets/opensubsonic.png';
@@ -91,17 +92,20 @@ function ServerSelector() {
                 const server = serverList[serverId];
                 const isNavidromeExpired =
                     server.type === ServerType.NAVIDROME && !server.ndCredential;
+                const isEmbyExpired = server.type === ServerType.EMBY && !server.credential;
                 const isJellyfinExpired = server.type === ServerType.JELLYFIN && !server.credential;
                 const isSubsonicExpired = server.type === ServerType.SUBSONIC && !server.credential;
                 const isSessionExpired =
-                    isNavidromeExpired || isJellyfinExpired || isSubsonicExpired;
+                    isNavidromeExpired || isEmbyExpired || isJellyfinExpired || isSubsonicExpired;
 
                 const logo =
                     server.type === ServerType.NAVIDROME
                         ? NavidromeLogo
                         : server.type === ServerType.JELLYFIN
                           ? JellyfinLogo
-                          : OpenSubsonicLogo;
+                          : server.type === ServerType.EMBY
+                            ? EmbyLogo
+                            : OpenSubsonicLogo;
 
                 return (
                     <Button

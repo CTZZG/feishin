@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { embyType } from '/@/shared/api/emby/emby-types';
+import { coerceYear, parsePartialIsoDateFromApi } from '/@/shared/api/partial-iso-date';
 import {
     Album,
     AlbumArtist,
@@ -82,6 +83,22 @@ const getTags = (item: { Tags?: string[] }): null | Record<string, string[]> => 
     return null;
 };
 
+// Emby returns `PremiereDate` as a full ISO datetime, but the domain model expects a partial ISO
+// date (`YYYY`, `YYYY-MM`, or `YYYY-MM-DD`). Fall back to `ProductionYear` when no premiere is set.
+const embyPremiereFields = (item: {
+    PremiereDate?: string;
+    ProductionYear?: number;
+}): { originalYear: number; releaseDate: null | string; releaseYear: null | number } => {
+    const premiere = parsePartialIsoDateFromApi(item.PremiereDate ?? null);
+    const prodYear = coerceYear(item.ProductionYear);
+    const releaseYear: null | number =
+        premiere.year > 0 ? premiere.year : prodYear > 0 ? prodYear : null;
+    const releaseDate = premiere.date ?? (prodYear > 0 ? String(prodYear) : null);
+    const originalYear = premiere.year > 0 ? premiere.year : prodYear;
+
+    return { originalYear, releaseDate, releaseYear };
+};
+
 const normalizeSong = (
     item: z.infer<typeof embyType._response.song>,
     server: null | ServerListItemWithCredential,
@@ -92,6 +109,7 @@ const normalizeSong = (
     void _imageSize;
 
     const audioMetadata = extractAudioMetadata(item.MediaSources || []);
+    const { releaseDate, releaseYear } = embyPremiereFields(item);
 
     return {
         _itemType: LibraryItem.SONG,
@@ -127,6 +145,7 @@ const normalizeSong = (
         compilation: null,
         container: item.MediaSources?.[0]?.Container || null,
         createdAt: item.DateCreated ?? '',
+        date: releaseDate ?? (releaseYear !== null ? String(releaseYear) : null),
         discNumber: item.ParentIndexNumber || 1,
         discSubtitle: null,
         duration: item.RunTimeTicks ? item.RunTimeTicks / 10000 : 0,
@@ -145,6 +164,7 @@ const normalizeSong = (
         imageUrl: null,
         lastPlayedAt: item.DatePlayed ? new Date(item.DatePlayed).toISOString() : null,
         lyrics: null,
+        mbzAlbumId: null,
         mbzRecordingId: null,
         mbzTrackId: null,
         name: item.Name,
@@ -153,13 +173,8 @@ const normalizeSong = (
         peak: null,
         playCount: item.UserData?.PlayCount || 0,
         playlistItemId: item.PlaylistItemId,
-        releaseDate: item.PremiereDate
-            ? new Date(item.PremiereDate).toISOString()
-            : item.ProductionYear
-              ? new Date(item.ProductionYear, 0, 1).toISOString()
-              : null,
-
-        releaseYear: item.ProductionYear ? Number(item.ProductionYear) : null,
+        releaseDate,
+        releaseYear,
         sampleRate: audioMetadata.sampleRate,
         size: item.MediaSources?.[0]?.Size ?? 0,
         sortName: item.SortName ?? item.Name,
@@ -169,6 +184,7 @@ const normalizeSong = (
         updatedAt: item.DateCreated ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
         userRating: item.UserData?.Rating || null,
+        year: releaseYear,
     };
 };
 
@@ -180,6 +196,7 @@ const normalizeAlbum = async (
     imageSize?: number,
 ): Promise<Album> => {
     const deviceId = server?.id || '';
+    const { originalYear, releaseDate, releaseYear } = embyPremiereFields(item);
 
     return {
         _itemType: LibraryItem.ALBUM,
@@ -226,23 +243,21 @@ const normalizeAlbum = async (
         mbzReleaseGroupId: null,
         name: item.Name,
         originalDate: null,
-        originalYear: item.ProductionYear ?? 0,
+        originalYear,
         participants: null,
         playCount: item.UserData?.PlayCount || 0,
         recordLabels: [],
-        releaseDate: item.PremiereDate
-            ? new Date(item.PremiereDate).toISOString()
-            : item.ProductionYear
-              ? new Date(item.ProductionYear, 0, 1).toISOString()
-              : null,
+        releaseDate,
         releaseType: null,
         releaseTypes: [],
-        releaseYear: item.ProductionYear ?? null,
+        releaseYear,
         size: null,
         songCount: item.Songs?.length ?? item.ChildCount ?? null,
         songs: item.Songs?.map((song) => normalizeSong(song, server, deviceId, imageSize)),
         sortName: item.SortName ?? item.Name,
         tags: getTags(item),
+        // Emby does not report per-track year ranges on the album payload.
+        trackYearRange: null,
         updatedAt: (item?.DateLastMediaAdded || item.DateCreated) ?? '',
         userFavorite: item.UserData?.IsFavorite || false,
         userRating: item.UserData?.Rating || null,
